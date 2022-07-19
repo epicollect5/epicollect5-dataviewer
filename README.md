@@ -1,7 +1,8 @@
 #Epicollect5 Dataviewer
 
 ##Dependencies
- - Forward geocoding provided by OpenCage Data https://geocoder.opencagedata.com/
+ - Mapbox satellite imagery available by adding key
+ - create .env file and add: REACT_APP_MAPBOX_API_TOKEN={token}
 
 ##Instructions
 - clone repo
