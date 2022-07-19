@@ -1,0 +1,90 @@
+@media all and (max-width: 992px) {
+}
+
+@media (max-width: 992px) {
+  .navbar-header {
+    margin-left: 0 !important;
+  }
+  .navbar-project-name-wrapper {
+    .navbar-project-name {
+      display: inline !important;
+      line-height: 42px !important;
+      //see cenetering in css https://goo.gl/Or1ju2
+    }
+  }
+  .navbar-brand {
+    padding-top: 5px !important;
+  }
+  .view-children-navbar {
+    .navbar-brand {
+      padding-top: 11px !important;
+    }
+    .navbar-right {
+      float: right;
+    }
+  }
+  .table-nav-items {
+    padding-top: 10.5px;
+    .navbar-pagination-btn {
+      .material-icons {
+        vertical-align: top;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-brand {
+    padding-top: 5px !important;
+    max-width: 70% !important;
+    white-space: nowrap;
+    overflow-y: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-dialog {
+    width: 90%;
+  }
+  .modal-media {
+    width: 80%;
+    margin: 0 auto;
+    .modal-body {
+      min-height: 125px;
+    }
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .modal-dialog {
+    width: 70%;
+  }
+  .modal-media {
+    width: 50%;
+    .modal-body {
+      min-height: 125px;
+    }
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1025px) {
+  .modal-prepare-download {
+    width: 50% !important;
+  }
+
+  .modal-dialog {
+    width: 75%;
+    .cell-view__content__question_header {
+      min-width: 200px;
+    }
+  }
+  .modal-media {
+    width: 50%;
+    .modal-body {
+      min-height: 125px;
+    }
+    margin: 0 auto;
+  }
+}

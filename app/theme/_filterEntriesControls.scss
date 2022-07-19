@@ -1,0 +1,19 @@
+.filter-entries-controls {
+  //margin-left:15px;
+  > div {
+    // padding:0!important;
+  }
+  .filter-entries-controls__extra {
+    margin-top: 10px;
+  }
+  .filter-entries-controls__extra--xs {
+    margin-bottom: 15px;
+  }
+  //.start-date__entry-title {
+  //  color: $deep-purple;
+  //
+  //}
+  .extra__clear-all {
+    font-weight: 700;
+  }
+}

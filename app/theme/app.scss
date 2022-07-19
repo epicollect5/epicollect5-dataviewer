@@ -1,0 +1,132 @@
+@import "variables";
+@import "mixins";
+@import "mediaQueries";
+@import "errorView";
+@import "loader";
+@import "drawer";
+@import "modal";
+@import "table";
+@import "map";
+@import "filterEntriesControls";
+@import "primaryNavbar";
+@import "secondaryNavbar";
+@import "react-day-picker";
+
+body {
+  font-family: $font-family-sans-serif;
+}
+
+//IE 11 Hacks
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  /* IE10+ specific styles go here */
+  .drawer__entry-loader {
+    display: none;
+  }
+  *,
+  ::after,
+  ::before {
+    z-index: 1;
+  }
+}
+
+.toast-top-full-width {
+  height: 64px !important;
+  .toast-success {
+    top: 2px !important;
+  }
+}
+#toast-container > div {
+  padding: 16px 15px 16px 50px !important;
+}
+#toast-container > .toast-error {
+  padding: 13px 15px 13px 50px !important;
+  top: 1px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+}
+
+#main {
+  //height: 600px;
+  //width:600px;
+  overflow-y: auto;
+}
+
+audio,
+video {
+  max-height: 400px;
+}
+
+img {
+  border-style: none;
+  border: 0;
+}
+
+//image thumb and Lightbox backdrop
+.thumb-wrapper:hover,
+.container_a31snl {
+  cursor: pointer;
+}
+
+.btn-icon {
+  width: 36px;
+  text-align: center;
+  padding: 6px 0;
+  height: 36px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+.btn-icon-medium {
+  width: 48px;
+  text-align: center;
+  padding: 12px 0;
+  height: 48px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+//Lightbox backdrop
+.container_a31snl {
+  button {
+    background-color: $solid-green;
+  }
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+.text-capitalize {
+  text-transform: capitalize;
+}
+
+.wait-overlay {
+  display: block;
+  cursor: wait;
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 9990;
+  top: 0;
+  left: 0;
+}
+//to move map outside of viewport but keeping the height
+.shifted {
+  left: -200% !important;
+}
+
+.button-import {
+  position: absolute;
+  bottom: 5%;
+  right: 5%;
+}
+code {
+  color: $deep-purple;
+}

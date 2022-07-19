@@ -1,0 +1,37 @@
+@mixin drawer ($backgroundColor){
+  margin-top:65px;
+  padding-bottom:65px;//this is to show the full height when scrolling
+  width: 300px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: -305px;
+  background: $backgroundColor;
+  -webkit-transform: translateX(0);
+  transform: translateX(0);
+  -webkit-transition: .3s ease all;
+  transition: .3s ease all;
+  overflow: auto;
+  -webkit-box-shadow: 2px 0 5px 0 rgba(170,170,170,1);
+  -moz-box-shadow: 2px 0 5px 0 rgba(170,170,170,1);
+  box-shadow: 2px 0 5px 0 rgba(170,170,170,1);
+  z-index:999;
+}
+
+@mixin centerOnPage() {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@mixin countButton(){
+  font-size:16px;
+  color: $deep-purple;
+  padding:10px;
+  font-weight: 700;
+  text-decoration: underline;
+  &:hover {
+    cursor: pointer;
+  }
+}

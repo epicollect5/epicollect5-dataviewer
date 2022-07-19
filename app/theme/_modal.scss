@@ -1,0 +1,195 @@
+//to center vertically
+.modal {
+  text-align: center;
+  padding: 0 !important;
+}
+
+.modal:before {
+  content: "";
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+  margin-right: -4px;
+}
+
+.modal-dialog {
+  display: inline-block;
+  text-align: left;
+  vertical-align: middle;
+}
+
+video,
+audio {
+  width: 100%;
+  display: block;
+}
+
+//lightbox popup
+.content_13hv8io {
+  padding: 15px;
+  min-height: 200px;
+  min-width: 200px;
+  background: white url("images/ring.svg") 50% 50% no-repeat;
+  border-radius: 5px;
+  div {
+    position: absolute;
+    width: 100%;
+  }
+  button {
+    background-color: $solid-green;
+    border-radius: 50%;
+    right: 0;
+    top: -30px;
+  }
+}
+
+//Bootstrap modal
+.modal-dialog {
+  .modal-header {
+    button.close {
+      width: 36px;
+      height: 36px;
+      background-color: $solid-green;
+      border-radius: 50%;
+      margin: 0;
+      color: #ffffff;
+      opacity: 1;
+      margin-top: -32px;
+      margin-right: -32px;
+    }
+  }
+  .modal-content {
+    border-radius: 5px;
+  }
+  .cell-view__entry-title,
+  .cell-delete__entry-title,
+  .start-date__entry-title {
+    color: $deep-purple;
+    font-weight: 700;
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 22px;
+  }
+  .table {
+    td,
+    th {
+      word-break: break-all;
+    }
+    .photo-wrapper {
+      img {
+        border: 1px solid #bbb;
+        padding: 2px;
+      }
+    }
+    .audio-wrapper,
+    .video-wrapper {
+      text-align: center;
+      //max-width:200px;//todo fix this using other markup when there is time, max width inside td dose not work
+      //background: white url('/app/vendor/images/ring.svg') 50% 50% no-repeat;
+      audio,
+      video {
+        width: 200px;
+        margin: 0 auto;
+      }
+    }
+  }
+}
+
+/* Branch entries modal*/
+.modal-branch-entries {
+  width: 90% !important;
+
+  .cell-branch__entry-header {
+    margin: 0;
+    color: $deep-purple;
+    font-weight: 700;
+    display: inline;
+  }
+}
+
+.modal-delete-entry {
+  .modal-header {
+    text-align: center;
+  }
+  .modal-content {
+    min-height: 300px;
+  }
+}
+
+.modal-prepare-download {
+  p {
+    margin: 0;
+  }
+  .modal-header {
+    text-align: center;
+    color: $deep-purple;
+    font-weight: 700;
+    font-size: 22px;
+  }
+  .modal-body {
+    min-height: 100px;
+  }
+  .loader-prepare-download {
+    margin-top: 100px;
+  }
+}
+
+//override size for any screen size
+.modal-dialog.start-date-modal,
+.modal-dialog.end-date-modal {
+  max-width: 300px !important;
+  .modal-header {
+    padding-bottom: 0;
+  }
+  .modal-body {
+    padding: 0 15px;
+    min-height: 350px !important;
+  }
+  .modal-footer {
+    padding-top: 0;
+  }
+}
+
+.pick-dates-modal {
+  .panel-heading {
+    border-bottom: 2px solid $light-grey;
+  }
+  .panel-body {
+    min-height: 350px;
+  }
+}
+
+.modal-dialog {
+  th.cell-view__content__question_header {
+    min-width: 150px;
+  }
+  .dataset-p {
+    margin: 0;
+  }
+}
+.modal-upload-entries__wrapper {
+  overflow: hidden;
+}
+.modal-upload-entries {
+  min-height: 100%;
+  .pagination {
+    li {
+      &:hover {
+        cursor: pointer;
+      }
+      &.disabled,
+      &.disabled:hover {
+        cursor: not-allowed;
+        pointer-events: none; // Future-proof disabling of clicks
+      }
+    }
+  }
+}
+.modal-media {
+  .modal-dialog {
+    //imp: see t.ly/QyTg
+    //this fixes the overlay control (clickin on more ...)
+    //going out of view or just misplaced
+    transform: none !important;
+  }
+}

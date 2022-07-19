@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible"
+            content="IE=edge">
+      <meta name="viewport"
+            content="width=device-width, initial-scale=1">
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet">
+      <link href='https://fonts.googleapis.com/css?family=Arimo'
+            rel='stylesheet'
+            type='text/css'>
+
+
+      <!-- <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+          rel="stylesheet"> -->
+
+      <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+      <title>EC5 Redux Dataviewer</title>
+      <link rel="icon"
+            href="/favicon.png">
+
+      <!-- Bootstrap Epicollect5 theme-->
+      <link rel="stylesheet"
+            href="./app/vendor/css/site/vendor-site.css">
+      <link rel="stylesheet"
+            href="./app/vendor/css/site/site.css">
+
+      <!-- dataviewer vendor css-->
+      <link rel="stylesheet"
+            href="./dist/vendor-dataviewer.css">
+
+      <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+
+      <!--DEFER is important, otherwise markerClusterGroup will be undefined. Loading locally also fails-->
+      <!--Loding from sources as I made some changes not in the 1.4.1 release, library not maintained anymore-->
+      <script src="/dist/leaflet.markercluster.min.js"
+              defer></script>
+      </script> -->
+
+      <script>
+            window.EC5 = window.EC5 || {};
+            window.EC5.SITE_URL = window.location.host;
+      </script>
+
+      <link href="dataviewer.css"
+            rel="stylesheet">
+</head>
+
+<body>
+      <div id="app"></div>
+      <script type="text/javascript"
+              src="dataviewer.js"></script>
+</body>
+
+</html>

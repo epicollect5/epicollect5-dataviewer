@@ -1,0 +1,124 @@
+{
+  "extends": "airbnb",
+  "plugins": [
+    "react",
+    "jsx-a11y",
+    "import"
+  ],
+  "settings": {
+    "import/resolver": "webpack"
+  },
+  "rules": {
+    "no-param-reassign": "off",
+    "space-before-function-paren": "off",
+    "arrow-parens": [
+      "error",
+      "always"
+    ],
+    "consistent-return": "off",
+    "react/sort-comp": [
+      1,
+      {
+        "order": [
+          "static-methods",
+          "lifecycle",
+          "render"
+        ]
+      }
+    ],
+    //todo: check this rule
+    "class-methods-use-this": [
+      1, //show only warning
+      {
+        "exceptMethods": [
+          "componentDidMount",
+          "componentDidUpdate",
+          "componentWillMount",
+          "componentWillReceiveProps",
+          "componentWillUnmount",
+          "componentWillUpdate",
+          "render",
+          "shouldComponentUpdate"
+        ]
+      }
+    ],
+    "no-console": "off",
+    "react/jsx-filename-extension": [
+      1,
+      {
+        "extensions": [
+          ".js",
+          ".jsx"
+        ]
+      }
+    ],
+    "brace-style": [
+      "error",
+      "1tbs",
+      {
+        "allowSingleLine": true
+      }
+    ],
+    "max-len": [
+      "off",
+      {
+        "ignoreComments": true
+      }
+    ],
+    "padded-blocks": "off",
+    "arrow-body-style": [
+      "error",
+      "always"
+    ],
+    "no-plusplus": "off",
+    "spaced-comment": [
+      "off",
+      "never",
+      {
+        "markers": [
+          "/"
+        ]
+      }
+    ],
+    "jsx-a11y/no-static-element-interactions": "off",
+    "prefer-template": "off",
+    "indent": 0,
+    "react/jsx-indent": "off",
+    "react/jsx-space-before-closing": "off",
+    "comma-dangle": [
+      "error",
+      "never"
+    ],
+    "no-lonely-if": [
+      "off"
+    ],
+    "react/jsx-indent-props": "off",
+    "react/forbid-prop-types": [
+      "off",
+      {
+        "forbid": [
+          "any"
+        ]
+      }
+    ],
+    "import/no-extraneous-dependencies": [
+      0,
+      {
+        "devDependencies": true,
+        "optionalDependencies": true,
+        "peerDependencies": true
+      }
+    ]
+  },
+  "globals": {
+    "document": true,
+    "window": true,
+    "PIXI": true
+  },
+  "env": {
+    "browser": true,
+    "jquery": true,
+    "es6": true,
+    "jest": true
+  }
+}

@@ -1,0 +1,120 @@
+.map-wrapper {
+  margin-top: 44px;
+  font-size: 14px;
+  #map {
+    //awesome: http://caniuse.com/#feat=calc
+    height: calc(100vh - 115px); //viewport height - the site navbar and the secondary navbar height
+    //opacity:.2;
+  }
+  .map-no-location-entries {
+    @include centerOnPage();
+  }
+  .leaflet-popup-content {
+    color: $hot-pink;
+    font-weight: 700;
+  }
+  .leaflet-div-icon {
+    border: 0;
+    background: none;
+  }
+
+  ////to get bigger clusters and fit more numbers *****************
+  .marker-cluster-large {
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 25px !important;
+    div {
+      width: 40px !important;
+      height: 40px !important;
+      border-radius: 20px !important;
+      span {
+        line-height: 40px;
+      }
+    }
+  }
+
+  //*************************************************************
+
+  /* EC5 colors for cluster************************************************************/
+  .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+    background-color: rgba(103, 60, 144, 0.9);
+  }
+  .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+    background-color: rgba(193, 89, 179, 0.8);
+    color: #fff;
+  }
+  .marker-cluster {
+    background-clip: padding-box;
+    border-radius: 20px;
+    color: #fff;
+  }
+  .marker-cluster div {
+    width: 30px;
+    height: 30px;
+    margin-left: 5px;
+    margin-top: 5px;
+    font-weight: 700;
+    text-align: center;
+    border-radius: 15px;
+    font-size: 12px;
+  }
+  .marker-cluster span {
+    line-height: 30px;
+  }
+  /***************************************************************************************/
+}
+
+//this is placed outside of map-wrapper in markup
+.map-progress-wrapper {
+  .progress {
+    height: 3px;
+  }
+  @include centerOnPage();
+  z-index: 9991;
+  width: 100%;
+  margin-top: 50px;
+  .map-progress-bar {
+    width: 100%;
+    //margin-top: 110px;
+  }
+  .map-progress-completed {
+    width: 100%;
+    text-align: center;
+    color: $deep-purple;
+    font-weight: 700;
+    font-size: 20px;
+  }
+}
+
+.leaflet-touch .leaflet-control-layers-toggle {
+  width: 30px;
+  height: 30px;
+}
+
+.toggle-clustered {
+  padding-top: 3px;
+}
+
+.toggle-unclustered {
+  padding-top: 3px;
+  margin-left: -2px;
+}
+
+.toggle-heatmap {
+  padding-top: 3px;
+  margin-left: -2px;
+}
+
+/**
+Override leaflet layers controls
+ */
+.leaflet-control-layers-toggle {
+  width: 30px;
+  height: 30px;
+}
+
+.leaflet-bar a, .leaflet-bar a:hover {
+  width: 30px;
+  height: 30px;
+}
+

@@ -1,0 +1,8 @@
+.idea/
+.vscode/
+node_modules/
+dist/*.map
+dist/dataviewer.js
+*.csv
+.history
+.env

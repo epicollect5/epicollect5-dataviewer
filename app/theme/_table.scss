@@ -1,0 +1,311 @@
+.table-wrapper,
+.branch-table-wrapper {
+  margin-top: 60px;
+  font-size: 13px;
+  min-height: 100vh;
+  i.material-icons {
+    width: 24px;
+  }
+  .answer-error__icon {
+    color: $red-error;
+  }
+  .form-dropdown-control {
+    select {
+      margin: 0 15px;
+      min-width: 100px;
+      max-width: 200px;
+      option {
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+  //cells: content on a single row and ellipsis for overflow
+  .cell-content-wrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    .cell-content {
+      line-height: 50px;
+      padding-left: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      box-sizing: border-box;
+    }
+  }
+
+  .cell-view,
+  .cell-delete,
+  .cell-edit {
+    padding: 5px;
+    text-align: center;
+  }
+
+  .cell-delete,
+  .cell-edit,
+  .cell-branch {
+    .btn:disabled {
+      background-color: $light-grey;
+      color: #ffffff;
+      box-shadow: none;
+      &:hover {
+        background-color: $light-grey;
+        color: #ffffff;
+      }
+      &:active {
+        background-color: $light-grey !important;
+        color: #ffffff !important;
+      }
+    }
+    .btn-danger:disabled {
+      background-color: $light-grey;
+      color: #ffffff;
+      &:active {
+        background-color: $light-grey !important;
+        color: #ffffff !important;
+        background: none;
+        box-shadow: none;
+      }
+    }
+  }
+
+  .cell-children {
+    text-align: center;
+    span:hover {
+      cursor: pointer;
+    }
+  }
+  .cell-media {
+    text-align: center;
+    margin-top: -2px;
+  }
+  .header-children {
+    text-align: center;
+  }
+  .thumb-wrapper {
+    text-align: center;
+    &:hover {
+      cursor: pointer;
+    }
+    img {
+      border: 1px solid #bbb;
+      padding: 2px;
+    }
+  }
+  .cell-branch {
+    .cell-branch__count {
+      @include countButton();
+    }
+    .cell-branch__add.pull-right {
+      margin-right: 5px;
+      margin-top: -2px;
+    }
+  }
+  .cell-children {
+    .cell-children__count {
+      @include countButton();
+    }
+    .cell-children__add.pull-right {
+      margin-right: 5px;
+      margin-top: -2px;
+    }
+  }
+}
+
+.branch-table-wrapper {
+  overflow: hidden;
+}
+
+.table-no-entries {
+  @include centerOnPage();
+}
+
+.bulk-upload-btn {
+  font-size: 16px;
+  margin: 5px 0 0 0;
+  color: $deep-purple;
+  //font-weight: 700;
+  i {
+    display: inline-flex;
+    vertical-align: middle;
+    margin-right: 5px;
+    margin-top: -4px;
+  }
+  span:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
+.table-upload-wrapper {
+  overflow: hidden;
+  //border-bottom: 1px solid #ccc !important;
+  .answer-error-label {
+    color: $red-error;
+  }
+  .answer-error {
+    .answer-error-icon,
+    .answer-error-label {
+      color: $red-error;
+    }
+  }
+  .progress {
+    margin-bottom: 15px;
+    margin-right: 4px;
+  }
+}
+
+.btn-view-upload-errors {
+  margin-top: -3px !important;
+  &:focus {
+    outline: 0;
+  }
+}
+
+.expanded-errors-container {
+  margin: 50px 0 0 0;
+  padding: 0;
+  background-color: white;
+  border: none;
+  overflow: hidden;
+  .answer-error__label {
+    color: $red-error;
+  }
+  .fixedDataTableCellLayout_main {
+    background-color: white;
+  }
+  .ScrollbarLayout_main.ScrollbarLayout_mainVertical.public_Scrollbar_main {
+    display: none;
+  }
+}
+
+.answer-error__icon,
+.answer-error-label {
+  color: $red-error;
+  vertical-align: middle;
+  .material-icons {
+    color: $red-error;
+  }
+}
+
+.answer-label {
+  vertical-align: middle;
+}
+
+.status-success {
+  color: $green-success;
+}
+
+.status-failed {
+  color: $red-error;
+}
+
+.uploading-entries-loader__label:after {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  -webkit-animation: ellipsis steps(4, end) 1200ms infinite;
+  animation: ellipsis steps(4, end) 1200ms infinite;
+  content: "\2026"; /* ascii code for the ellipsis character */
+  width: 0;
+}
+
+@keyframes ellipsis {
+  to {
+    width: 20px;
+  }
+}
+
+@-webkit-keyframes ellipsis {
+  to {
+    width: 20px;
+  }
+}
+
+.uploading-entries__table-controls {
+  padding: 0 5px 5px 0;
+}
+
+.upload-table-left {
+  float: left;
+  width: 120px;
+  tr {
+    height: 50px;
+  }
+  th,
+  td {
+    text-align: center;
+    width: 60px;
+    white-space: nowrap;
+  }
+  td.icon-cell {
+    padding-top: 12px;
+    padding-bottom: 0;
+  }
+}
+
+.upload-table-right {
+  margin-bottom: 0 !important;
+  overflow-x: auto;
+  .table {
+    margin-bottom: 0 !important;
+    tr {
+      height: 50px;
+    }
+    th,
+    td {
+      width: 150px;
+      white-space: nowrap;
+    }
+  }
+}
+
+.upload-table-container {
+  overflow-y: scroll;
+  max-height: 50vh;
+  //fix for scrollbar corner on Windows/Linux...not the best but for now it will do
+  margin-bottom: -12px;
+}
+
+.upload-entries__error-row {
+  height: 100px !important;
+}
+
+.upload-entries-controls {
+  position: absolute;
+  right: 15px;
+  bottom: 5px;
+  .bulk-upload-btn {
+    &.disabled,
+    &.disabled:hover {
+      cursor: not-allowed;
+      pointer-events: none; // Future-proof disabling of clicks
+      color: $medium-grey;
+    }
+  }
+}
+
+.upload-entries-pagination {
+  .prev,
+  .next {
+    background-color: $solid-green;
+    color: #ffffff;
+  }
+  .prev:hover,
+  .next:hover {
+    background-color: $light-green;
+    color: #333;
+  }
+}
+// upload-table-right::-moz-scrollbar-button,
+// upload-table-right::-webkit-scrollbar-button {
+//   width: 0px;
+//   display: none;
+// }
