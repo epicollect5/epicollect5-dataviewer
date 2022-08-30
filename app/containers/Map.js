@@ -170,11 +170,16 @@ class Map extends React.Component {
             attribution: PARAMETERS.OSM_TILES_ATTRIBUTION,
             maxNativeZoom: 20
         });
-
-        const mapboxSatellite = L.tileLayer(PARAMETERS.MAPBOX_TILES_PROVIDER_SATELLITE, {
-            attribution: PARAMETERS.MAPBOX_TILES_ATTRIBUTION,
-            maxNativeZoom: 20
+        //add satellite images from ESRI
+        const Esri = L.tileLayer(PARAMETERS.ESRI_TILES_PROVIDER_SATELLITE, {
+            attribution: PARAMETERS.ESRI_TILES_PROVIDER_ATTRIBUTION,
+            maxNativeZoom: 17
         });
+
+        // const mapboxSatellite = L.tileLayer(PARAMETERS.MAPBOX_TILES_PROVIDER_SATELLITE, {
+        //     attribution: PARAMETERS.MAPBOX_TILES_ATTRIBUTION,
+        //     maxNativeZoom: 20
+        // });
 
         const mapboxOutdoors = L.tileLayer(PARAMETERS.MAPBOX_TILES_PROVIDER_OUTDOOR, {
             attribution: PARAMETERS.MAPBOX_TILES_ATTRIBUTION,
@@ -184,7 +189,7 @@ class Map extends React.Component {
         //layers control https://goo.gl/TNMUoJ
         carto.addTo(this.map);//to set it as the default
         const baseMaps = {
-            Satellite: mapboxSatellite,
+            Satellite: Esri,
             Terrain: mapboxOutdoors,
             Contrast: stamenHC,
             Carto: carto,

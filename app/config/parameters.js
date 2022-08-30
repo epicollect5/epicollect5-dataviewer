@@ -51,6 +51,11 @@ const PARAMETERS = {
     FORMAT_CSV: 'csv',
     FORMAT_JSON: 'json',
 
+    //ESRI satellite -> https://wiki.openstreetmap.org/wiki/Esri#Legal_permissions
+    ESRI_TILES_PROVIDER_SATELLITE: ' https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=' + process.env.REACT_APP_ESRI_API_TOKEN,
+    //https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9
+    ESRI_TILES_PROVIDER_ATTRIBUTION: 'Powered by Esri | Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+
     //Mapbox  imagery https://docs.mapbox.com/api/maps/styles/
     MAPBOX_TILES_PROVIDER_SATELLITE: 'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=' + process.env.REACT_APP_MAPBOX_API_TOKEN,
     MAPBOX_TILES_PROVIDER_OUTDOOR: 'https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/{z}/{x}/{y}?access_token=' + process.env.REACT_APP_MAPBOX_API_TOKEN,
