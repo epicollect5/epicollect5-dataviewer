@@ -41,7 +41,7 @@ class ModalUploadEntries extends React.Component {
     }
 
     //handle click on pagination next button
-    handleClickNext() {
+    handleClickNext () {
         const { responses, failedResponses } = this.state;
         const { filterByFailed } = this.props;
 
@@ -79,7 +79,7 @@ class ModalUploadEntries extends React.Component {
         }, PARAMETERS.DELAY.LONG);
     }
 
-    handleClickPrev() {
+    handleClickPrev () {
         const { uploadTablePageStart, uploadTablePageEnd } = this.props;
 
         if ((uploadTablePageStart - 1) < 0) {
@@ -131,7 +131,7 @@ class ModalUploadEntries extends React.Component {
     //     );
     // }
 
-    getBranchEntries() {
+    getBranchEntries () {
 
         const { hierarchyNavigator, projectSlug, projectExtra, currentBranchRef, currentBranchOwnerUuid, branchBackLink, currentBranchOwnerEntryTitle } = this.props;
         const formRef = hierarchyNavigator[hierarchyNavigator.length - 1].formRef;
@@ -150,7 +150,7 @@ class ModalUploadEntries extends React.Component {
         );
     }
 
-    getChildEntries() {
+    getChildEntries () {
 
         const { forms, projectSlug, projectExtra } = this.props;
         const hierarchyNavigator = this.props.hierarchyNavigator;
@@ -178,7 +178,7 @@ class ModalUploadEntries extends React.Component {
         this.props.fetchChildEntries(bundle);
     }
 
-    close() {
+    close () {
 
         const { projectSlug, currentBranchRef, isViewingChildren } = this.props;
 
@@ -244,11 +244,11 @@ class ModalUploadEntries extends React.Component {
         }
     }
 
-    componentDidMount() {
+    componentDidMount () {
         console.log(' 1 -modal upload mounted');
     }
 
-    componentDidUpdate() {
+    componentDidUpdate () {
 
         console.log('2 - modal upload updated');
         //   this.isFirstRun = true;
@@ -270,12 +270,12 @@ class ModalUploadEntries extends React.Component {
         }
     }
 
-    componentWillUnmount() {
+    componentWillUnmount () {
         console.log('modal upload unmounted ************************************************');
     }
 
 
-    render() {
+    render () {
         console.log('rendering upload entries modal');
 
         const { showModalUploadEntries, projectSlug, reverseEntries, projectMapping, activeMapping, hierarchyNavigator } = this.props;
@@ -335,12 +335,11 @@ class ModalUploadEntries extends React.Component {
             }
         }
 
-        const mapping = projectMapping[activeMapping.map_index].forms[currentFormRef];
-
         if (!showModalUploadEntries) {
             return null;
         }
 
+        const mapping = projectMapping[activeMapping.map_index].forms[currentFormRef];
         const responses = this.state.responses;
         const failedResponses = this.state.failedResponses;
         const showPagination = this.clonedReverseEntries.length === 0 && (responses.length / 2) > PARAMETERS.TABLE_UPLOAD_PER_PAGE;

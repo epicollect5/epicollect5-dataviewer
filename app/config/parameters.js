@@ -52,7 +52,7 @@ const PARAMETERS = {
     FORMAT_JSON: 'json',
 
     //ESRI satellite -> https://wiki.openstreetmap.org/wiki/Esri#Legal_permissions
-    ESRI_TILES_PROVIDER_SATELLITE: ' https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=' + process.env.REACT_APP_ESRI_API_TOKEN,
+    ESRI_TILES_PROVIDER_SATELLITE: 'https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=' + process.env.REACT_APP_ESRI_API_TOKEN,
     //https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9
     ESRI_TILES_PROVIDER_ATTRIBUTION: 'Powered by Esri | Esri, Maxar, Earthstar Geographics, and the GIS User Community',
 
