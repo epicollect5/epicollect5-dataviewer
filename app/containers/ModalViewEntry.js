@@ -4,9 +4,8 @@ import Table from 'react-bootstrap/lib/Table';
 import { bindActionCreators } from 'redux';
 import { toggleModalViewEntry } from 'actions';
 import { connect } from 'react-redux';
-
 import PARAMETERS from 'config/parameters';
-
+import PhotoPopup from 'components/PhotoPopup';
 
 class ModalViewEntry extends React.Component {
 
@@ -19,15 +18,16 @@ class ModalViewEntry extends React.Component {
             PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE,
             PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE
         ];
+
         this.getQuestionAndAnswerRowsForModal = this.getQuestionAndAnswerRowsForModal.bind(this);
     }
 
-    close() {
+    close () {
         this.props.toggleModalViewEntry();
     }
 
     //add some css to print the whole content of the modal
-    getPrintCss() {
+    getPrintCss () {
         const css = '@media print{#app,thead,.close{visibility:hidden}.modal{position:absolute;left:0;top:0;margin:0;padding:0;overflow:visible!important}}';
 
         return (
@@ -35,7 +35,7 @@ class ModalViewEntry extends React.Component {
         );
     }
 
-    getQuestionAndAnswerRowsForModal(headers, answers) {
+    getQuestionAndAnswerRowsForModal (headers, answers) {
 
         return answers.map((answer, index) => {
 
@@ -56,7 +56,8 @@ class ModalViewEntry extends React.Component {
                                         <audio src={answer.answer.entry_original} controls>
                                             Sorry, your browser doesn't support embedded audio,
                                             but don't worry, you can<a
-                                            href={answer.answer.entry_original}>download it</a>
+                                                href={answer.answer.entry_original}
+                                            >download it</a>
                                             and listen to it with your favorite music player!
                                         </audio>
                                     </div>
@@ -69,11 +70,15 @@ class ModalViewEntry extends React.Component {
                         if (answer.answer === '') {
                             return null;
                         }
+
+
                         return (
                             <tr key={index}>
                                 <td>{headers[index].question}</td>
                                 <td className="text-center photo-wrapper">
-                                    <img src={answer.answer.entry_sidebar} alt="thumbnail" width="200" />
+                                    <div className="photo-popup-wrapper">
+                                        <PhotoPopup answer={answer} />
+                                    </div>
                                 </td>
                             </tr>
                         );
@@ -88,19 +93,25 @@ class ModalViewEntry extends React.Component {
                                     <div className="video-wrapper text-center">
                                         <video
                                             src={answer.answer.entry_original} controls
-                                            data-mejsoptions='{"alwaysShowControls": true}'>
+                                            data-mejsoptions='{"alwaysShowControls": true}'
+                                        >
                                             Sorry, your browser doesn't support embedded videos,
                                             but don't worry, you can <a
-                                            href={answer.answer.entry_original}
-                                        >
-                                            download it
-                                        </a>
+                                                href={answer.answer.entry_original}
+                                            >
+                                                download it
+                                            </a>
                                             and watch it with your favorite video player!
                                         </video>
                                     </div>
                                 </td>
                             </tr>
                         );
+
+                    default:
+                    //
+
+
                 }
             } else {
 
@@ -127,7 +138,7 @@ class ModalViewEntry extends React.Component {
         });
     }
 
-    render() {
+    render () {
         console.log('rendering view modal');
         const { showModalViewEntry, entryTitle, viewHeaders, viewAnswers } = this.props;
         return (
@@ -138,13 +149,13 @@ class ModalViewEntry extends React.Component {
                 <Modal.Body>
                     <Table bordered condensed responsive className="cell-view__content">
                         <thead>
-                        <tr>
-                            <th className="text-center cell-view__content__question_header">Question</th>
-                            <th className="text-center">Answer</th>
-                        </tr>
+                            <tr>
+                                <th className="text-center cell-view__content__question_header">Question</th>
+                                <th className="text-center">Answer</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        {viewHeaders === null ? null : this.getQuestionAndAnswerRowsForModal(viewHeaders, viewAnswers)}
+                            {viewHeaders === null ? null : this.getQuestionAndAnswerRowsForModal(viewHeaders, viewAnswers)}
                         </tbody>
                     </Table>
                 </Modal.Body>

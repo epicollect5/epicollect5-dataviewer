@@ -9,6 +9,8 @@
     "import/resolver": "webpack"
   },
   "rules": {
+    "default-case": "off",
+    "array-callback-return": "off",
     "no-param-reassign": "off",
     "space-before-function-paren": "off",
     "arrow-parens": [

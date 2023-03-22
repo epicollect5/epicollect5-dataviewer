@@ -8,12 +8,10 @@ import { bindActionCreators } from 'redux';
 
 import ListGroup from 'react-bootstrap/lib/ListGroup';
 import ListGroupItem from 'react-bootstrap/lib/ListGroupItem';
-import Lightbox from 'react-images';
-
 import PARAMETERS from 'config/parameters';
 import table from 'utils/table';
 import localstorage from 'utils/localstorage';
-import ProgressiveImage from 'react-progressive-image';
+import PhotoPopup from 'components/PhotoPopup';
 
 class DrawerEntry extends React.Component {
 
@@ -36,11 +34,11 @@ class DrawerEntry extends React.Component {
         this.openLightbox = this.openLightbox.bind(this);
     }
 
-    componentDidUpdate() {
+    componentDidUpdate () {
         console.log('DrawerEntry didUpdate');
     }
 
-    openLightbox(event) {
+    openLightbox (event) {
         event.preventDefault();
         this.setState({
             currentImage: 0,
@@ -48,21 +46,21 @@ class DrawerEntry extends React.Component {
         });
     }
 
-    closeLightbox() {
+    closeLightbox () {
         this.setState({
             currentImage: 0,
             lightboxIsOpen: false
         });
     }
 
-    handleOnDrawerClose() {
+    handleOnDrawerClose () {
         //close drawer
         this.props.toggleDrawerEntry(true);
         //close any open entry popup on map
         this.props.mapClosePopups();
     }
 
-    handleClickEdit() {
+    handleClickEdit () {
         const { links, selectedEntry, selectedLocationQuestion } = this.props;
         const selfLink = links.self;
         const url = new URL(selfLink);
@@ -99,7 +97,7 @@ class DrawerEntry extends React.Component {
         window.open(dataEditorHref + '?' + searchParams.toString(), '_self');
     }
 
-    saveParamsForRestore(entryUuid) {
+    saveParamsForRestore (entryUuid) {
 
         const {
             currentFormName,
@@ -144,11 +142,11 @@ class DrawerEntry extends React.Component {
         localstorage.save(restoreViewParams);
     }
 
-    showEntryLoader() {
+    showEntryLoader () {
         return (<div className="drawer__entry-loader loader" />);
     }
 
-    showEntryList(headers, answers, entryTitle, entryCreatedAt) {
+    showEntryList (headers, answers, entryTitle, entryCreatedAt) {
         return (
             <div className="drawer__entry__list">
                 <ListGroup>
@@ -169,7 +167,7 @@ class DrawerEntry extends React.Component {
         );
     }
 
-    getEntryList(headers, answers) {
+    getEntryList (headers, answers) {
         return answers.map((answer, index) => {
             //is this a media type?
             if (this.mediaTypes.indexOf(answer.inputType) > -1) {
@@ -203,12 +201,7 @@ class DrawerEntry extends React.Component {
                         if (answer.answer === '') {
                             return null;
                         }
-                        const placeholder = (
-                            <div className="loader drawer__entry-loader-photo" />
-                        );
-                        //get image file name to be used as alt=""
-                        const photoParams = new URLSearchParams(answer.answer.entry_original);
-                        const photoFilename = photoParams.get('name');
+
 
                         return (
                             <ListGroup key={index}>
@@ -217,33 +210,7 @@ class DrawerEntry extends React.Component {
                                 </ListGroupItem>
                                 <ListGroupItem className="list-answer">
                                     <div className="text-center photo-wrapper">
-                                        <ProgressiveImage src={answer.answer.entry_sidebar} placeholder="">
-                                            {(src, loading) => {
-                                                return (loading ? placeholder :
-                                                        <a
-                                                            className="thumb animated fadeIn"
-                                                            href={answer.answer.entry_original}
-                                                            onClick={(e) => {
-                                                                this.openLightbox(e);
-                                                            }}
-                                                        >
-                                                            <img
-                                                                src={src}
-                                                                alt={photoFilename}
-                                                                width="250"
-                                                            />
-                                                            <Lightbox
-                                                                currentImage={this.state.currentImage}
-                                                                images={[{ src: answer.answer.entry_original }]}
-                                                                isOpen={this.state.lightboxIsOpen}
-                                                                onClose={this.closeLightbox}
-                                                                showImageCount={false}
-                                                                backdropClosesModal
-                                                            />
-                                                        </a>
-                                                );
-                                            }}
-                                        </ProgressiveImage>
+                                        <PhotoPopup answer={answer} />
                                     </div>
                                 </ListGroupItem>
                             </ListGroup>
@@ -291,7 +258,7 @@ class DrawerEntry extends React.Component {
 
     //todo need to find a way to get a different content based on what button was clicked to
     //open the drawer and the main navigation state (MAP OR TABLE)
-    render() {
+    render () {
 
         //todo weird bug on IS11...drawer always rendering loader?
 
@@ -386,7 +353,7 @@ class DrawerEntry extends React.Component {
 }
 
 //get app state and map to props
-function mapStateToProps(state) {
+function mapStateToProps (state) {
     return {
         showDrawerEntry: state.drawerReducer.showDrawerEntry,
         currentFormRef: state.navigationReducer.currentFormRef,
@@ -410,7 +377,7 @@ function mapStateToProps(state) {
     };
 }
 
-function mapDispatchToProps(dispatch) {
+function mapDispatchToProps (dispatch) {
     return bindActionCreators({
         toggleDrawerEntry,
         mapClosePopups

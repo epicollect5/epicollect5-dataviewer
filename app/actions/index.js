@@ -109,12 +109,12 @@ export const setFailedReverseEntries = (entries) => {
     };
 };
 
-export const setGeneratedUuids = (uuids) =>{
+export const setGeneratedUuids = (uuids) => {
     return {
         type: SET_GENERATED_UUIDS,
         payload: { uuids }
     };
-}
+};
 
 export const setExpandedErrorRows = (expandedErrorRows) => {
     return {
@@ -159,12 +159,12 @@ export const updateEntriesFilterOrderBy = (selectedOrderBy, sortBy, sortOrder) =
 };
 
 export const updateEntriesFilters = ({
-                                         sortBy,
-                                         sortOrder,
-                                         filterByTitle,
-                                         startDate,
-                                         endDate
-                                     }) => {
+    sortBy,
+    sortOrder,
+    filterByTitle,
+    startDate,
+    endDate
+}) => {
     return {
         type: UPDATE_ENTRIES_FILTERS,
         payload: { filterByTitle, startDate, endDate, sortBy, sortOrder }
@@ -200,9 +200,9 @@ export const mapClosePopupsReset = () => {
 };
 
 export const progressBarUpdate = (progressBarIsVisible,
-                                  progressBarMarkersProcessed,
-                                  progressBarMarkersTotal,
-                                  progressBarPercentage) => {
+    progressBarMarkersProcessed,
+    progressBarMarkersTotal,
+    progressBarPercentage) => {
     return {
         type: PROGRESS_BAR_UPDATE,
         payload: {
@@ -262,84 +262,84 @@ export const toggleModalPrepareDownload = (showModal) => {
     };
 };
 
-export function toggleDrawerMap(showDrawerMap) {
+export function toggleDrawerMap (showDrawerMap) {
     return {
         type: TOGGLE_DRAWER_MAP,
         payload: !showDrawerMap
     };
 }
 
-export function toggleDrawerEntry(showDrawerEntry) {
+export function toggleDrawerEntry (showDrawerEntry) {
     return {
         type: TOGGLE_DRAWER_ENTRY,
         payload: !showDrawerEntry
     };
 }
 
-export function toggleDrawerDownload(showDrawerDownload) {
+export function toggleDrawerDownload (showDrawerDownload) {
     return {
         type: TOGGLE_DRAWER_DOWNLOAD,
         payload: !showDrawerDownload
     };
 }
 
-export function toggleDrawerUpload(showDrawerUpload) {
+export function toggleDrawerUpload (showDrawerUpload) {
     return {
         type: TOGGLE_DRAWER_UPLOAD,
         payload: !showDrawerUpload
     };
 }
 
-export function switchForm(form) {
+export function switchForm (form) {
     return {
         type: SWITCH_FORM,
         payload: form
     };
 }
 
-export function toggleActivePage(page) {
+export function toggleActivePage (page) {
     return {
         type: TOGGLE_ACTIVE_PAGE,
         payload: page
     };
 }
 
-export function toggleClusters(clustered) {
+export function toggleClusters (clustered) {
     return {
         type: TOGGLE_CLUSTERS,
         payload: clustered
     };
 }
 
-export function toggleClustersOverlay(state) {
+export function toggleClustersOverlay (state) {
     return {
         type: TOGGLE_CLUSTERS_OVERLAY,
         payload: state
     };
 }
 
-export function setActiveMapping(selectedMapping) {
+export function setActiveMapping (selectedMapping) {
     return {
         type: SET_ACTIVE_MAPPING,
         payload: selectedMapping
     };
 }
 
-export function setActiveFormat(selectedFormat) {
+export function setActiveFormat (selectedFormat) {
     return {
         type: SET_ACTIVE_FORMAT,
         payload: selectedFormat
     };
 }
 
-export function setActiveTimeframe(selectedTimeframe) {
+export function setActiveTimeframe (selectedTimeframe) {
     return {
         type: SET_ACTIVE_TIMEFRAME,
         payload: selectedTimeframe
     };
 }
 
-export function filterLocationsByDates(startDate, endDate, sliderStartValue, sliderEndValue) {
+export function filterLocationsByDates (startDate, endDate, sliderStartValue, sliderEndValue) {
     return {
         type: FILTER_LOCATIONS_BY_DATES,
         payload: { startDate, endDate, sliderStartValue, sliderEndValue }
@@ -393,6 +393,11 @@ export const fetchEntry = (projectSlug, formRef, entryUuid, branchRef) => {
 export const deleteEntry = (projectSlug, deleteParams, rowIndexToDelete) => {
     const entryEndpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_ARCHIVE_ENDPOINT + projectSlug;
     const deleteEntryRequest = axios.post(entryEndpoint, deleteParams);
+
+
+    console.log(deleteEntryRequest);
+    console.log(entryEndpoint);
+    console.log(JSON.stringify(deleteParams));
 
     return (dispatch) => {
         return dispatch({
@@ -649,94 +654,94 @@ export const fetchEntriesAndLocations = (projectSlug, formRef, formName, project
             });
         };
     }
-    else {
 
-        //FRESH START: just get entries, no locations for this form
-        //RESTORE:we might have a parent/owner form to load locations for
-        const requests = [];
 
-        //are we restoring to a children view -> parent form might have a location
-        //todo what are we doing here?
-        if (isViewingChildren && !isViewingBranch) {
+    //FRESH START: just get entries, no locations for this form
+    //RESTORE:we might have a parent/owner form to load locations for
+    const requests = [];
 
-            //the selfLink point to the last data set that was requested
-            const childEntriesRequest = entriesRequest;
-            requests.push(childEntriesRequest);
-            const childFormRef = shouldRestoreParams.formRef;
-            const parentFormRef = shouldRestoreParams.parentFormRef;
+    //are we restoring to a children view -> parent form might have a location
+    //todo what are we doing here?
+    if (isViewingChildren && !isViewingBranch) {
 
-            console.log('restore children endpoint ', restoreEntriesEndpoint);
+        //the selfLink point to the last data set that was requested
+        const childEntriesRequest = entriesRequest;
+        requests.push(childEntriesRequest);
+        const childFormRef = shouldRestoreParams.formRef;
+        const parentFormRef = shouldRestoreParams.parentFormRef;
 
-            //check if the parent form has locations
-            const hasParentLocation = projectExtra.forms[parentFormRef].details.has_location;
-            console.log('hasParentLocation --------------------------->', hasParentLocation);
+        console.log('restore children endpoint ', restoreEntriesEndpoint);
 
-            //add request for parent form locations
-            if (hasParentLocation) {
-                //get first input ref of location type: it can be a form or a branch location
-                const parentFirstLocationInput = projectExtra.forms[parentFormRef].lists.location_inputs[0];
-                const parentEntriesLocationsQuery = '?' + queryString.stringify({
-                    form_ref: parentFormRef,
-                    input_ref: parentFirstLocationInput.input_ref,
-                    branch_ref: parentFirstLocationInput.branch_ref || ''//when null set it to empty string
-                });
-                const parentEntriesLocationsEndpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_ENTRIES_LOCATIONS_ENDPOINT + projectSlug + parentEntriesLocationsQuery;
-                const parentEntriesAndLocationsRequest = axios.get(parentEntriesLocationsEndpoint);
-                requests.push(parentEntriesAndLocationsRequest);
-            }
+        //check if the parent form has locations
+        const hasParentLocation = projectExtra.forms[parentFormRef].details.has_location;
+        console.log('hasParentLocation --------------------------->', hasParentLocation);
 
-            //get both child entries and entries locations
-            return (dispatch) => {
-                return dispatch({
-                    type: RESTORE_CHILD_ENTRIES_AND_LOCATIONS,
-                    payload: Promise.all(requests),
-                    meta: { projectSlug, childFormRef, parentFormRef, projectExtra, hierarchyNavigator, entriesFilters }
-                });
-            };
+        //add request for parent form locations
+        if (hasParentLocation) {
+            //get first input ref of location type: it can be a form or a branch location
+            const parentFirstLocationInput = projectExtra.forms[parentFormRef].lists.location_inputs[0];
+            const parentEntriesLocationsQuery = '?' + queryString.stringify({
+                form_ref: parentFormRef,
+                input_ref: parentFirstLocationInput.input_ref,
+                branch_ref: parentFirstLocationInput.branch_ref || ''//when null set it to empty string
+            });
+            const parentEntriesLocationsEndpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_ENTRIES_LOCATIONS_ENDPOINT + projectSlug + parentEntriesLocationsQuery;
+            const parentEntriesAndLocationsRequest = axios.get(parentEntriesLocationsEndpoint);
+            requests.push(parentEntriesAndLocationsRequest);
         }
 
-        //are we restoring to a branch view? -> owner form might have a location
-        if (isViewingBranch) {
-            //the selfLink point to the last data set that was requested
-            const branchEntriesRequest = entriesRequest;
-            requests.push(branchEntriesRequest);
-            const ownerFormRef = shouldRestoreParams.formRef;
-            const branchRef = shouldRestoreParams.branchRef;
-            const restoredFormName = shouldRestoreParams.formName;
-            const branchBackLink = shouldRestoreParams.branchBackLink;
-            const entryTitle = shouldRestoreParams.currentBranchOwnerEntryTitle;
-            const ownerEntryUuid = shouldRestoreParams.entryUuid;
-
-            return (dispatch) => {
-                return dispatch({
-                    type: RESTORE_BRANCH_ENTRIES_AND_LOCATIONS,
-                    payload: Promise.all(requests),
-                    meta: {
-                        projectSlug,
-                        formRef: ownerFormRef,
-                        locationFormRef,
-                        restoredFormName,
-                        branchRef,
-                        projectExtra,
-                        ownerEntryUuid,
-                        entryTitle,
-                        branchBackLink,
-                        isViewingChildren,
-                        hierarchyNavigator,
-                        entriesFilters
-                    }
-                });
-            };
-        }
-
+        //get both child entries and entries locations
         return (dispatch) => {
             return dispatch({
-                type: FETCH_ENTRIES,
-                payload: entriesRequest,
-                meta: { projectSlug, formRef, formName, projectExtra, entriesFilters }
+                type: RESTORE_CHILD_ENTRIES_AND_LOCATIONS,
+                payload: Promise.all(requests),
+                meta: { projectSlug, childFormRef, parentFormRef, projectExtra, hierarchyNavigator, entriesFilters }
             });
         };
     }
+
+    //are we restoring to a branch view? -> owner form might have a location
+    if (isViewingBranch) {
+        //the selfLink point to the last data set that was requested
+        const branchEntriesRequest = entriesRequest;
+        requests.push(branchEntriesRequest);
+        const ownerFormRef = shouldRestoreParams.formRef;
+        const branchRef = shouldRestoreParams.branchRef;
+        const restoredFormName = shouldRestoreParams.formName;
+        const branchBackLink = shouldRestoreParams.branchBackLink;
+        const entryTitle = shouldRestoreParams.currentBranchOwnerEntryTitle;
+        const ownerEntryUuid = shouldRestoreParams.entryUuid;
+
+        return (dispatch) => {
+            return dispatch({
+                type: RESTORE_BRANCH_ENTRIES_AND_LOCATIONS,
+                payload: Promise.all(requests),
+                meta: {
+                    projectSlug,
+                    formRef: ownerFormRef,
+                    locationFormRef,
+                    restoredFormName,
+                    branchRef,
+                    projectExtra,
+                    ownerEntryUuid,
+                    entryTitle,
+                    branchBackLink,
+                    isViewingChildren,
+                    hierarchyNavigator,
+                    entriesFilters
+                }
+            });
+        };
+    }
+
+    return (dispatch) => {
+        return dispatch({
+            type: FETCH_ENTRIES,
+            payload: entriesRequest,
+            meta: { projectSlug, formRef, formName, projectExtra, entriesFilters }
+        });
+    };
+
 };
 
 
@@ -769,8 +774,7 @@ export const fetchProjectAndEntries = (projectSlug, shouldRestoreParams) => {
                 //restore from previous state
                 formRef = shouldRestoreParams.formRef;
                 formName = helpers.getFormName(forms, formRef);
-            }
-            else {
+            } else {
                 //get top parent form ref
                 formRef = value.data.project.forms[0].ref;
                 formName = value.data.project.forms[0].name;

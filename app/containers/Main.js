@@ -39,7 +39,7 @@ class Main extends React.Component {
         axios.defaults.headers.get['Content-Type'] = 'application/vnd.api+json';
     }
 
-    componentDidMount() {
+    componentDidMount () {
 
         const href = window.location.href;
         const path = href.replace(window.location.protocol + '//', '');
@@ -69,7 +69,7 @@ class Main extends React.Component {
         console.log('main mounted');
     }
 
-    componentDidUpdate() {
+    componentDidUpdate () {
         console.log('Main updated ********************************** ->');
         const { toastSuccessShow, toastErrorShow, toastMessage } = this.props;
 
@@ -94,27 +94,27 @@ class Main extends React.Component {
     }
 
     //clear existing toasts
-    clearToast() {
+    clearToast () {
         if (this.toast) {
             this.toast.clear();
         }
     }
 
-    showToastSuccess(message) {
+    showToastSuccess (message) {
         // Immediately remove current toasts
         this.toast.clear();
         this.toast.success(message, '', PARAMETERS.TOAST_OPTIONS.SUCCESS);
 
     }
 
-    showToastError(message) {
+    showToastError (message) {
         // Immediately remove current toasts
         this.toast.clear();
         this.toast.error(message, '', PARAMETERS.TOAST_OPTIONS.ERROR);
 
     }
 
-    render() {
+    render () {
 
         //show/hide table/map without re-mounting so we do not destroy the map or the table
         const { activePage, isFetchingProject, isFetchingNavigation, isRejectedProject, projectErrors, isRestoring } = this.props;
@@ -173,7 +173,7 @@ Main.propTypes = {
 };
 
 //get app state and map to props
-function mapStateToProps(state) {
+function mapStateToProps (state) {
     return {
         isRejectedProject: state.projectReducer.isRejected,
         projectErrors: state.projectReducer.errors,
@@ -187,7 +187,7 @@ function mapStateToProps(state) {
     };
 }
 
-function mapDispatchToProps(dispatch) {
+function mapDispatchToProps (dispatch) {
     return bindActionCreators({
         fetchProject,
         fetchProjectAndEntries,

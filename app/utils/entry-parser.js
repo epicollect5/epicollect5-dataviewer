@@ -7,7 +7,7 @@ const entryParser = {
     /*parse entry based on type and return parsed object
      notice the object is wrapped in an array so we can use the spread operator on the function caller
      */
-    getParsedEntryForDisplay(projectSlug, formRef, currentEntry, inputRef, projectExtra, entryUuid, branchInputRef) {
+    getParsedEntryForDisplay (projectSlug, formRef, currentEntry, inputRef, projectExtra, entryUuid, branchInputRef) {
 
         const self = this;
         const input = projectExtra.inputs[inputRef].data;
@@ -228,7 +228,7 @@ const entryParser = {
         return parsedAnswer;
     },
 
-    getEmptyEntryForDisplay(currentEntry) {
+    getEmptyEntryForDisplay (currentEntry) {
         const attributes = currentEntry.attributes;
         const relationships = currentEntry.relationships;
         return {
@@ -240,7 +240,7 @@ const entryParser = {
         };
     },
 
-    getMediaURL(projectSlug, fileName, fileType) {
+    getMediaURL (projectSlug, fileName, fileType) {
 
         const apiFullPath = PARAMETERS.SERVER_URL + PARAMETERS.API_MEDIA_ENDPOINT;
         const apiProjectMediaPath = apiFullPath + projectSlug + '?type=' + fileType;
@@ -261,7 +261,8 @@ const entryParser = {
                 mediaObj = {
                     entry_original: apiProjectMediaPath + '&format=entry_original&name=' + fileName,
                     entry_thumb: apiProjectMediaPath + '&format=entry_thumb&name=' + fileName,
-                    entry_sidebar: apiProjectMediaPath + '&format=entry_sidebar&name=' + fileName,
+                    //using original image instead of legacy sidebar size to save a lot of GB in storage
+                    entry_sidebar: apiProjectMediaPath + '&format=entry_original&name=' + fileName,
                     entry_default: apiProjectMediaPath + '&format=entry_thumb&name=' + fileName
                 };
                 break;
@@ -279,7 +280,7 @@ const entryParser = {
     },
 
     //any possible answers saved for the current input?
-    getMultipleChoiceAnswer(projectExtra, formRef, inputRawAnswer, inputRef, branchInputRef, input) {
+    getMultipleChoiceAnswer (projectExtra, formRef, inputRawAnswer, inputRef, branchInputRef, input) {
 
         let possibleAnswers = {};
         let answer = '';

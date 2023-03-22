@@ -3,6 +3,7 @@ const PARAMETERS = {
     APP_NAME: 'Epicollect5',
     IS_LOCALHOST: process.env.NODE_ENV === 'production' ? 0 : 1, //for debugging outside of Laravel(production), it is set to 1
     SERVER_URL: 'https://five.epicollect.net', //to be changed at run time if neeeded
+    //SERVER_URL: 'http://localhost/~mirko/opensource/epicollect5-server-os/public',
     PROJECT_HOME_PATH: '/project/',
     PROJECT_LOGO_QUERY_STRING: '?type=photo&name=logo.jpg&format=project_mobile_logo',
     DATA_VIEWER_PATH: '/data',

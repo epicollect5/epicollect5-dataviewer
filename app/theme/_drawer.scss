@@ -4,10 +4,10 @@
   .drawer__header {
     margin: 0;
     padding: 8px;
-    box-shadow: 0 4px 5px 0 rgba(0, 0, 0, .2);
+    box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.2);
   }
   .drawer__close-btn {
-    margin:3px;
+    margin: 3px;
   }
   .drawer__edit-entry-btn {
     color: $deep-purple;
@@ -18,7 +18,9 @@
   }
 }
 
-#drawer__map, #drawer__download, #drawer__upload {
+#drawer__map,
+#drawer__download,
+#drawer__upload {
   .reset-filter {
     margin-top: -3px;
   }
@@ -32,7 +34,8 @@
       }
     }
     .date-filter-labels {
-      .from, .to {
+      .from,
+      .to {
         font-weight: 700;
       }
     }
@@ -44,11 +47,14 @@
     }
   }
 
-  #distribution-questions, #location-questions, #mappings {
+  #distribution-questions,
+  #location-questions,
+  #mappings {
     width: 100%;
     .dropdown {
       width: 100%;
-      button, ul {
+      button,
+      ul {
         width: 100%;
       }
       .dropdown-toggle {
@@ -77,7 +83,8 @@
     text-align: center;
   }
 
-  #location-questions, #distribution-questions {
+  #location-questions,
+  #distribution-questions {
     .dropdown-menu {
       max-height: 185px;
       overflow-y: scroll;
@@ -106,17 +113,27 @@
     }
   }
   .drawer__entry-loader-photo {
-    position:absolute;
+    position: absolute;
   }
   .photo-wrapper {
     position: relative;
     min-height: 180px;
     padding: 15px;
+    .thumb {
+      img {
+        min-height: 180px;
+        border: 1px solid #bbb;
+        padding: 2px;
+      }
+    }
   }
 }
 
 /*To slide the drawers in from left*/
-#drawer__map.show, #drawer__entry.show, #drawer__download.show, #drawer__upload.show {
+#drawer__map.show,
+#drawer__entry.show,
+#drawer__download.show,
+#drawer__upload.show {
   -webkit-transform: translateX(305px);
   transform: translateX(305px);
 }
@@ -142,7 +159,7 @@
   z-index: 30;
   .upload-controls {
     .btn-action {
-      width:160px;
+      width: 160px;
     }
   }
 }
@@ -155,11 +172,8 @@
   }
 }
 .modal-upload-entries {
-  width:90%!important;
+  width: 90% !important;
   .modal-content {
     min-height: 90vh;
   }
 }
-
-
-
