@@ -47,6 +47,10 @@ class MediaPopup extends React.Component {
 
     getMediaMarkup(mediaURL) {
 
+        //append timestamp as extra param to request to avoid caching
+        //we use & as the request already has a query
+        mediaURL += '&t=' + Date.now();
+
         if (this.state.showLoader) {
             return <Loader />;
         }
@@ -77,8 +81,8 @@ class MediaPopup extends React.Component {
             return (
                 <audio src={mediaURL} controls>
                     Sorry, your browser doesn't support embedded audio, but don't
-                        worry, you can <a href={mediaURL}>download it</a>
-                        and listen to it with your favorite music player!
+                    worry, you can <a href={mediaURL}>download it</a>
+                    and listen to it with your favorite music player!
                 </audio>
             );
         }
@@ -92,8 +96,8 @@ class MediaPopup extends React.Component {
                     data-mejsoptions='{"alwaysShowControls": true}'
                 >
                     Sorry, your browser doesn't support embedded videos, but don't
-                        worry, you can <a href={mediaURL}>download it</a>
-                        and watch it with your favorite video player!
+                    worry, you can <a href={mediaURL}>download it</a>
+                    and watch it with your favorite video player!
                 </video>
             );
         }
@@ -121,6 +125,7 @@ class MediaPopup extends React.Component {
                         <Modal.Body>
                             {this.state.showModal
                                 ?
+                                // add timestamp to avoid caching
                                 this.getMediaMarkup(this.props.content.answer.entry_default)
                                 :
                                 ''
