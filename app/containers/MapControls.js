@@ -8,7 +8,7 @@ import {
     fetchEntriesLocations
 } from 'actions';
 import { bindActionCreators } from 'redux';
-
+import datetime from 'utils/datetime';
 import fecha from 'fecha';
 import queryString from 'query-string';
 import Slider from 'rc-slider/lib/Slider';
@@ -121,8 +121,9 @@ class MapControls extends React.Component {
             }
 
             this.datesRange = datesRange;
-            //disable timeslider when start date and end date are the same
-            this.isTimesliderDisabled = startDateInJS.getUTCDate() === endDateInJS.getUTCDate();
+            //disable timeslider when start date and end date are the same (DD, MM, YYYY)
+            this.isTimesliderDisabled = datetime.doDatesHaveSameDay(startDateInJS, endDateInJS);
+
         }
     }
 

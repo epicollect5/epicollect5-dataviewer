@@ -94,9 +94,21 @@ const datetime = {
                 formattedTime = minutes + ':' + seconds;
                 break;
             default:
-                //do nothing
+            //do nothing
         }
         return formattedTime;
+    },
+
+    doDatesHaveSameDay(date1, date2) {
+        if (!(date1 instanceof Date) || !(date2 instanceof Date)) {
+            return false; // Ensure both inputs are Date objects
+        }
+
+        return (
+            date1.getUTCFullYear() === date2.getUTCFullYear() &&
+            date1.getUTCMonth() === date2.getUTCMonth() &&
+            date1.getUTCDate() === date2.getUTCDate()
+        );
     }
 };
 
