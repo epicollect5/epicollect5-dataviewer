@@ -103,8 +103,7 @@ class CellBranch extends React.Component {
          It happens because at the time of saving the entry did not have
          the branch_ref since no branch existed yet
          **/
-            //const isDisabled = this.props.content.answer === 0 || this.props.content.answer === undefined;
-        const answer = this.props.content.answer || '0';
+        const branchCount = this.props.content.attributes.branch_counts[this.props.content.inputRef] || '0';
         const { projectUser } = this.props;
         let isUserLoggedIn = PARAMETERS.IS_LOCALHOST === 1;//always true when debugging
 
@@ -123,7 +122,7 @@ class CellBranch extends React.Component {
                             this.getBranchEntries();
                         }}
                     >
-                        {answer}
+                        {branchCount}
                     </a>
                     {isUserLoggedIn ?
                         <div className="cell-branch__add pull-right">

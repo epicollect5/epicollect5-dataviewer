@@ -262,84 +262,84 @@ export const toggleModalPrepareDownload = (showModal) => {
     };
 };
 
-export function toggleDrawerMap (showDrawerMap) {
+export function toggleDrawerMap(showDrawerMap) {
     return {
         type: TOGGLE_DRAWER_MAP,
         payload: !showDrawerMap
     };
 }
 
-export function toggleDrawerEntry (showDrawerEntry) {
+export function toggleDrawerEntry(showDrawerEntry) {
     return {
         type: TOGGLE_DRAWER_ENTRY,
         payload: !showDrawerEntry
     };
 }
 
-export function toggleDrawerDownload (showDrawerDownload) {
+export function toggleDrawerDownload(showDrawerDownload) {
     return {
         type: TOGGLE_DRAWER_DOWNLOAD,
         payload: !showDrawerDownload
     };
 }
 
-export function toggleDrawerUpload (showDrawerUpload) {
+export function toggleDrawerUpload(showDrawerUpload) {
     return {
         type: TOGGLE_DRAWER_UPLOAD,
         payload: !showDrawerUpload
     };
 }
 
-export function switchForm (form) {
+export function switchForm(form) {
     return {
         type: SWITCH_FORM,
         payload: form
     };
 }
 
-export function toggleActivePage (page) {
+export function toggleActivePage(page) {
     return {
         type: TOGGLE_ACTIVE_PAGE,
         payload: page
     };
 }
 
-export function toggleClusters (clustered) {
+export function toggleClusters(clustered) {
     return {
         type: TOGGLE_CLUSTERS,
         payload: clustered
     };
 }
 
-export function toggleClustersOverlay (state) {
+export function toggleClustersOverlay(state) {
     return {
         type: TOGGLE_CLUSTERS_OVERLAY,
         payload: state
     };
 }
 
-export function setActiveMapping (selectedMapping) {
+export function setActiveMapping(selectedMapping) {
     return {
         type: SET_ACTIVE_MAPPING,
         payload: selectedMapping
     };
 }
 
-export function setActiveFormat (selectedFormat) {
+export function setActiveFormat(selectedFormat) {
     return {
         type: SET_ACTIVE_FORMAT,
         payload: selectedFormat
     };
 }
 
-export function setActiveTimeframe (selectedTimeframe) {
+export function setActiveTimeframe(selectedTimeframe) {
     return {
         type: SET_ACTIVE_TIMEFRAME,
         payload: selectedTimeframe
     };
 }
 
-export function filterLocationsByDates (startDate, endDate, sliderStartValue, sliderEndValue) {
+export function filterLocationsByDates(startDate, endDate, sliderStartValue, sliderEndValue) {
     return {
         type: FILTER_LOCATIONS_BY_DATES,
         payload: { startDate, endDate, sliderStartValue, sliderEndValue }
@@ -391,7 +391,7 @@ export const fetchEntry = (projectSlug, formRef, entryUuid, branchRef) => {
 };
 
 export const deleteEntry = (projectSlug, deleteParams, rowIndexToDelete) => {
-    const entryEndpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_ARCHIVE_ENDPOINT + projectSlug;
+    const entryEndpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_DELETION_ENDPOINT + projectSlug;
     const deleteEntryRequest = axios.post(entryEndpoint, deleteParams);
 
 
