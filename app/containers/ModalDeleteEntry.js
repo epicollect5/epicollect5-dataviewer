@@ -26,11 +26,11 @@ class ModalDeleteEntry extends React.Component {
 
         const deleteParams = {
             data: {
-                type: 'archive', //we archive the entry on the server for the time being, not a real deletion
+                type: 'delete',
                 id: entryUuid,
                 attributes,
                 relationships,
-                archive: {
+                delete: {
                     entry_uuid: entryUuid
                 }
             }
