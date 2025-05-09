@@ -2,8 +2,8 @@ const PARAMETERS = {
 
     APP_NAME: 'Epicollect5',
     IS_LOCALHOST: process.env.NODE_ENV === 'production' ? 0 : 1, //for debugging outside of Laravel(production), it is set to 1
-    SERVER_URL: 'https://dev.epicollect.net', //to be changed at run time if neeeded
-    //SERVER_URL: 'http://localhost/~mirko/opensource/epicollect5-server-os/public',
+    SERVER_URL: 'https://five.epicollect.net', //to be changed at run time if needed
+    //SERVER_URL: 'http://localhost/~mmenegazzo/epicollect5-server/public',
     PROJECT_HOME_PATH: '/project/',
     PROJECT_LOGO_QUERY_STRING: '?type=photo&name=logo.jpg&format=project_mobile_logo',
     DATA_VIEWER_PATH: '/data',
@@ -166,8 +166,8 @@ const PARAMETERS = {
         EC5_README_TYPE: 'readme',
         EC5_SEARCH_SINGLE_TYPE: 'searchsingle',
         EC5_SEARCH_MULTIPLE_TYPE: 'searchmultiple',
-        EC5_DATASET_SINGLE_TYPE: 'datasetsingle',
-        EC5_DATASET_MULTIPLE_TYPE: 'datasetmultiple'
+        EC5_DATASET_SINGLE_TYPE: 'dataset single',
+        EC5_DATASET_MULTIPLE_TYPE: 'dataset multiple'
     },
 
     BULK_UPLOADABLE_TYPES: [

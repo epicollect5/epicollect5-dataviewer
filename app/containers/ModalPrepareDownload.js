@@ -28,7 +28,10 @@ class ModalPrepareDownload extends React.Component {
                         <Loader elementClass="loader-prepare-download" />
                     </Modal.Body>
                     <Modal.Footer>
-                        <p className="text-center warning-well"><strong>Please DO NOT close this page.</strong>
+                        <p className="text-center warning-well">
+                            Preparing your archive... This may take a few minutes. Thank you for your patience.
+                            <br/>
+                            <strong>Please DO NOT close this page.</strong>
                         </p>
                     </Modal.Footer>
                 </div>

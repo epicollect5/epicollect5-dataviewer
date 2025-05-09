@@ -785,6 +785,23 @@ export const fetchProjectAndEntries = (projectSlug, shouldRestoreParams) => {
             //clear restore params from localstorage
         }).catch((error) => {
             console.log(error);
+            if (error.response && error.response.status === 403) {
+                //request forbidden, network error due to firewall or VPN
+                window.alert(
+                  `❌ Error 403: Access Forbidden
+
+The request to:
+${endpoint}
+was blocked by the server.
+
+This could be due to one of the following reasons:
+- 🔒 You are not authorized to access this resource.
+- 🌐 A VPN or firewall may be blocking the connection.
+- 🚫 The server may be configured to deny requests from your location.
+
+Please check your network settings, VPN, and server configuration.`
+                );
+            }
         });
     };
 };
