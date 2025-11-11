@@ -1,3 +1,5 @@
+@use 'mixins' as *;
+@use 'variables' as *;
 .drawer {
   @include drawer(#fff);
 
@@ -144,7 +146,7 @@
     #formats {
       text-align: center;
       .radio-inline {
-        line-height: 25px; //to vertical aligne labels with radios
+        line-height: 25px; //to vertical align labels with radios
         padding-left: 30px;
       }
     }

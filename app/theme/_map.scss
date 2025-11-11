@@ -1,3 +1,5 @@
+@use 'variables' as *;
+@use 'mixins' as *;
 .map-wrapper {
   margin-top: 44px;
   font-size: 14px;

@@ -1,3 +1,4 @@
+@use 'variables' as *;
 .primary-navbar {
   padding-left: 0;
   padding-right: 0;
@@ -61,7 +62,7 @@
       vertical-align: middle;
       border-radius: 50%;
     }
-    margin-left: 0px;
+    margin-left: 0;
     .navbar-text {
       margin-top: 17px;
       margin-left: 17px;

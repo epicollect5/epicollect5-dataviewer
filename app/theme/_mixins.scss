@@ -1,3 +1,4 @@
+@use 'variables' as *;
 @mixin drawer ($backgroundColor){
   margin-top:65px;
   padding-bottom:65px;//this is to show the full height when scrolling

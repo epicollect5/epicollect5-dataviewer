@@ -1,4 +1,7 @@
+@use 'variables' as *;
+
 //loader
+
 .loader {
   cursor: wait;
   position: fixed;
@@ -55,7 +58,7 @@
   //font-size:5px;
 }
 .table-loader {
-  top: 121px; //to consider the navbars
+  top: 121px; //to consider the navbar
   // font-size:5px;
 }
 .photo-popup-loader {

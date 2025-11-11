@@ -55,8 +55,7 @@ function getPlugins () {
 //app is served from app/index.html (app.js) in dev -> npm start, production files will be in ./dist -> npm run build
 module.exports = {
     entry: [
-        './app/app.js', //js entry point,
-        './app/theme/app.scss' //sass entry point
+        './app/app.js' //js entry point,
     ],
     resolve: {
         modulesDirectories: ['app', 'node_modules']//where the import looks for module (avoid ../../../)
@@ -86,11 +85,19 @@ module.exports = {
                     plugins: ['transform-object-rest-spread']
                 }
             },
-            //load sass and compile (live reload)
-            {
-                test: /\.scss$/,
-                loader: ExtractTextPlugin.extract('style-loader', 'css-loader!sass-loader')
-            }
+          {
+            test: /\.scss$/,
+            loader: ExtractTextPlugin.extract({
+              fallback: 'style-loader',
+              use: [
+                'css-loader',
+                {
+                  loader: 'sass-loader',
+                  options: { implementation: require('sass') }
+                }
+              ]
+            })
+          }
         ]
     },
     plugins: getPlugins()

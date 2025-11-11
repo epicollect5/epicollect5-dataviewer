@@ -76,7 +76,7 @@ class ModalUploadEntries extends React.Component {
         //hack...hide the overlay after a delay
         window.setTimeout(() => {
             this.props.toggleWaitOverlay(false);
-        }, PARAMETERS.DELAY.LONG);
+        }, 2 * PARAMETERS.DELAY.LONG);
     }
 
     handleClickPrev () {
@@ -109,27 +109,8 @@ class ModalUploadEntries extends React.Component {
         //hack...hide the overlay after a delay
         window.setTimeout(() => {
             this.props.toggleWaitOverlay(false);
-        }, PARAMETERS.DELAY.LONG);
+        }, 2 * PARAMETERS.DELAY.LONG);
     }
-
-    // getBranchEntries() {
-    //
-    //     const { hierarchyNavigator, projectSlug, projectExtra, currentBranchRef, currentBranchOwnerUuid, currentBranchOwnerEntryTitle, branchBackLink } = this.props;
-    //     const formRef = hierarchyNavigator[hierarchyNavigator.length - 1].formRef;
-    //
-    //     //reset entries filters redux
-    //     // this.props.performEntriesFilterReset();
-    //
-    //     this.props.fetchBranchEntries(
-    //         projectSlug,
-    //         formRef,
-    //         currentBranchOwnerUuid,
-    //         currentBranchRef,
-    //         projectExtra,
-    //         currentBranchOwnerEntryTitle,
-    //         branchBackLink
-    //     );
-    // }
 
     getBranchEntries () {
 
@@ -308,7 +289,7 @@ class ModalUploadEntries extends React.Component {
                             if (this.clonedReverseEntries.length !== 0) {
                                 window.setTimeout(() => {
                                     uploadEntries(this.clonedReverseEntries.shift());
-                                }, PARAMETERS.DELAY.MEDIUM);
+                                }, 2 * PARAMETERS.DELAY.LONG);
                             }
                         });
                     } else {
@@ -320,7 +301,7 @@ class ModalUploadEntries extends React.Component {
                             if (this.clonedReverseEntries.length !== 0) {
                                 window.setTimeout(() => {
                                     uploadEntries(this.clonedReverseEntries.shift());
-                                }, PARAMETERS.DELAY.MEDIUM);
+                                }, 2 * PARAMETERS.DELAY.LONG);
                             }
                         });
                     }

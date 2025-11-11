@@ -1,3 +1,5 @@
+
+@use 'variables' as *;
 /* DayPicker styles */
 
 .DayPicker {
@@ -28,8 +30,7 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  margin: 0 1rem;
-  margin-top: 1rem;
+  margin: 1rem 1rem 0;
 }
 
 .DayPicker-NavBar {
@@ -187,7 +188,7 @@
   background-color: $hot-pink;
 }
 
-.DayPicker:not(.DayPicker--interactionDisabled)
+.DayPicker:not(.DayPicker--interactionDisabled),
 .DayPicker-Day:not(.DayPicker-Day--disabled):not(.DayPicker-Day--selected):not(.DayPicker-Day--outside):hover {
   background-color: $very-light-purple;
   //border-radius: 50%;
