@@ -269,10 +269,7 @@ class ModalUploadEntries extends React.Component {
         }
 
         const uploadEntries = (entry) => {
-
-            //console.log('POST entry -> ', JSON.stringify(entry));
-            console.log('Posting entry..........................');
-
+            window.setTimeout(() => {
             requests.uploadOneEntry(entry, projectSlug).then((response) => {
 
                 if (!this.wasInterruptedUpload) {
@@ -287,9 +284,7 @@ class ModalUploadEntries extends React.Component {
                             };
                         }, () => {
                             if (this.clonedReverseEntries.length !== 0) {
-                                window.setTimeout(() => {
                                     uploadEntries(this.clonedReverseEntries.shift());
-                                }, 2 * PARAMETERS.DELAY.LONG);
                             }
                         });
                     } else {
@@ -299,14 +294,13 @@ class ModalUploadEntries extends React.Component {
                             };
                         }, () => {
                             if (this.clonedReverseEntries.length !== 0) {
-                                window.setTimeout(() => {
                                     uploadEntries(this.clonedReverseEntries.shift());
-                                }, 2 * PARAMETERS.DELAY.LONG);
                             }
                         });
                     }
                 }
             });
+            }, 2 * PARAMETERS.DELAY.LONG);
         };
 
         if (showModalUploadEntries && reverseEntries.length > 0) {

@@ -6,3 +6,4 @@ dist/dataviewer.js
 *.csv
 .history
 .env
+copy-to-server.sh

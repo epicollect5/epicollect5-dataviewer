@@ -59,7 +59,7 @@ class DrawerUpload extends React.Component {
         const requestTimestamp = new Date().getTime();
         const cookies = new Cookies();
         const requestCookie = PARAMETERS.COOKIES.DOWNLOAD_ENTRIES;
-        const delay = 3000;
+        const delay = 2000;
 
         //show loader
         this.props.toggleModalPrepareDownload(true);

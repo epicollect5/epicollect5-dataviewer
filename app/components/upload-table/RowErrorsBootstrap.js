@@ -57,6 +57,12 @@ class RowErrorsBootstrap extends React.Component {
                                 return false;
                             }
 
+                          //too many requests?
+                          if (error.source === 'upload-controller' && error.code === 'ec5_255') {
+                            errorTitle = error.title;
+                            return false;
+                          }
+
                             //todo put these errors in constants
                             //is the project version out of date?
                             if (error.source === 'upload-controller' && error.code === 'ec5_201') {
@@ -75,8 +81,7 @@ class RowErrorsBootstrap extends React.Component {
                                 errorTitle = error.title;
                                 return false;
                             }
-
-                            //show following errors only on ec5_uuid cokumn
+                            //show following errors only on ec5_uuid column
                             if (inputIndex === 0) {
                                 //update not allowed?
                                 if (error.source === 'upload' && error.code === 'ec5_54') {
