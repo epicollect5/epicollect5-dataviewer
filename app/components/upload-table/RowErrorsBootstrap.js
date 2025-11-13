@@ -57,12 +57,6 @@ class RowErrorsBootstrap extends React.Component {
                                 return false;
                             }
 
-                          //too many requests?
-                          if (error.source === 'upload-controller' && error.code === 'ec5_255') {
-                            errorTitle = error.title;
-                            return false;
-                          }
-
                             //todo put these errors in constants
                             //is the project version out of date?
                             if (error.source === 'upload-controller' && error.code === 'ec5_201') {
@@ -109,21 +103,26 @@ class RowErrorsBootstrap extends React.Component {
                                     errorTitle = error.title;
                                     return false;
                                 }
-
+                                //Bulk uploads not allowed?
                                 if (error.source === 'bulk-upload' && error.code === 'ec5_363') {
                                     errorTitle = error.title;
                                     return false;
                                 }
-
+                                //Bulk uploads disabled?
                                 if (error.source === 'middleware' && error.code === 'ec5_360') {
                                     errorTitle = error.title;
                                     return false;
                                 }
-
+                                //Permissions to access the project?
                                 if (error.source === 'upload-controller' && error.code === 'ec5_71') {
                                     errorTitle = error.title;
                                     return false;
                                 }
+                               //too many requests?
+                               if (error.source === 'rate-limiter' && error.code === 'ec5_255') {
+                                 errorTitle = error.title;
+                                 return false;
+                               }
                             }
                         });
                     }

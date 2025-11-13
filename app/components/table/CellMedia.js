@@ -28,7 +28,7 @@ class CellMedia extends React.Component {
 
         this.timeout = setTimeout(() => { //Start the timer
             this.setState({ render: true });
-            console.log('Rendering with delay of ' + delay + 'ms');
+          console.log('%cRendering with delay of ' + delay + 'ms', 'color: blue; font-weight: bold;');
         }, delay);
     }
 

@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "deploy": "webpack -p --progress && gulp css && [ -f ./copy-to-server.sh ] && ./copy-to-server.sh || echo 'Skipping copy script (not found)'",
+    "deploy": "gulp css && webpack -p --progress &&  [ -f ./copy-to-server.sh ] && ./copy-to-server.sh || echo 'Skipping copy script (not found)'",
     "build": "gulp css && webpack -p --progress --analyze",
     "start": "webpack-dev-server & gulp watch",
     "test": "jest --silent",
     "test:watch": "npm test -- --watch",
-    "build-dev": "webpack --progress && gulp css"
+    "build-dev": "gulp css &&webpack --progress"
   },
   "author": "",
   "license": "ISC",
