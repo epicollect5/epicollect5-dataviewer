@@ -76,7 +76,7 @@ class ModalUploadEntries extends React.Component {
         //hack...hide the overlay after a delay
         window.setTimeout(() => {
             this.props.toggleWaitOverlay(false);
-        }, PARAMETERS.DELAY.LONG);
+        }, 2 * PARAMETERS.DELAY.LONG);
     }
 
     handleClickPrev () {

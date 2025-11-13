@@ -60,7 +60,7 @@ class Main extends React.Component {
         basePath = basePath.slice(0, basePath.lastIndexOf('/'));
         PARAMETERS.SERVER_URL = basePath;
 
-        //set server url if running inside laravel
+        //Replace server url if running as localhost
         if (PARAMETERS.IS_LOCALHOST) {
           console.log('%cSERVER_URL set to ' + PARAMETERS.SERVER_URL, 'color: blue; font-weight: bold;');
           PARAMETERS.SERVER_URL = process.env.REACT_APP_SERVER_URL;
