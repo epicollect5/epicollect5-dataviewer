@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.1.2
+- Updated Node.js requirement to 18; added .nvmrc, and example copy-to-server script
+- Modernized build/dev workflow: 
+- Reworked media popup rendering for consistent loader, not-found and media handling
+- Increased bulk upload delay
 ## 0.1.0
 - Updated deletion route (single entry deletion)
 ## 0.0.9
