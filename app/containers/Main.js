@@ -58,10 +58,12 @@ class Main extends React.Component {
         PARAMETERS.DATA_EDITOR_BASE_PATH = basePath;
         basePath = basePath.slice(0, basePath.lastIndexOf('/'));
         basePath = basePath.slice(0, basePath.lastIndexOf('/'));
+        PARAMETERS.SERVER_URL = basePath;
 
-        //set server url if running inside laravel
-        if (!PARAMETERS.IS_LOCALHOST) {
-            PARAMETERS.SERVER_URL = basePath;
+        //Replace server url if running as localhost
+        if (PARAMETERS.IS_LOCALHOST) {
+          console.log('%cSERVER_URL set to ' + PARAMETERS.SERVER_URL, 'color: blue; font-weight: bold;');
+          PARAMETERS.SERVER_URL = process.env.REACT_APP_SERVER_URL;
         }
         //get data
         this.props.fetchProjectAndEntries(projectSlug, shouldRestoreParams);

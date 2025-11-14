@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 
+const shouldAnalyze = process.argv.indexOf('--analyze') !== -1;
 
 //Called when building -> (see plugins)
 const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
@@ -36,9 +37,11 @@ function getPlugins () {
         }));
         plugins.push(new webpack.optimize.DedupePlugin());
         plugins.push(new webpack.optimize.AggressiveMergingPlugin());
+        if (shouldAnalyze) {
         plugins.push(new BundleAnalyzerPlugin({
             analyzerPort: process.env.VUE_CLI_MODERN_BUILD ? 8888 : 9999 // Prevents build errors when running --modern
         }));
+        }
     } else {
         plugins.push(HTMLWebpackPluginConfig);
     }
@@ -55,8 +58,7 @@ function getPlugins () {
 //app is served from app/index.html (app.js) in dev -> npm start, production files will be in ./dist -> npm run build
 module.exports = {
     entry: [
-        './app/app.js', //js entry point,
-        './app/theme/app.scss' //sass entry point
+        './app/app.js' //js entry point
     ],
     resolve: {
         modulesDirectories: ['app', 'node_modules']//where the import looks for module (avoid ../../../)

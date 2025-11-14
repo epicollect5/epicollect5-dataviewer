@@ -21,7 +21,6 @@ const requests = {
     uploadOneEntry(entry, projectSlug) {
 
         let endpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_BULK_UPLOAD_INTERNAL_ENDPOINT + projectSlug;
-
         if (PARAMETERS.IS_LOCALHOST === 1) {
             //bulk upload endpoint (external) gets disabled in production server
             endpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_BULK_UPLOAD_EXTERNAL_ENDPOINT + projectSlug;

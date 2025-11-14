@@ -1,16 +1,16 @@
-@import "variables";
-@import "mixins";
-@import "mediaQueries";
-@import "errorView";
-@import "loader";
-@import "drawer";
-@import "modal";
-@import "table";
-@import "map";
-@import "filterEntriesControls";
-@import "primaryNavbar";
-@import "secondaryNavbar";
-@import "react-day-picker";
+@use "variables" as *;
+@use "mixins" as *;
+@use "mediaQueries" as *;
+@use "errorView" as *;
+@use "loader" as *;
+@use "drawer" as *;
+@use "modal" as *;
+@use "table" as *;
+@use "map" as *;
+@use "filterEntriesControls" as *;
+@use "primaryNavbar" as *;
+@use "secondaryNavbar" as *;
+@use "react-day-picker" as *;
 
 body {
   font-family: $font-family-sans-serif;
@@ -64,8 +64,7 @@ video {
 }
 
 img {
-  border-style: none;
-  border: 0;
+  border: 0 none;
 }
 
 //image thumb and Lightbox backdrop

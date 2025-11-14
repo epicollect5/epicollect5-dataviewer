@@ -150,7 +150,7 @@ class DrawerUpload extends React.Component {
 
         //request download endpoint
         window.setTimeout(() => {
-            //IMPORTANT: this is done othewise cookies do not get set with file saver
+            //IMPORTANT: this is done otherwise cookies do not get set with file saver
             window.location.href = endpoint;
             // saveAs(endpoint, filename);
         }, delay);

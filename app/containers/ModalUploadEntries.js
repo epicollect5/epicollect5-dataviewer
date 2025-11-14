@@ -112,25 +112,6 @@ class ModalUploadEntries extends React.Component {
         }, PARAMETERS.DELAY.LONG);
     }
 
-    // getBranchEntries() {
-    //
-    //     const { hierarchyNavigator, projectSlug, projectExtra, currentBranchRef, currentBranchOwnerUuid, currentBranchOwnerEntryTitle, branchBackLink } = this.props;
-    //     const formRef = hierarchyNavigator[hierarchyNavigator.length - 1].formRef;
-    //
-    //     //reset entries filters redux
-    //     // this.props.performEntriesFilterReset();
-    //
-    //     this.props.fetchBranchEntries(
-    //         projectSlug,
-    //         formRef,
-    //         currentBranchOwnerUuid,
-    //         currentBranchRef,
-    //         projectExtra,
-    //         currentBranchOwnerEntryTitle,
-    //         branchBackLink
-    //     );
-    // }
-
     getBranchEntries () {
 
         const { hierarchyNavigator, projectSlug, projectExtra, currentBranchRef, currentBranchOwnerUuid, branchBackLink, currentBranchOwnerEntryTitle } = this.props;
@@ -288,10 +269,7 @@ class ModalUploadEntries extends React.Component {
         }
 
         const uploadEntries = (entry) => {
-
-            //console.log('POST entry -> ', JSON.stringify(entry));
-            console.log('Posting entry..........................');
-
+            window.setTimeout(() => {
             requests.uploadOneEntry(entry, projectSlug).then((response) => {
 
                 if (!this.wasInterruptedUpload) {
@@ -306,9 +284,7 @@ class ModalUploadEntries extends React.Component {
                             };
                         }, () => {
                             if (this.clonedReverseEntries.length !== 0) {
-                                window.setTimeout(() => {
                                     uploadEntries(this.clonedReverseEntries.shift());
-                                }, PARAMETERS.DELAY.MEDIUM);
                             }
                         });
                     } else {
@@ -318,14 +294,13 @@ class ModalUploadEntries extends React.Component {
                             };
                         }, () => {
                             if (this.clonedReverseEntries.length !== 0) {
-                                window.setTimeout(() => {
                                     uploadEntries(this.clonedReverseEntries.shift());
-                                }, PARAMETERS.DELAY.MEDIUM);
                             }
                         });
                     }
                 }
             });
+            }, PARAMETERS.DELAY.LONG);
         };
 
         if (showModalUploadEntries && reverseEntries.length > 0) {

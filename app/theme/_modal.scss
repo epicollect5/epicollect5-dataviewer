@@ -1,3 +1,4 @@
+@use 'variables' as *;
 //to center vertically
 .modal {
   text-align: center;
@@ -51,11 +52,9 @@ audio {
       height: 36px;
       background-color: $solid-green;
       border-radius: 50%;
-      margin: 0;
       color: #ffffff;
       opacity: 1;
-      margin-top: -32px;
-      margin-right: -32px;
+      margin: -32px -32px 0 0;
     }
   }
   .modal-content {
@@ -188,7 +187,7 @@ audio {
 .modal-media {
   .modal-dialog {
     //imp: see t.ly/QyTg
-    //this fixes the overlay control (clickin on more ...)
+    //this fixes the overlay control (clicking on more ...)
     //going out of view or just misplaced
     transform: none !important;
   }

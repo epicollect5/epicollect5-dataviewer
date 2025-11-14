@@ -1,3 +1,5 @@
+@use 'variables' as *;
+@use 'mixins' as *;
 .table-wrapper,
 .branch-table-wrapper {
   margin-top: 60px;
