@@ -22,7 +22,6 @@ import helpers from 'utils/helpers';
 import localstorage from 'utils/localstorage';
 
 class SecondaryNavbar extends React.Component {
-
     constructor(props) {
         super(props);
 
@@ -30,6 +29,10 @@ class SecondaryNavbar extends React.Component {
         this.handleOnBranchBackClick = this.handleOnBranchBackClick.bind(this);
         this.handleAddChildEntry = this.handleAddChildEntry.bind(this);
         this.handleAddBranchEntry = this.handleAddBranchEntry.bind(this);
+
+        this.state = {
+            paginationDisabled: false
+        };
     }
 
     getTableNav() {
@@ -121,25 +124,39 @@ class SecondaryNavbar extends React.Component {
                 <span className="navbar-text">Total: {entriesTotal}, </span>
                 <span className="navbar-text">{entriesCurrentPage}/{entriesLastPage}</span>
                 <span className="navbar-text navbar-pagination-btn-wrapper">
-                        <button
-                            onClick={() => {
-                                this.getTablePage(prevPageUrl, false);
-                            }}
-                            className={prevPageUrl === null ? 'btn disabled navbar-pagination-btn' : 'btn navbar-pagination-btn'}
-                            disabled={prevPageUrl === null}
-                        >
-                            <i className="material-icons">navigate_before</i>
-                        </button>
-                        <button
-                            onClick={() => {
-                                this.getTablePage(nextPageUrl, false);
-                            }}
-                            className={nextPageUrl === null ? 'btn disabled navbar-pagination-btn' : 'btn navbar-pagination-btn'}
-                            disabled={nextPageUrl === null}
-                        >
-                            <i className="material-icons">navigate_next</i>
-                        </button>
-                    </span>
+                    <button
+                        onClick={() => {
+                            if (!this.state.paginationDisabled && prevPageUrl !== null) {
+                                this.setState({ paginationDisabled: true }, () => {
+                                    this.getTablePage(prevPageUrl, false);
+                                    setTimeout(() => {
+                                        this.setState({ paginationDisabled: false });
+                                    }, 3000);
+                                });
+                            }
+                        }}
+                        className={prevPageUrl === null || this.state.paginationDisabled ? 'btn disabled navbar-pagination-btn' : 'btn navbar-pagination-btn'}
+                        disabled={prevPageUrl === null || this.state.paginationDisabled}
+                    >
+                        <i className="material-icons">navigate_before</i>
+                    </button>
+                    <button
+                        onClick={() => {
+                            if (!this.state.paginationDisabled && nextPageUrl !== null) {
+                                this.setState({ paginationDisabled: true }, () => {
+                                    this.getTablePage(nextPageUrl, false);
+                                    setTimeout(() => {
+                                        this.setState({ paginationDisabled: false });
+                                    }, 3000);
+                                });
+                            }
+                        }}
+                        className={nextPageUrl === null || this.state.paginationDisabled ? 'btn disabled navbar-pagination-btn' : 'btn navbar-pagination-btn'}
+                        disabled={nextPageUrl === null || this.state.paginationDisabled}
+                    >
+                        <i className="material-icons">navigate_next</i>
+                    </button>
+                </span>
 
             </div>
         );

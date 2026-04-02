@@ -475,16 +475,28 @@ export const fetchChildEntries = (bundle) => {
 };
 
 export const fetchEntriesTablePage = (requestUrl, projectSlug, formRef, projectExtra, filters, currentBranchRef) => {
-    console.log(requestUrl);
-
-    const entriesTablePageRequest = axios.get(requestUrl);
-
-    return (dispatch) => {
-        return dispatch({
-            type: FETCH_ENTRIES_TABLE_PAGE,
-            payload: entriesTablePageRequest,
+    return function(dispatch) {
+        dispatch({
+            type: FETCH_ENTRIES_TABLE_PAGE + '_PENDING',
             meta: { projectSlug, formRef, projectExtra, currentBranchRef }
         });
+        axios.get(requestUrl)
+            .then(function(response) {
+                setTimeout(function() {
+                    dispatch({
+                        type: FETCH_ENTRIES_TABLE_PAGE + '_FULFILLED',
+                        payload: response,
+                        meta: { projectSlug, formRef, projectExtra, currentBranchRef }
+                    });
+                }, 2000);
+            })
+            .catch(function(error) {
+                dispatch({
+                    type: FETCH_ENTRIES_TABLE_PAGE + '_REJECTED',
+                    payload: error,
+                    meta: { projectSlug, formRef, projectExtra, currentBranchRef }
+                });
+            });
     };
 };
 
