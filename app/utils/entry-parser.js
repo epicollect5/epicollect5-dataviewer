@@ -1,6 +1,7 @@
 import PARAMETERS from 'config/parameters';
 import datetime from 'utils/datetime';
 import entryGroupParser from 'utils/entry-group-parser';
+import moment from 'moment';
 
 //parse entry to get a flat list (excluded: GROUP, README type)
 const entryParser = {
@@ -15,9 +16,10 @@ const entryParser = {
         const rawEntry = branchInputRef ? currentEntry.branch_entry : currentEntry.entry;
         const attributes = currentEntry.attributes;
         const relationships = currentEntry.relationships;
-        const inputRawAnswer = rawEntry.answers[inputRef];
+        const inputRawAnswer = rawEntry ? rawEntry.answers[inputRef] : currentEntry.answers[inputRef];
+        const uploadedAt = rawEntry ? rawEntry.uploaded_at : currentEntry.uploaded_at;
 
-        //was the question jumped? return immediatley with an empty answer object
+        //was the question jumped? return immediately with an empty answer object
         if (rawEntry.answers[inputRef].was_jumped) {
             //set it to empty string then
             parsedAnswer = [{
@@ -130,7 +132,7 @@ const entryParser = {
                     inputRef: input.ref,
                     inputType: input.type,
                     cellType: PARAMETERS.CEll_TYPES.MEDIA,
-                    answer: inputRawAnswer.answer === '' ? '' : self.getMediaURL(projectSlug, inputRawAnswer.answer, input.type)
+                    answer: inputRawAnswer.answer === '' ? '' : self.getMediaURL(projectSlug, inputRawAnswer.answer, input.type, uploadedAt)
                 }];
                 break;
             case PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE:
@@ -141,7 +143,7 @@ const entryParser = {
                     inputRef: input.ref,
                     inputType: input.type,
                     cellType: PARAMETERS.CEll_TYPES.MEDIA,
-                    answer: inputRawAnswer.answer === '' ? '' : self.getMediaURL(projectSlug, inputRawAnswer.answer, input.type)
+                    answer: inputRawAnswer.answer === '' ? '' : self.getMediaURL(projectSlug, inputRawAnswer.answer, input.type, uploadedAt)
                 }];
                 break;
             case PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE: {
@@ -152,7 +154,7 @@ const entryParser = {
                     inputRef: input.ref,
                     inputType: input.type,
                     cellType: PARAMETERS.CEll_TYPES.MEDIA,
-                    answer: inputRawAnswer.answer === '' ? '' : self.getMediaURL(projectSlug, inputRawAnswer.answer, input.type)
+                    answer: inputRawAnswer.answer === '' ? '' : self.getMediaURL(projectSlug, inputRawAnswer.answer, input.type, uploadedAt)
                 }];
                 break;
             }
@@ -240,7 +242,7 @@ const entryParser = {
         };
     },
 
-    getMediaURL (projectSlug, fileName, fileType) {
+    getMediaURL (projectSlug, fileName, fileType, uploadedAt) {
 
         const apiFullPath = PARAMETERS.SERVER_URL + PARAMETERS.API_MEDIA_ENDPOINT;
         const apiProjectMediaPath = apiFullPath + projectSlug + '?type=' + fileType;
@@ -257,15 +259,18 @@ const entryParser = {
                 };
                 break;
 
-            case PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE:
+            case PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE: {
+                const timestamp = uploadedAt ? moment(uploadedAt).unix() : '';
+                const version = timestamp ? '&v=' + timestamp : '';
                 mediaObj = {
-                    entry_original: apiProjectMediaPath + '&format=entry_original&name=' + fileName,
-                    entry_thumb: apiProjectMediaPath + '&format=entry_thumb&name=' + fileName,
+                    entry_original: apiProjectMediaPath + '&format=entry_original&name=' + fileName + version,
+                    entry_thumb: apiProjectMediaPath + '&format=entry_thumb&name=' + fileName + version,
                     //using original image instead of legacy sidebar size to save a lot of GB in storage
-                    entry_sidebar: apiProjectMediaPath + '&format=entry_original&name=' + fileName,
-                    entry_default: apiProjectMediaPath + '&format=entry_thumb&name=' + fileName
+                    entry_sidebar: apiProjectMediaPath + '&format=entry_original&name=' + fileName + version,
+                    entry_default: apiProjectMediaPath + '&format=entry_thumb&name=' + fileName + version
                 };
                 break;
+            }
 
             case PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE:
                 mediaObj = {
