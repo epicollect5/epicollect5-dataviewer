@@ -159,9 +159,8 @@ class Map extends React.Component {
             maxNativeZoom: 20
         });
 
-        //add tiles (STAMEN HC)
-        const stamenHC = L.tileLayer(PARAMETERS.STAMEN_HIGH_CONTRAST_TILES_PROVIDER, {
-            attribution: PARAMETERS.STAMEN_TILES_ATTRIBUTION,
+        const cartoDark = L.tileLayer(PARAMETERS.CARTO_DARK_TILES_PROVIDER, {
+            attribution: PARAMETERS.CARTO_TILES_ATTRIBUTION,
             maxNativeZoom: 20
         });
 
@@ -176,23 +175,18 @@ class Map extends React.Component {
             maxNativeZoom: 17
         });
 
-        // const mapboxSatellite = L.tileLayer(PARAMETERS.MAPBOX_TILES_PROVIDER_SATELLITE, {
-        //     attribution: PARAMETERS.MAPBOX_TILES_ATTRIBUTION,
-        //     maxNativeZoom: 20
-        // });
-
-        const mapboxOutdoors = L.tileLayer(PARAMETERS.MAPBOX_TILES_PROVIDER_OUTDOOR, {
-            attribution: PARAMETERS.MAPBOX_TILES_ATTRIBUTION,
-            maxNativeZoom: 20
+        const openTopo = L.tileLayer(PARAMETERS.OPENTOPO_TILES_PROVIDER, {
+            attribution: PARAMETERS.OPENTOPO_TILES_ATTRIBUTION,
+            maxNativeZoom: 17
         });
 
         //layers control https://goo.gl/TNMUoJ
         carto.addTo(this.map);//to set it as the default
         const baseMaps = {
             Satellite: Esri,
-            Terrain: mapboxOutdoors,
-            Contrast: stamenHC,
+            Terrain: openTopo,
             Carto: carto,
+            CartoDark: cartoDark,
             OpenStreetMap: osm
         };
 
