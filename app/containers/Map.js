@@ -160,7 +160,7 @@ class Map extends React.Component {
         });
 
         const cartoDark = L.tileLayer(PARAMETERS.CARTO_DARK_TILES_PROVIDER, {
-            attribution: PARAMETERS.CARTO_TILES_ATTRIBUTION,
+            attribution: PARAMETERS.CARTO_DARK_TILES_ATTRIBUTION,
             maxNativeZoom: 20
         });
 
@@ -190,7 +190,7 @@ class Map extends React.Component {
             OpenStreetMap: osm
         };
 
-        //add layers control
+        //add layer control
         this.basemaps = L.control.layers(baseMaps).addTo(this.map);
 
         //render the  default clusters (or restore)

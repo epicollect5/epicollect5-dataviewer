@@ -58,7 +58,7 @@ const PARAMETERS = {
 
     //carto https://carto.com/basemaps/
     CARTO_LIGHT_TILES_PROVIDER: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
-    CARTO_TILES_ATTRIBUTION: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
+    CARTO_TILES_ATTRIBUTION: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
 
     CARTO_DARK_TILES_PROVIDER:
       'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
@@ -69,7 +69,7 @@ const PARAMETERS = {
 
     //OSM tiles
     OSM_TILES_PROVIDER: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    OSM_TILES_ATTRIBUTION: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+    OSM_TILES_ATTRIBUTION: 'Map data &copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
 
     OPENTOPO_TILES_PROVIDER: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
     OPENTOPO_TILES_ATTRIBUTION:
