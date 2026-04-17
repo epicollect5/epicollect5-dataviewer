@@ -4,7 +4,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 
-const shouldAnalyze = process.argv.indexOf('--analyze') !== -1;
 
 //Called when building -> (see plugins)
 const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
@@ -14,8 +13,6 @@ const HTMLWebpackPluginConfig = new HtmlWebpackPlugin({
 });
 
 const isProd = process.argv.indexOf('-p') !== -1; //are we in production?
-
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 
 // Conditionally return a list of plugins to use based on the current environment.
@@ -37,11 +34,6 @@ function getPlugins () {
         }));
         plugins.push(new webpack.optimize.DedupePlugin());
         plugins.push(new webpack.optimize.AggressiveMergingPlugin());
-        if (shouldAnalyze) {
-        plugins.push(new BundleAnalyzerPlugin({
-            analyzerPort: process.env.VUE_CLI_MODERN_BUILD ? 8888 : 9999 // Prevents build errors when running --modern
-        }));
-        }
     } else {
         plugins.push(HTMLWebpackPluginConfig);
     }
