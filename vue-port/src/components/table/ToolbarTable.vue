@@ -1,12 +1,6 @@
 <template>
   <section class="table-toolbar">
     <div class="table-toolbar__primary">
-      <FormSwitcher
-        :forms="forms"
-        :selected-form-ref="selectedFormRef"
-        @change="$emit('change-form', $event)"
-      />
-
       <label class="table-toolbar__field table-toolbar__field--search">
         <span>Title</span>
         <input
@@ -55,17 +49,8 @@
 <script setup>
 import { computed } from 'vue';
 import PARAMETERS from '@/config/parameters';
-import FormSwitcher from '@/components/forms/FormSwitcher.vue';
 
 const props = defineProps({
-  forms: {
-    type: Array,
-    default: () => []
-  },
-  selectedFormRef: {
-    type: String,
-    default: ''
-  },
   isLoading: {
     type: Boolean,
     default: false
@@ -97,7 +82,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-  'change-form',
   'update:title',
   'update:start-date',
   'update:end-date',

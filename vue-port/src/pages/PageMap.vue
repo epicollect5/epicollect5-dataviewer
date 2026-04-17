@@ -17,11 +17,6 @@
     <template v-else>
       <section class="table-toolbar">
         <div class="table-toolbar__primary">
-          <FormSwitcher
-            :forms="projectStore.forms"
-            :selected-form-ref="navigationStore.currentFormRef"
-            @change="handleFormChange"
-          />
           <button v-if="hasLocationQuestions" class="table-toolbar__ghost" type="button" @click="openFiltersDrawer">Filters</button>
         </div>
       </section>
@@ -60,7 +55,6 @@ import { computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import env from '@/config/env';
 import { useDrawerStore } from '@/stores/drawerStore';
-import FormSwitcher from '@/components/forms/FormSwitcher.vue';
 import LeafletMap from '@/components/map/MapLeaflet.vue';
 import MapProgressBar from '@/components/map/MapProgressBar.vue';
 import { useMapStore } from '@/stores/mapStore';
@@ -102,16 +96,6 @@ const bootstrap = async () => {
   if (didLoadProject && navigationStore.currentFormRef) {
     await mapStore.loadLocations({ resetFilters: true });
   }
-};
-
-const handleFormChange = async (formRef) => {
-  const nextForm = projectStore.forms.find((form) => form.ref === formRef);
-  if (!nextForm) {
-    return;
-  }
-
-  navigationStore.setCurrentForm(nextForm.ref, nextForm.name);
-  await mapStore.loadLocations({ resetFilters: true });
 };
 
 const handleLocationQuestionChange = async (question) => {

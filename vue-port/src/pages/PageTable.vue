@@ -16,8 +16,6 @@
 
     <template v-else>
       <TableToolbar
-        :forms="projectStore.forms"
-        :selected-form-ref="navigationStore.currentFormRef"
         :is-loading="tableStore.isFetchingPage"
         :pagination="tableStore.pagination"
         :links="tableStore.links"
@@ -25,7 +23,6 @@
         :start-date="filtersStore.startDate"
         :end-date="filtersStore.endDate"
         :selected-order-by="filtersStore.selectedOrderBy"
-        @change-form="handleFormChange"
         @update:title="handleTitleChange"
         @update:start-date="handleDateChange"
         @update:end-date="handleDateChange"
@@ -95,6 +92,8 @@ const bootstrap = async () => {
     return;
   }
 
+  navigationStore.setActivePage('table');
+
   const didLoadProject =
     projectStore.projectSlug === resolvedProjectSlug.value
       ? true
@@ -103,16 +102,6 @@ const bootstrap = async () => {
   if (didLoadProject && navigationStore.currentFormRef) {
     await tableStore.loadEntries();
   }
-};
-
-const handleFormChange = async (formRef) => {
-  const nextForm = projectStore.forms.find((form) => form.ref === formRef);
-  if (!nextForm) {
-    return;
-  }
-
-  navigationStore.setCurrentForm(nextForm.ref, nextForm.name);
-  await tableStore.loadEntries();
 };
 
 const handleTitleChange = (title) => {

@@ -5,6 +5,7 @@ const PARAMETERS = {
   SERVER_URL: env.serverUrl,
   DATA_EDITOR_BASE_PATH: env.dataEditorBaseUrl,
   PROJECT_HOME_PATH: '/project/',
+  PROJECT_LOGO_QUERY_STRING: '?type=photo&name=logo.jpg&format=project_mobile_logo',
   DATA_VIEWER_PATH: '/data',
   DATA_EDITOR_ADD_ENTRY_PATH: '/add-entry',
   DATA_EDITOR_EDIT_ENTRY_PATH: '/edit-entry',
