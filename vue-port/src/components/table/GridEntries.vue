@@ -44,6 +44,6 @@ const rowData = computed(() => mapTableRowsToGrid(props.rows));
 const defaultColDef = {
   sortable: false,
   resizable: false,
-  wrapHeaderText: true
+  wrapHeaderText: false
 };
 </script>

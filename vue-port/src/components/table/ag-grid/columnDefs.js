@@ -143,6 +143,15 @@ const createMediaCell = (value) => {
   return button;
 };
 
+const createTextCell = (value, isLastDynamicColumn = false) => {
+  const content = document.createElement('div');
+  content.className = isLastDynamicColumn
+    ? 'entries-grid__text-value entries-grid__text-value--last'
+    : 'entries-grid__text-value';
+  content.textContent = value ?? '';
+  return content;
+};
+
 export const createEntriesColumnDefs = (headers = []) => {
   const fixedColumns = [
     createActionColumn('View', 'view', headers),
@@ -174,32 +183,42 @@ export const createEntriesColumnDefs = (headers = []) => {
     }
   ];
 
-  const dynamicColumns = headers.map((header, index) => ({
-    headerName: header.question,
-    field: `answer_${index}`,
-    cellDataType: false,
-    minWidth: 200,
-    maxWidth: 200,
-    width: 200,
-    tooltipField: `answer_${index}`,
-    autoHeight: false,
-    resizable: false,
-    suppressMovable: true,
-    cellClass: 'entries-grid__text-cell',
-    cellRenderer: (params) => {
-      const value = params.value;
+  const dynamicColumns = headers.map((header, index) => {
+    const isLastDynamicColumn = index === headers.length - 1;
 
-      if (value && typeof value === 'object') {
-        if (value.entry_default) {
-          return createMediaCell(value);
+    return {
+      headerName: header.question,
+      field: `answer_${index}`,
+      cellDataType: false,
+      minWidth: 200,
+      maxWidth: 200,
+      width: 200,
+      tooltipField: `answer_${index}`,
+      wrapText: false,
+      autoHeight: false,
+      resizable: false,
+      suppressMovable: true,
+      headerClass: isLastDynamicColumn
+        ? 'entries-grid__dynamic-header entries-grid__dynamic-header--last'
+        : 'entries-grid__dynamic-header',
+      cellClass: isLastDynamicColumn
+        ? 'entries-grid__text-cell entries-grid__text-cell--last'
+        : 'entries-grid__text-cell',
+      cellRenderer: (params) => {
+        const value = params.value;
+
+        if (value && typeof value === 'object') {
+          if (value.entry_default) {
+            return createMediaCell(value);
+          }
+
+          return createTextCell(JSON.stringify(value), isLastDynamicColumn);
         }
 
-        return JSON.stringify(value);
+        return createTextCell(value, isLastDynamicColumn);
       }
-
-      return value ?? '';
-    }
-  }));
+    };
+  });
 
   return [...fixedColumns, ...dynamicColumns];
 };

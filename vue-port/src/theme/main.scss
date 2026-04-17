@@ -266,15 +266,50 @@ ion-button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  border-right: 1px solid rgba(var(--ion-color-primary-rgb, 103, 60, 144), 0.14);
+}
+
+.entries-grid__text-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entries-grid__text-value--last {
+  padding-right: 18px;
+  box-sizing: border-box;
+}
+
+.entries-grid__dynamic-header {
+  border-right: 1px solid rgba(var(--ion-color-primary-rgb, 103, 60, 144), 0.14);
 }
 
 .entries-grid .ag-cell {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .entries-grid .ag-cell-value {
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  width: 100%;
+}
+
+.entries-grid .ag-header-cell-label,
+.entries-grid .ag-header-cell-text {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.entries-grid .ag-header-cell-text {
+  display: block;
+  width: 100%;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
