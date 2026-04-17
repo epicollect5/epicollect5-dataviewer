@@ -1,9 +1,5 @@
 #Epicollect5 Dataviewer
 
-##Dependencies
- - Mapbox satellite imagery available by adding key
- - create .env file and add: REACT_APP_MAPBOX_API_TOKEN={token}
-
 ##Instructions
 - clone repo
 - cd to repo folder and `npm install`

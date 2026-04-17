@@ -1,0 +1,230 @@
+# Vue Port Structure Rules
+
+This file defines the folder and naming rules for the Vue rewrite in `vue-port/`.
+
+## Goals
+
+- Keep the rewrite isolated from the legacy app.
+- Keep file placement predictable.
+- Separate UI, state, API, and core business logic.
+- Avoid recreating a `features/` or `utils/` junk drawer.
+
+## Top-Level `src/` Structure
+
+- `src/api/`
+  Backend clients and endpoint-specific request functions.
+
+- `src/components/`
+  All Vue UI components.
+
+- `src/composable/`
+  Reusable Vue composables only.
+
+- `src/config/`
+  App configuration, routes, constants, env helpers.
+
+- `src/core/`
+  Core dataviewer logic and product-specific transformations.
+
+- `src/pages/`
+  Route-level page components.
+
+- `src/router/`
+  Vue Router setup.
+
+- `src/stores/`
+  Pinia stores.
+
+- `src/tests/`
+  Unit and integration tests.
+
+- `src/theme/`
+  Global styles, theme tokens, and shared visual rules.
+
+- `src/utils/`
+  Truly generic helpers only.
+
+## Component Placement
+
+All Vue components belong under `src/components/`.
+
+Current component groups:
+
+- `src/components/app/`
+- `src/components/entry/`
+- `src/components/forms/`
+- `src/components/global/`
+- `src/components/map/`
+- `src/components/media/`
+- `src/components/table/`
+- `src/components/upload/`
+
+Create a new subfolder only when the component group is real and reusable, not for one-off organization.
+
+## Naming Rules
+
+Component type goes first in the filename.
+
+Examples:
+
+- `AppShell.vue`
+- `AppHeader.vue`
+- `DrawerAppHost.vue`
+- `DrawerEntry.vue`
+- `ModalDeleteEntry.vue`
+- `ModalMediaViewer.vue`
+- `ModalUpload.vue`
+- `OverlayWait.vue`
+- `PageMap.vue`
+- `PageTable.vue`
+- `ToolbarTable.vue`
+- `GridEntries.vue`
+
+Use these prefixes consistently:
+
+- `App*`
+  App shell and app-level hosts.
+
+- `Page*`
+  Route-level pages.
+
+- `Modal*`
+  Modal content components.
+
+- `Drawer*`
+  Drawer content or drawer hosts.
+
+- `Toast*`
+  Toast hosts or toast-specific components.
+
+- `Overlay*`
+  Full-screen overlays.
+
+- `Grid*`
+  Grid/table wrapper components.
+
+- `Toolbar*`
+  Toolbar components.
+
+- `State*`
+  Empty/loading/error state components.
+
+## Pages
+
+Route components live in `src/pages/`.
+
+Rules:
+
+- Use `Page*` naming.
+- Pages compose stores, API flows, and UI components.
+- Pages should stay thin where possible.
+- Heavy UI should move into `src/components/`.
+
+## Composables
+
+Reusable composables live in `src/composable/`.
+
+Rules:
+
+- Use `use*` naming.
+- Put Vue reactivity and lifecycle orchestration here.
+- Do not place plain business logic here.
+- Do not place API wrappers here unless the composable is explicitly coordinating a UI flow.
+
+Examples:
+
+- `useLeafletMap.js`
+- `useUploadGrid.js`
+- `useEntriesGrid.js`
+
+## Core vs. Utils
+
+Use `src/core/` for dataviewer-specific behavior.
+
+Examples:
+
+- entry parsing
+- upload row pairing
+- upload error placement
+- map data shaping
+- datetime formatting tied to app behavior
+
+Use `src/utils/` only for generic helpers that are not specific to the dataviewer business rules.
+
+If a file encodes Epicollect or dataviewer rules, it belongs in `core`, not `utils`.
+
+## API
+
+`src/api/` is for backend communication only.
+
+Rules:
+
+- one module per API area where practical
+- keep request/response normalization close to the API module
+- do not mix UI rendering logic into API files
+
+## Stores
+
+`src/stores/` contains Pinia stores.
+
+Rules:
+
+- stores own app state and orchestration
+- stores may call `api/` and `core/`
+- stores should not contain large view templates or DOM logic
+
+## Theme
+
+Global styling belongs in `src/theme/`.
+
+Rules:
+
+- theme tokens in `variables.css`
+- global app styling in `main.scss`
+- do not recreate `src/styles/`
+- prefer extending the central theme files over scattering global CSS across components
+
+## Tests
+
+Tests stay under `src/tests/`.
+
+Rules:
+
+- keep unit tests close to the architectural area they validate
+- `unit/core/` for core logic
+- `unit/stores/` for Pinia
+- `integration/` for page and workflow smoke coverage
+
+## Placement Checklist
+
+When adding a file, ask:
+
+1. Is it route-level UI?
+   Put it in `src/pages/`.
+
+2. Is it a reusable Vue component?
+   Put it in `src/components/`.
+
+3. Is it a reusable Vue composable?
+   Put it in `src/composable/`.
+
+4. Is it product-specific business logic?
+   Put it in `src/core/`.
+
+5. Is it a generic helper?
+   Put it in `src/utils/`.
+
+6. Is it an HTTP/API module?
+   Put it in `src/api/`.
+
+7. Is it shared styling or tokens?
+   Put it in `src/theme/`.
+
+## Avoid
+
+- Do not reintroduce `src/features/`.
+- Do not reintroduce `src/views/`.
+- Do not reintroduce `src/styles/`.
+- Do not create vague buckets like `misc`, `helpers`, or `common` for UI components.
+- Do not put business logic into components if it can live in `core`.
+- Do not put generic helpers into `core`.

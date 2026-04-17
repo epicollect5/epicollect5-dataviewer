@@ -1,0 +1,239 @@
+<template>
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>Bulk Upload</ion-title>
+      <ion-buttons slot="end">
+        <ion-button :disabled="uploadStore.isUploading" @click="handleClose">Close</ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content class="ion-padding">
+    <section class="upload-modal">
+      <div class="upload-modal__controls">
+        <label class="table-toolbar__field">
+          <span>Mapping</span>
+          <select :value="uploadStore.activeMappingIndex" @change="handleMappingChange($event.target.value)">
+            <option v-for="(mapping, index) in projectStore.projectMapping" :key="mapping.name" :value="index">
+              {{ mapping.name }}
+            </option>
+          </select>
+        </label>
+
+        <label class="table-toolbar__field table-toolbar__field--search">
+          <span>CSV file</span>
+          <input type="file" accept=".csv,text/csv" @change="handleFileChange" />
+        </label>
+
+        <div class="upload-modal__actions">
+          <ion-button :disabled="!selectedFile || uploadStore.isPreparing" @click="prepareUpload">
+            Prepare
+          </ion-button>
+          <ion-button
+            color="secondary"
+            :disabled="uploadStore.reverseEntries.length === 0 || uploadStore.isUploading"
+            @click="startUpload"
+          >
+            Upload
+          </ion-button>
+        </div>
+      </div>
+
+      <p v-if="uploadStore.parsingError" class="upload-modal__error">{{ uploadStore.parsingError }}</p>
+
+      <div v-if="uploadStore.reverseEntries.length > 0" class="upload-modal__status">
+        <label>
+          <input
+            type="checkbox"
+            :checked="uploadStore.filterByFailed"
+            :disabled="uploadStore.failedReverseEntries.length === 0"
+            @change="uploadStore.setFilterByFailed($event.target.checked)"
+          />
+          Show only failed rows
+        </label>
+        <span>
+          Uploaded {{ uploadStore.uploadResults.length }} / {{ uploadStore.reverseEntries.length }}
+          <template v-if="uploadStore.isUploading"> · {{ uploadStore.uploadProgress }}%</template>
+        </span>
+        <div class="upload-modal__actions">
+          <ion-button
+            fill="outline"
+            :disabled="failedRowsForDownload.length === 0"
+            @click="downloadFailedRows"
+          >
+            Download failed rows
+          </ion-button>
+        </div>
+      </div>
+
+      <UploadGrid
+        v-if="pagedRows.length > 0"
+        :headers="uploadStore.availableHeaders"
+        :rows="pagedRows"
+      />
+
+      <div v-if="totalPages > 1" class="upload-modal__pagination">
+        <span>Page {{ currentPage }} / {{ totalPages }}</span>
+        <div class="upload-modal__actions">
+          <ion-button fill="outline" :disabled="currentPage === 1" @click="currentPage -= 1">Prev</ion-button>
+          <ion-button fill="outline" :disabled="currentPage === totalPages" @click="currentPage += 1">Next</ion-button>
+        </div>
+      </div>
+
+      <p v-else class="upload-modal__hint">
+        Choose a CSV file, prepare it against the current mapping, then upload to inspect row-level validation.
+      </p>
+    </section>
+  </ion-content>
+</template>
+
+<script setup>
+import {
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonTitle,
+  IonToolbar
+} from '@ionic/vue';
+import Papa from 'papaparse';
+import { computed, ref, watch } from 'vue';
+import UploadGrid from '@/components/upload/GridUpload.vue';
+import { useModalStore } from '@/stores/modalStore';
+import { useNavigationStore } from '@/stores/navigationStore';
+import { useProjectStore } from '@/stores/projectStore';
+import { useTableStore } from '@/stores/tableStore';
+import { useToastStore } from '@/stores/toastStore';
+import { useUploadStore } from '@/stores/uploadStore';
+
+const modalStore = useModalStore();
+const navigationStore = useNavigationStore();
+const projectStore = useProjectStore();
+const tableStore = useTableStore();
+const toastStore = useToastStore();
+const uploadStore = useUploadStore();
+const selectedFile = ref(null);
+const currentPage = ref(1);
+const pageSize = 25;
+
+const totalPages = computed(() => {
+  return Math.max(1, Math.ceil(uploadStore.pairedRows.length / pageSize));
+});
+
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return uploadStore.pairedRows.slice(start, start + pageSize);
+});
+
+const failedRowsForDownload = computed(() => {
+  return uploadStore.uploadResults.reduce((rows, result, index) => {
+    if (result.status !== 'error') {
+      return rows;
+    }
+
+    const currentRow = { ...uploadStore.uploadedRows[index] };
+    Object.keys(currentRow).forEach((key) => {
+      if (!uploadStore.bulkUploadableHeaders.includes(key)) {
+        delete currentRow[key];
+      }
+    });
+    rows.push(currentRow);
+    return rows;
+  }, []);
+});
+
+watch(
+  () => [uploadStore.filterByFailed, uploadStore.pairedRows.length],
+  () => {
+    currentPage.value = 1;
+  }
+);
+
+const handleClose = async () => {
+  const shouldReload = uploadStore.uploadResults.length > 0 && !uploadStore.isUploading;
+  uploadStore.reset();
+  modalStore.close();
+  if (shouldReload) {
+    await tableStore.loadEntries({ params: { page: 1 } });
+  }
+};
+
+const handleFileChange = (event) => {
+  selectedFile.value = event.target.files?.[0] || null;
+};
+
+const handleMappingChange = (index) => {
+  uploadStore.setActiveMapping(Number(index));
+};
+
+const prepareUpload = async () => {
+  if (!selectedFile.value) {
+    return;
+  }
+
+  currentPage.value = 1;
+  navigationStore.setBusy(true);
+
+  try {
+    const wasPrepared = await uploadStore.prepareFile(selectedFile.value);
+
+    if (wasPrepared) {
+      toastStore.show(`Prepared ${uploadStore.reverseEntries.length} row(s).`, {
+        color: 'success'
+      });
+    } else if (uploadStore.parsingError) {
+      toastStore.show(uploadStore.parsingError, {
+        color: 'danger',
+        duration: 2500
+      });
+    }
+  } finally {
+    navigationStore.setBusy(false);
+  }
+};
+
+const startUpload = async () => {
+  currentPage.value = 1;
+  navigationStore.setBusy(true);
+
+  try {
+    await uploadStore.uploadPreparedEntries();
+
+    const failures = uploadStore.uploadResults.filter((result) => result.status === 'error').length;
+
+    toastStore.show(
+      failures > 0
+        ? `Upload finished with ${failures} failed row(s).`
+        : `Uploaded ${uploadStore.uploadResults.length} row(s).`,
+      {
+        color: failures > 0 ? 'warning' : 'success',
+        duration: 2600
+      }
+    );
+  } finally {
+    navigationStore.setBusy(false);
+  }
+};
+
+const downloadFailedRows = () => {
+  if (failedRowsForDownload.value.length === 0) {
+    return;
+  }
+
+  const data = Papa.unparse(failedRowsForDownload.value);
+  const blob = new Blob([data], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const slug = projectStore.projectSlug || 'project';
+
+  link.href = url;
+  link.download = `${slug}__failed-rows.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toastStore.show(`Downloaded ${failedRowsForDownload.value.length} failed row(s).`, {
+    color: 'medium'
+  });
+};
+</script>
