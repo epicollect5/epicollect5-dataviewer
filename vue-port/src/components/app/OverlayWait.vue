@@ -5,11 +5,31 @@
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue';
+<script>
+import { computed, reactive } from 'vue';
 import { useNavigationStore } from '@/stores/navigationStore';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 
-const navigationStore = useNavigationStore();
-const isBusy = computed(() => navigationStore.isPerformingLongAction);
+export default {
+  name: 'OverlayWait',
+  components: {
+    LoaderSpinner
+  },
+  setup() {
+    const navigationStore = useNavigationStore();
+
+    const state = reactive({
+      navigationStore
+    });
+
+    const computedState = {
+      isBusy: computed(() => navigationStore.isPerformingLongAction)
+    };
+
+    return {
+      ...state,
+      ...computedState
+    };
+  }
+};
 </script>

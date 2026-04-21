@@ -128,7 +128,7 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import {
   IonButton,
   IonButtons,
@@ -140,7 +140,7 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive } from 'vue';
 import PARAMETERS from '@/config/parameters';
 import tableModel from '@/core/entries/tableModel';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
@@ -149,205 +149,228 @@ import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 
-const projectStore = useProjectStore();
-const navigationStore = useNavigationStore();
-const mapStore = useMapStore();
-const modalStore = useModalStore();
-const activePhoto = ref(null);
-const isPhotoLoading = ref(false);
-const loadedThumbs = ref({});
-const photoAspectRatio = ref(4 / 3);
-const viewportWidth = ref(0);
-const viewportHeight = ref(0);
-
 const FRAME_BORDER = 6;
 const MODAL_PADDING = 24;
 const MODAL_CHROME_HEIGHT = 84;
 
-const syncViewport = () => {
-  if (typeof window === 'undefined') {
-    return;
-  }
+export default {
+  name: 'DrawerEntry',
+  components: {
+    IonButton,
+    IonButtons,
+    IonContent,
+    IonHeader,
+    IonIcon,
+    IonModal,
+    IonTitle,
+    IonToolbar,
+    LoaderSpinner
+  },
+  setup() {
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const mapStore = useMapStore();
+    const modalStore = useModalStore();
 
-  viewportWidth.value = window.innerWidth;
-  viewportHeight.value = window.innerHeight;
-};
+    const state = reactive({
+      projectStore,
+      navigationStore,
+      mapStore,
+      activePhoto: null,
+      isPhotoLoading: false,
+      loadedThumbs: {},
+      photoAspectRatio: 4 / 3,
+      viewportWidth: 0,
+      viewportHeight: 0
+    });
 
-const photoLayout = computed(() => {
-  const maxWidth = Math.max(320, viewportWidth.value - 48);
-  const maxHeight = Math.max(240, viewportHeight.value - 120);
-  let width = maxHeight * photoAspectRatio.value;
-  let height = maxHeight;
+    const methods = {
+      syncViewport() {
+        if (typeof window === 'undefined') {
+          return;
+        }
 
-  if (width > maxWidth) {
-    width = maxWidth;
-    height = width / photoAspectRatio.value;
-  }
+        state.viewportWidth = window.innerWidth;
+        state.viewportHeight = window.innerHeight;
+      },
+      openPhoto(title, src) {
+        methods.syncViewport();
+        state.isPhotoLoading = true;
+        state.activePhoto = {
+          title,
+          src
+        };
+      },
+      closePhoto() {
+        state.activePhoto = null;
+        state.isPhotoLoading = false;
+      },
+      openMedia(mediaType, title, src) {
+        modalStore.open('media-viewer', {
+          mediaType,
+          title,
+          src
+        });
+      },
+      handlePhotoLoad(event) {
+        const image = event.target;
 
-  return {
-    width: Math.round(width),
-    height: Math.round(height)
-  };
-});
+        if (image?.naturalWidth && image?.naturalHeight) {
+          state.photoAspectRatio = image.naturalWidth / image.naturalHeight;
+        }
 
-const photoFrameStyle = computed(() => {
-  return {
-    width: `${photoLayout.value.width + FRAME_BORDER}px`,
-    height: `${photoLayout.value.height + FRAME_BORDER}px`
-  };
-});
-
-const photoModalStyle = computed(() => {
-  return {
-    '--width': `${photoLayout.value.width + FRAME_BORDER + MODAL_PADDING}px`,
-    '--height': `${photoLayout.value.height + FRAME_BORDER + MODAL_PADDING + MODAL_CHROME_HEIGHT}px`,
-    '--max-width': '96vw',
-    '--max-height': '94vh'
-  };
-});
-
-const openPhoto = (title, src) => {
-  syncViewport();
-  isPhotoLoading.value = true;
-  activePhoto.value = {
-    title,
-    src
-  };
-};
-
-const closePhoto = () => {
-  activePhoto.value = null;
-  isPhotoLoading.value = false;
-};
-
-const openMedia = (mediaType, title, src) => {
-  modalStore.open('media-viewer', {
-    mediaType,
-    title,
-    src
-  });
-};
-
-const handlePhotoLoad = (event) => {
-  const image = event.target;
-
-  if (image?.naturalWidth && image?.naturalHeight) {
-    photoAspectRatio.value = image.naturalWidth / image.naturalHeight;
-  }
-
-  isPhotoLoading.value = false;
-};
-
-const isThumbLoading = (key) => {
-  return loadedThumbs.value[key] !== true;
-};
-
-const handleThumbLoad = (key) => {
-  loadedThumbs.value = {
-    ...loadedThumbs.value,
-    [key]: true
-  };
-};
-
-onMounted(() => {
-  syncViewport();
-  window.addEventListener('resize', syncViewport);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', syncViewport);
-});
-
-const entryData = computed(() => {
-  if (!mapStore.selectedEntry || !navigationStore.currentFormRef) {
-    return null;
-  }
-
-  const branchRef = mapStore.selectedLocationQuestion?.branch_ref || '';
-  const rows = tableModel.getRows(
-    projectStore.projectSlug,
-    projectStore.projectExtra,
-    navigationStore.currentFormRef,
-    mapStore.selectedEntry,
-    branchRef
-  );
-
-  if (rows.length === 0) {
-    return null;
-  }
-
-  const row = rows[0];
-  const headers = branchRef
-    ? tableModel.getBranchHeaders(projectStore.projectExtra, navigationStore.currentFormRef, branchRef)
-    : tableModel.getHeaders(projectStore.projectExtra, navigationStore.currentFormRef);
-
-  const titleIndex = branchRef
-    ? PARAMETERS.TABLE_FIXED_HEADERS_TITLE_INDEX - 1
-    : PARAMETERS.TABLE_FIXED_HEADERS_TITLE_INDEX;
-  const createdAtIndex = branchRef
-    ? PARAMETERS.TABLE_FIXED_HEADERS_CREATED_AT_INDEX - 1
-    : PARAMETERS.TABLE_FIXED_HEADERS_CREATED_AT_INDEX;
-  const answerOffset = branchRef
-    ? PARAMETERS.TABLE_FIXED_HEADERS_TOTAL - 1
-    : PARAMETERS.TABLE_FIXED_HEADERS_TOTAL;
-
-  return {
-    title: row[titleIndex]?.answer || 'Untitled entry',
-    createdAt: row[createdAtIndex]?.answer || '',
-    answers: row.slice(answerOffset),
-    headers
-  };
-});
-
-const entryTitle = computed(() => entryData.value?.title || 'Entry');
-const entryCreatedAt = computed(() => entryData.value?.createdAt || '');
-const entrySections = computed(() => {
-  if (!entryData.value) {
-    return [];
-  }
-
-  return entryData.value.answers
-    .map((answer, index) => {
-      const header = entryData.value.headers[index];
-
-      if (!header) {
-        return null;
-      }
-
-      if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE && answer.answer) {
-        return {
-          key: `${header.question}-${index}`,
-          question: header.question,
-          kind: 'photo',
-          value: answer.answer
+        state.isPhotoLoading = false;
+      },
+      isThumbLoading(key) {
+        return state.loadedThumbs[key] !== true;
+      },
+      handleThumbLoad(key) {
+        state.loadedThumbs = {
+          ...state.loadedThumbs,
+          [key]: true
         };
       }
+    };
 
-      if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE && answer.answer) {
+    const computedState = {
+      photoLayout: computed(() => {
+        const maxWidth = Math.max(320, state.viewportWidth - 48);
+        const maxHeight = Math.max(240, state.viewportHeight - 120);
+        let width = maxHeight * state.photoAspectRatio;
+        let height = maxHeight;
+
+        if (width > maxWidth) {
+          width = maxWidth;
+          height = width / state.photoAspectRatio;
+        }
+
         return {
-          key: `${header.question}-${index}`,
-          question: header.question,
-          kind: 'audio',
-          value: answer.answer
+          width: Math.round(width),
+          height: Math.round(height)
         };
-      }
-
-      if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE && answer.answer) {
+      }),
+      photoFrameStyle: computed(() => {
         return {
-          key: `${header.question}-${index}`,
-          question: header.question,
-          kind: 'video',
-          value: answer.answer
+          width: `${computedState.photoLayout.value.width + FRAME_BORDER}px`,
+          height: `${computedState.photoLayout.value.height + FRAME_BORDER}px`
         };
-      }
+      }),
+      photoModalStyle: computed(() => {
+        return {
+          '--width': `${computedState.photoLayout.value.width + FRAME_BORDER + MODAL_PADDING}px`,
+          '--height': `${computedState.photoLayout.value.height + FRAME_BORDER + MODAL_PADDING + MODAL_CHROME_HEIGHT}px`,
+          '--max-width': '96vw',
+          '--max-height': '94vh'
+        };
+      }),
+      entryData: computed(() => {
+        if (!mapStore.selectedEntry || !navigationStore.currentFormRef) {
+          return null;
+        }
 
-      return {
-        key: `${header.question}-${index}`,
-        question: header.question,
-        kind: 'text',
-        value: answer.answer
-      };
-    })
-    .filter(Boolean);
-});
+        const branchRef = mapStore.selectedLocationQuestion?.branch_ref || '';
+        const rows = tableModel.getRows(
+          projectStore.projectSlug,
+          projectStore.projectExtra,
+          navigationStore.currentFormRef,
+          mapStore.selectedEntry,
+          branchRef
+        );
+
+        if (rows.length === 0) {
+          return null;
+        }
+
+        const row = rows[0];
+        const headers = branchRef
+          ? tableModel.getBranchHeaders(projectStore.projectExtra, navigationStore.currentFormRef, branchRef)
+          : tableModel.getHeaders(projectStore.projectExtra, navigationStore.currentFormRef);
+
+        const titleIndex = branchRef
+          ? PARAMETERS.TABLE_FIXED_HEADERS_TITLE_INDEX - 1
+          : PARAMETERS.TABLE_FIXED_HEADERS_TITLE_INDEX;
+        const createdAtIndex = branchRef
+          ? PARAMETERS.TABLE_FIXED_HEADERS_CREATED_AT_INDEX - 1
+          : PARAMETERS.TABLE_FIXED_HEADERS_CREATED_AT_INDEX;
+        const answerOffset = branchRef
+          ? PARAMETERS.TABLE_FIXED_HEADERS_TOTAL - 1
+          : PARAMETERS.TABLE_FIXED_HEADERS_TOTAL;
+
+        return {
+          title: row[titleIndex]?.answer || 'Untitled entry',
+          createdAt: row[createdAtIndex]?.answer || '',
+          answers: row.slice(answerOffset),
+          headers
+        };
+      }),
+      entryTitle: computed(() => computedState.entryData.value?.title || 'Entry'),
+      entryCreatedAt: computed(() => computedState.entryData.value?.createdAt || ''),
+      entrySections: computed(() => {
+        if (!computedState.entryData.value) {
+          return [];
+        }
+
+        return computedState.entryData.value.answers
+          .map((answer, index) => {
+            const header = computedState.entryData.value.headers[index];
+
+            if (!header) {
+              return null;
+            }
+
+            if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE && answer.answer) {
+              return {
+                key: `${header.question}-${index}`,
+                question: header.question,
+                kind: 'photo',
+                value: answer.answer
+              };
+            }
+
+            if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE && answer.answer) {
+              return {
+                key: `${header.question}-${index}`,
+                question: header.question,
+                kind: 'audio',
+                value: answer.answer
+              };
+            }
+
+            if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE && answer.answer) {
+              return {
+                key: `${header.question}-${index}`,
+                question: header.question,
+                kind: 'video',
+                value: answer.answer
+              };
+            }
+
+            return {
+              key: `${header.question}-${index}`,
+              question: header.question,
+              kind: 'text',
+              value: answer.answer
+            };
+          })
+          .filter(Boolean);
+      })
+    };
+
+    onMounted(() => {
+      methods.syncViewport();
+      window.addEventListener('resize', methods.syncViewport);
+    });
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', methods.syncViewport);
+    });
+
+    return {
+      ...state,
+      ...methods,
+      ...computedState,
+      close
+    };
+  }
+};
 </script>

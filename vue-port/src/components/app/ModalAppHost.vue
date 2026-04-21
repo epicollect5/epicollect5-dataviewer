@@ -1,8 +1,8 @@
 <template>
-  <ion-modal :is-open="activeModal !== null" :style="modalStyle" @didDismiss="modalStore.close()">
+  <ion-modal :is-open="activeModal !== null" :style="modalStyle" @didDismiss="closeModal">
     <UploadModal v-if="activeModal === 'upload'" />
     <DeleteEntryModal v-else-if="activeModal === 'delete-entry'" />
-    <MediaViewerModal v-else-if="activeModal === 'media-viewer'" ref="mediaViewerModal" />
+    <MediaViewerModal v-else-if="activeModal === 'media-viewer'" :ref="setMediaViewerModal" />
     <ViewEntryModal v-else-if="activeModal === 'view-entry'" />
     <ion-content v-else class="ion-padding">
       <h2>{{ modalTitle }}</h2>
@@ -11,35 +11,68 @@
   </ion-modal>
 </template>
 
-<script setup>
+<script>
 import { IonContent, IonModal } from '@ionic/vue';
-import { computed, ref } from 'vue';
-import { storeToRefs } from 'pinia';
+import { computed, reactive } from 'vue';
 import DeleteEntryModal from '@/components/entry/ModalDeleteEntry.vue';
 import ViewEntryModal from '@/components/entry/ModalViewEntry.vue';
 import MediaViewerModal from '@/components/media/ModalMediaViewer.vue';
 import UploadModal from '@/components/upload/ModalUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
 
-const modalStore = useModalStore();
-const { activeModal } = storeToRefs(modalStore);
-const mediaViewerModal = ref(null);
+export default {
+  name: 'ModalAppHost',
+  components: {
+    IonContent,
+    IonModal,
+    DeleteEntryModal,
+    ViewEntryModal,
+    MediaViewerModal,
+    UploadModal
+  },
+  setup() {
+    const modalStore = useModalStore();
 
-const modalTitle = computed(() => activeModal.value || 'Modal');
-const modalStyle = computed(() => {
-  if (activeModal.value === 'media-viewer') {
-    return mediaViewerModal.value?.modalStyle || {};
-  }
+    const state = reactive({
+      modalStore,
+      mediaViewerModal: null
+    });
 
-  if (activeModal.value === 'view-entry') {
+    const methods = {
+      setMediaViewerModal(instance) {
+        state.mediaViewerModal = instance;
+      },
+      closeModal() {
+        modalStore.close();
+      }
+    };
+
+    const computedState = {
+      activeModal: computed(() => modalStore.activeModal),
+      modalTitle: computed(() => modalStore.activeModal || 'Modal'),
+      modalStyle: computed(() => {
+        if (modalStore.activeModal === 'media-viewer') {
+          return state.mediaViewerModal?.modalStyle || {};
+        }
+
+        if (modalStore.activeModal === 'view-entry') {
+          return {
+            '--width': '80vw',
+            '--max-width': '80vw',
+            '--height': 'min(85vh, 960px)',
+            '--max-height': '85vh'
+          };
+        }
+
+        return {};
+      })
+    };
+
     return {
-      '--width': '80vw',
-      '--max-width': '80vw',
-      '--height': 'min(85vh, 960px)',
-      '--max-height': '85vh'
+      ...state,
+      ...methods,
+      ...computedState
     };
   }
-
-  return {};
-});
+};
 </script>

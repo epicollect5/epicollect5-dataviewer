@@ -74,10 +74,10 @@
   </ion-header>
 </template>
 
-<script setup>
+<script>
 import { IonHeader, IonIcon, IonToolbar } from '@ionic/vue';
 import { cloudDownload, globe, grid, logIn, logOut, power } from 'ionicons/icons';
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PARAMETERS from '@/config/parameters';
 import { useDrawerStore } from '@/stores/drawerStore';
@@ -87,149 +87,179 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
 import helpers from '@/utils/helpers';
 
-const route = useRoute();
-const router = useRouter();
-const drawerStore = useDrawerStore();
-const projectStore = useProjectStore();
-const navigationStore = useNavigationStore();
-const tableStore = useTableStore();
-const mapStore = useMapStore();
-
-const isMapPage = computed(() => route.path.includes('/map'));
-const isLocalhost = computed(() => ['localhost', '127.0.0.1'].includes(window.location.hostname));
-const currentProjectSlug = computed(() => {
-  return projectStore.projectDefinition.project?.slug || route.params.projectSlug || route.query.project || '';
-});
-const projectName = computed(() => projectStore.projectDefinition.project?.name || 'Epicollect5');
-const currentFormRef = computed(() => navigationStore.currentFormRef);
-const forms = computed(() => projectStore.forms);
-const isLoggedIn = computed(() => {
-  const user = projectStore.projectUser || {};
-  return (user.role !== null && user.role !== undefined) || (user.id !== null && user.id !== undefined);
-});
-const showDownloadButton = computed(() => isLocalhost.value || isLoggedIn.value);
-const userName = computed(() => projectStore.projectUser?.name || 'User');
-const loginHref = computed(() => `${PARAMETERS.SERVER_URL}/login`);
-const logoutHref = computed(() => `${PARAMETERS.SERVER_URL}${isLocalhost.value ? '/login' : '/logout'}`);
-const projectHomeUrl = computed(() => {
-  return currentProjectSlug.value
-    ? `${PARAMETERS.SERVER_URL}${PARAMETERS.PROJECT_HOME_PATH}${currentProjectSlug.value}`
-    : PARAMETERS.SERVER_URL;
-});
-const projectLogoUrl = computed(() => {
-  if (!currentProjectSlug.value) {
-    return '/favicon.png';
-  }
-
-  const version = projectStore.projectStats?.structure_last_updated
-    ? Math.floor(new Date(projectStore.projectStats.structure_last_updated).getTime() / 1000)
-    : Date.now();
-
-  return `${PARAMETERS.SERVER_URL}${PARAMETERS.API_MEDIA_ENDPOINT}${currentProjectSlug.value}${PARAMETERS.PROJECT_LOGO_QUERY_STRING}&v=${version}`;
-});
-const projectLogoSrc = ref(projectLogoUrl.value);
-const tableHref = computed(() => {
-  if (route.params.projectSlug) {
-    return `/${route.params.projectSlug}/data`;
-  }
-
-  if (currentProjectSlug.value) {
-    return `/table?project=${currentProjectSlug.value}`;
-  }
-
-  return '/table';
-});
-const mapHref = computed(() => {
-  if (route.params.projectSlug) {
-    return `/${route.params.projectSlug}/data/map`;
-  }
-
-  if (currentProjectSlug.value) {
-    return `/map?project=${currentProjectSlug.value}`;
-  }
-
-  return '/map';
-});
-const fallbackAvatarSrc = computed(() => `${PARAMETERS.SERVER_URL}${PARAMETERS.IMAGES_PATH_LARAVEL}avatar-placeholder.png`);
-const avatarSrc = ref(projectStore.projectUser?.avatar || fallbackAvatarSrc.value);
-
-watch(
-  projectLogoUrl,
-  (nextLogoUrl) => {
-    projectLogoSrc.value = nextLogoUrl || '/favicon.png';
+export default {
+  name: 'AppHeader',
+  components: {
+    IonHeader,
+    IonIcon,
+    IonToolbar
   },
-  { immediate: true }
-);
+  setup() {
+    const route = useRoute();
+    const router = useRouter();
+    const drawerStore = useDrawerStore();
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+    const mapStore = useMapStore();
 
-watch(
-  () => [projectStore.projectUser?.avatar, fallbackAvatarSrc.value],
-  ([nextAvatar, nextFallback]) => {
-    avatarSrc.value = nextAvatar || nextFallback;
-  },
-  { immediate: true }
-);
+    const state = reactive({
+      drawerStore,
+      projectStore,
+      navigationStore,
+      tableStore,
+      mapStore,
+      projectLogoSrc: '/favicon.png',
+      avatarSrc: ''
+    });
 
-const handleLogoError = () => {
-  projectLogoSrc.value = '/favicon.png';
-};
+    const methods = {
+      handleLogoError() {
+        state.projectLogoSrc = '/favicon.png';
+      },
+      handleAvatarError() {
+        state.avatarSrc = computedState.fallbackAvatarSrc.value;
+      },
+      async navigateToPage(page) {
+        drawerStore.close();
+        navigationStore.setActivePage(page);
+        await router.push(page === 'map' ? computedState.mapHref.value : computedState.tableHref.value);
+      },
+      async handleFormChange(formRef) {
+        const nextForm = projectStore.forms.find((form) => form.ref === formRef);
+        if (!nextForm || nextForm.ref === navigationStore.currentFormRef) {
+          return;
+        }
 
-const handleAvatarError = () => {
-  avatarSrc.value = fallbackAvatarSrc.value;
-};
+        navigationStore.setCurrentForm(nextForm.ref, nextForm.name);
+        drawerStore.close();
 
-const navigateToPage = async (page) => {
-  drawerStore.close();
-  navigationStore.setActivePage(page);
-  await router.push(page === 'map' ? mapHref.value : tableHref.value);
-};
+        if (computedState.isMapPage.value) {
+          await mapStore.loadLocations({ resetFilters: true });
+          return;
+        }
 
-const handleFormChange = async (formRef) => {
-  const nextForm = projectStore.forms.find((form) => form.ref === formRef);
-  if (!nextForm || nextForm.ref === navigationStore.currentFormRef) {
-    return;
-  }
+        await tableStore.loadEntries({ params: { page: 1 } });
+      },
+      handleDownload() {
+        if (!computedState.currentProjectSlug.value) {
+          return;
+        }
 
-  navigationStore.setCurrentForm(nextForm.ref, nextForm.name);
-  drawerStore.close();
+        const availableMappings = Array.isArray(projectStore.projectMapping)
+          ? projectStore.projectMapping
+          : Object.values(projectStore.projectMapping || {});
+        const activeMapping = helpers.getDefaultMapping(availableMappings) || availableMappings[0] || {};
+        const params = computedState.isMapPage.value
+          ? {
+              form_ref: computedState.currentFormRef.value,
+              format: 'csv'
+            }
+          : {
+              ...tableStore.buildEntriesParams(),
+              format: 'csv'
+            };
 
-  if (isMapPage.value) {
-    await mapStore.loadLocations({ resetFilters: true });
-    return;
-  }
+        if (activeMapping.map_index !== undefined) {
+          params.map_index = activeMapping.map_index;
+        }
 
-  await tableStore.loadEntries({ params: { page: 1 } });
-};
+        const query = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            query.set(key, value);
+          }
+        });
 
-const handleDownload = () => {
-  if (!currentProjectSlug.value) {
-    return;
-  }
-
-  const availableMappings = Array.isArray(projectStore.projectMapping)
-    ? projectStore.projectMapping
-    : Object.values(projectStore.projectMapping || {});
-  const activeMapping = helpers.getDefaultMapping(availableMappings) || availableMappings[0] || {};
-  const params = isMapPage.value
-    ? {
-        form_ref: currentFormRef.value,
-        format: 'csv'
+        window.location.href = `${PARAMETERS.SERVER_URL}${PARAMETERS.API_DOWNLOAD_ENDPOINT}${computedState.currentProjectSlug.value}?${query.toString()}`;
       }
-    : {
-        ...tableStore.buildEntriesParams(),
-        format: 'csv'
-      };
+    };
 
-  if (activeMapping.map_index !== undefined) {
-    params.map_index = activeMapping.map_index;
+    const computedState = {
+      isMapPage: computed(() => route.path.includes('/map')),
+      isLocalhost: computed(() => ['localhost', '127.0.0.1'].includes(window.location.hostname)),
+      currentProjectSlug: computed(() => {
+        return projectStore.projectDefinition.project?.slug || route.params.projectSlug || route.query.project || '';
+      }),
+      projectName: computed(() => projectStore.projectDefinition.project?.name || 'Epicollect5'),
+      currentFormRef: computed(() => navigationStore.currentFormRef),
+      forms: computed(() => projectStore.forms),
+      isLoggedIn: computed(() => {
+        const user = projectStore.projectUser || {};
+        return (user.role !== null && user.role !== undefined) || (user.id !== null && user.id !== undefined);
+      }),
+      showDownloadButton: computed(() => computedState.isLocalhost.value || computedState.isLoggedIn.value),
+      userName: computed(() => projectStore.projectUser?.name || 'User'),
+      loginHref: computed(() => `${PARAMETERS.SERVER_URL}/login`),
+      logoutHref: computed(() => `${PARAMETERS.SERVER_URL}${computedState.isLocalhost.value ? '/login' : '/logout'}`),
+      projectHomeUrl: computed(() => {
+        return computedState.currentProjectSlug.value
+          ? `${PARAMETERS.SERVER_URL}${PARAMETERS.PROJECT_HOME_PATH}${computedState.currentProjectSlug.value}`
+          : PARAMETERS.SERVER_URL;
+      }),
+      projectLogoUrl: computed(() => {
+        if (!computedState.currentProjectSlug.value) {
+          return '/favicon.png';
+        }
+
+        const version = projectStore.projectStats?.structure_last_updated
+          ? Math.floor(new Date(projectStore.projectStats.structure_last_updated).getTime() / 1000)
+          : Date.now();
+
+        return `${PARAMETERS.SERVER_URL}${PARAMETERS.API_MEDIA_ENDPOINT}${computedState.currentProjectSlug.value}${PARAMETERS.PROJECT_LOGO_QUERY_STRING}&v=${version}`;
+      }),
+      tableHref: computed(() => {
+        if (route.params.projectSlug) {
+          return `/${route.params.projectSlug}/data`;
+        }
+
+        if (computedState.currentProjectSlug.value) {
+          return `/table?project=${computedState.currentProjectSlug.value}`;
+        }
+
+        return '/table';
+      }),
+      mapHref: computed(() => {
+        if (route.params.projectSlug) {
+          return `/${route.params.projectSlug}/data/map`;
+        }
+
+        if (computedState.currentProjectSlug.value) {
+          return `/map?project=${computedState.currentProjectSlug.value}`;
+        }
+
+        return '/map';
+      }),
+      fallbackAvatarSrc: computed(() => `${PARAMETERS.SERVER_URL}${PARAMETERS.IMAGES_PATH_LARAVEL}avatar-placeholder.png`)
+    };
+
+    watch(
+      computedState.projectLogoUrl,
+      (nextLogoUrl) => {
+        state.projectLogoSrc = nextLogoUrl || '/favicon.png';
+      },
+      { immediate: true }
+    );
+
+    watch(
+      () => [projectStore.projectUser?.avatar, computedState.fallbackAvatarSrc.value],
+      ([nextAvatar, nextFallback]) => {
+        state.avatarSrc = nextAvatar || nextFallback;
+      },
+      { immediate: true }
+    );
+
+    return {
+      ...state,
+      ...methods,
+      ...computedState,
+      cloudDownload,
+      globe,
+      grid,
+      logIn,
+      logOut,
+      power
+    };
   }
-
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      query.set(key, value);
-    }
-  });
-
-  window.location.href = `${PARAMETERS.SERVER_URL}${PARAMETERS.API_DOWNLOAD_ENDPOINT}${currentProjectSlug.value}?${query.toString()}`;
 };
 </script>

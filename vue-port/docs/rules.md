@@ -187,6 +187,7 @@ Rules:
 ## Tests
 
 Tests stay under `src/tests/`.
+Use vitest, not jest
 
 Rules:
 

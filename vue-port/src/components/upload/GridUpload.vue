@@ -14,7 +14,7 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { computed } from 'vue';
 import { AgGridVue } from 'ag-grid-vue3';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
@@ -22,29 +22,47 @@ import { createUploadColumnDefs } from '@/components/upload/ag-grid/uploadColumn
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const props = defineProps({
-  headers: {
-    type: Array,
-    default: () => []
+export default {
+  name: 'GridUpload',
+  components: {
+    AgGridVue
   },
-  rows: {
-    type: Array,
-    default: () => []
+  props: {
+    headers: {
+      type: Array,
+      default: () => []
+    },
+    rows: {
+      type: Array,
+      default: () => []
+    }
+  },
+  setup(props) {
+    const state = {
+      defaultColDef: {
+        resizable: true,
+        wrapHeaderText: true
+      }
+    };
+
+    const methods = {
+      getRowHeight(params) {
+        return params.data?.rowType === 'error' ? 34 : 44;
+      },
+      getRowClass(params) {
+        return params.data?.rowType === 'error' ? 'upload-grid__row--error' : '';
+      }
+    };
+
+    const computedState = {
+      columnDefs: computed(() => createUploadColumnDefs(props.headers))
+    };
+
+    return {
+      ...state,
+      ...methods,
+      ...computedState
+    };
   }
-});
-
-const columnDefs = computed(() => createUploadColumnDefs(props.headers));
-
-const defaultColDef = {
-  resizable: true,
-  wrapHeaderText: true
-};
-
-const getRowHeight = (params) => {
-  return params.data?.rowType === 'error' ? 34 : 44;
-};
-
-const getRowClass = (params) => {
-  return params.data?.rowType === 'error' ? 'upload-grid__row--error' : '';
 };
 </script>

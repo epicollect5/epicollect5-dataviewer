@@ -7,23 +7,26 @@
   </div>
 </template>
 
-<script setup>
-defineProps({
-  isVisible: {
-    type: Boolean,
-    default: false
-  },
-  processed: {
-    type: Number,
-    default: 0
-  },
-  total: {
-    type: Number,
-    default: 0
-  },
-  percentage: {
-    type: Number,
-    default: 0
+<script>
+export default {
+  name: 'MapProgressBar',
+  props: {
+    isVisible: {
+      type: Boolean,
+      default: false
+    },
+    processed: {
+      type: Number,
+      default: 0
+    },
+    total: {
+      type: Number,
+      default: 0
+    },
+    percentage: {
+      type: Number,
+      default: 0
+    }
   }
-});
+};
 </script>

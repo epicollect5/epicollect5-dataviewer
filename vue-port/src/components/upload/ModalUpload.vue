@@ -47,7 +47,7 @@
             type="checkbox"
             :checked="uploadStore.filterByFailed"
             :disabled="uploadStore.failedReverseEntries.length === 0"
-            @change="uploadStore.setFilterByFailed($event.target.checked)"
+            @change="handleFailedFilterChange($event.target.checked)"
           />
           Show only failed rows
         </label>
@@ -75,8 +75,8 @@
       <div v-if="totalPages > 1" class="upload-modal__pagination">
         <span>Page {{ currentPage }} / {{ totalPages }}</span>
         <div class="upload-modal__actions">
-          <ion-button fill="outline" :disabled="currentPage === 1" @click="currentPage -= 1">Prev</ion-button>
-          <ion-button fill="outline" :disabled="currentPage === totalPages" @click="currentPage += 1">Next</ion-button>
+          <ion-button fill="outline" :disabled="currentPage === 1" @click="goToPreviousPage">Prev</ion-button>
+          <ion-button fill="outline" :disabled="currentPage === totalPages" @click="goToNextPage">Next</ion-button>
         </div>
       </div>
 
@@ -87,7 +87,7 @@
   </ion-content>
 </template>
 
-<script setup>
+<script>
 import {
   IonButton,
   IonButtons,
@@ -97,7 +97,7 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import Papa from 'papaparse';
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import UploadGrid from '@/components/upload/GridUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
@@ -106,134 +106,174 @@ import { useTableStore } from '@/stores/tableStore';
 import { useToastStore } from '@/stores/toastStore';
 import { useUploadStore } from '@/stores/uploadStore';
 
-const modalStore = useModalStore();
-const navigationStore = useNavigationStore();
-const projectStore = useProjectStore();
-const tableStore = useTableStore();
-const toastStore = useToastStore();
-const uploadStore = useUploadStore();
-const selectedFile = ref(null);
-const currentPage = ref(1);
 const pageSize = 25;
 
-const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(uploadStore.pairedRows.length / pageSize));
-});
+export default {
+  name: 'ModalUpload',
+  components: {
+    IonButton,
+    IonButtons,
+    IonContent,
+    IonHeader,
+    IonTitle,
+    IonToolbar,
+    UploadGrid
+  },
+  setup() {
+    const modalStore = useModalStore();
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+    const toastStore = useToastStore();
+    const uploadStore = useUploadStore();
 
-const pagedRows = computed(() => {
-  const start = (currentPage.value - 1) * pageSize;
-  return uploadStore.pairedRows.slice(start, start + pageSize);
-});
-
-const failedRowsForDownload = computed(() => {
-  return uploadStore.uploadResults.reduce((rows, result, index) => {
-    if (result.status !== 'error') {
-      return rows;
-    }
-
-    const currentRow = { ...uploadStore.uploadedRows[index] };
-    Object.keys(currentRow).forEach((key) => {
-      if (!uploadStore.bulkUploadableHeaders.includes(key)) {
-        delete currentRow[key];
-      }
+    const state = reactive({
+      modalStore,
+      navigationStore,
+      projectStore,
+      tableStore,
+      toastStore,
+      uploadStore,
+      selectedFile: null,
+      currentPage: 1
     });
-    rows.push(currentRow);
-    return rows;
-  }, []);
-});
 
-watch(
-  () => [uploadStore.filterByFailed, uploadStore.pairedRows.length],
-  () => {
-    currentPage.value = 1;
-  }
-);
+    const methods = {
+      async handleClose() {
+        const shouldReload = uploadStore.uploadResults.length > 0 && !uploadStore.isUploading;
+        uploadStore.reset();
+        modalStore.close();
+        if (shouldReload) {
+          await tableStore.loadEntries({ params: { page: 1 } });
+        }
+      },
+      handleFileChange(event) {
+        state.selectedFile = event.target.files?.[0] || null;
+      },
+      handleMappingChange(index) {
+        uploadStore.setActiveMapping(Number(index));
+      },
+      handleFailedFilterChange(value) {
+        uploadStore.setFilterByFailed(value);
+      },
+      goToPreviousPage() {
+        if (state.currentPage > 1) {
+          state.currentPage -= 1;
+        }
+      },
+      goToNextPage() {
+        if (state.currentPage < computedState.totalPages.value) {
+          state.currentPage += 1;
+        }
+      },
+      async prepareUpload() {
+        if (!state.selectedFile) {
+          return;
+        }
 
-const handleClose = async () => {
-  const shouldReload = uploadStore.uploadResults.length > 0 && !uploadStore.isUploading;
-  uploadStore.reset();
-  modalStore.close();
-  if (shouldReload) {
-    await tableStore.loadEntries({ params: { page: 1 } });
-  }
-};
+        state.currentPage = 1;
+        navigationStore.setBusy(true);
 
-const handleFileChange = (event) => {
-  selectedFile.value = event.target.files?.[0] || null;
-};
+        try {
+          const wasPrepared = await uploadStore.prepareFile(state.selectedFile);
 
-const handleMappingChange = (index) => {
-  uploadStore.setActiveMapping(Number(index));
-};
+          if (wasPrepared) {
+            toastStore.show(`Prepared ${uploadStore.reverseEntries.length} row(s).`, {
+              color: 'success'
+            });
+          } else if (uploadStore.parsingError) {
+            toastStore.show(uploadStore.parsingError, {
+              color: 'danger',
+              duration: 2500
+            });
+          }
+        } finally {
+          navigationStore.setBusy(false);
+        }
+      },
+      async startUpload() {
+        state.currentPage = 1;
+        navigationStore.setBusy(true);
 
-const prepareUpload = async () => {
-  if (!selectedFile.value) {
-    return;
-  }
+        try {
+          await uploadStore.uploadPreparedEntries();
 
-  currentPage.value = 1;
-  navigationStore.setBusy(true);
+          const failures = uploadStore.uploadResults.filter((result) => result.status === 'error').length;
 
-  try {
-    const wasPrepared = await uploadStore.prepareFile(selectedFile.value);
+          toastStore.show(
+            failures > 0
+              ? `Upload finished with ${failures} failed row(s).`
+              : `Uploaded ${uploadStore.uploadResults.length} row(s).`,
+            {
+              color: failures > 0 ? 'warning' : 'success',
+              duration: 2600
+            }
+          );
+        } finally {
+          navigationStore.setBusy(false);
+        }
+      },
+      downloadFailedRows() {
+        if (computedState.failedRowsForDownload.value.length === 0) {
+          return;
+        }
 
-    if (wasPrepared) {
-      toastStore.show(`Prepared ${uploadStore.reverseEntries.length} row(s).`, {
-        color: 'success'
-      });
-    } else if (uploadStore.parsingError) {
-      toastStore.show(uploadStore.parsingError, {
-        color: 'danger',
-        duration: 2500
-      });
-    }
-  } finally {
-    navigationStore.setBusy(false);
-  }
-};
+        const data = Papa.unparse(computedState.failedRowsForDownload.value);
+        const blob = new Blob([data], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const slug = projectStore.projectSlug || 'project';
 
-const startUpload = async () => {
-  currentPage.value = 1;
-  navigationStore.setBusy(true);
+        link.href = url;
+        link.download = `${slug}__failed-rows.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toastStore.show(`Downloaded ${computedState.failedRowsForDownload.value.length} failed row(s).`, {
+          color: 'medium'
+        });
+      }
+    };
 
-  try {
-    await uploadStore.uploadPreparedEntries();
+    const computedState = {
+      totalPages: computed(() => {
+        return Math.max(1, Math.ceil(uploadStore.pairedRows.length / pageSize));
+      }),
+      pagedRows: computed(() => {
+        const start = (state.currentPage - 1) * pageSize;
+        return uploadStore.pairedRows.slice(start, start + pageSize);
+      }),
+      failedRowsForDownload: computed(() => {
+        return uploadStore.uploadResults.reduce((rows, result, index) => {
+          if (result.status !== 'error') {
+            return rows;
+          }
 
-    const failures = uploadStore.uploadResults.filter((result) => result.status === 'error').length;
+          const currentRow = { ...uploadStore.uploadedRows[index] };
+          Object.keys(currentRow).forEach((key) => {
+            if (!uploadStore.bulkUploadableHeaders.includes(key)) {
+              delete currentRow[key];
+            }
+          });
+          rows.push(currentRow);
+          return rows;
+        }, []);
+      })
+    };
 
-    toastStore.show(
-      failures > 0
-        ? `Upload finished with ${failures} failed row(s).`
-        : `Uploaded ${uploadStore.uploadResults.length} row(s).`,
-      {
-        color: failures > 0 ? 'warning' : 'success',
-        duration: 2600
+    watch(
+      () => [uploadStore.filterByFailed, uploadStore.pairedRows.length],
+      () => {
+        state.currentPage = 1;
       }
     );
-  } finally {
-    navigationStore.setBusy(false);
+
+    return {
+      ...state,
+      ...methods,
+      ...computedState
+    };
   }
-};
-
-const downloadFailedRows = () => {
-  if (failedRowsForDownload.value.length === 0) {
-    return;
-  }
-
-  const data = Papa.unparse(failedRowsForDownload.value);
-  const blob = new Blob([data], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  const slug = projectStore.projectSlug || 'project';
-
-  link.href = url;
-  link.download = `${slug}__failed-rows.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  toastStore.show(`Downloaded ${failedRowsForDownload.value.length} failed row(s).`, {
-    color: 'medium'
-  });
 };
 </script>

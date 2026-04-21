@@ -16,7 +16,7 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { computed } from 'vue';
 import { AgGridVue } from 'ag-grid-vue3';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
@@ -24,26 +24,43 @@ import { createEntriesColumnDefs, mapTableRowsToGrid } from '@/components/table/
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const props = defineProps({
-  headers: {
-    type: Array,
-    default: () => []
+export default {
+  name: 'GridEntries',
+  components: {
+    AgGridVue
   },
-  rows: {
-    type: Array,
-    default: () => []
+  props: {
+    headers: {
+      type: Array,
+      default: () => []
+    },
+    rows: {
+      type: Array,
+      default: () => []
+    },
+    isLoading: {
+      type: Boolean,
+      default: false
+    }
   },
-  isLoading: {
-    type: Boolean,
-    default: false
-  }
-});
+  setup(props) {
+    const state = {
+      defaultColDef: {
+        sortable: false,
+        resizable: false,
+        wrapHeaderText: false
+      }
+    };
 
-const columnDefs = computed(() => createEntriesColumnDefs(props.headers));
-const rowData = computed(() => mapTableRowsToGrid(props.rows));
-const defaultColDef = {
-  sortable: false,
-  resizable: false,
-  wrapHeaderText: false
+    const computedState = {
+      columnDefs: computed(() => createEntriesColumnDefs(props.headers)),
+      rowData: computed(() => mapTableRowsToGrid(props.rows))
+    };
+
+    return {
+      ...state,
+      ...computedState
+    };
+  }
 };
 </script>

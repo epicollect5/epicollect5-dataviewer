@@ -13,7 +13,7 @@
   </ion-app>
 </template>
 
-<script setup>
+<script>
 import {
   IonApp,
   IonContent,
@@ -24,4 +24,18 @@ import AppDrawerHost from '@/components/app/DrawerAppHost.vue';
 import AppModalHost from '@/components/app/ModalAppHost.vue';
 import AppToastHost from '@/components/app/ToastAppHost.vue';
 import OverlayWait from '@/components/app/OverlayWait.vue';
+
+export default {
+  name: 'AppShell',
+  components: {
+    IonApp,
+    IonContent,
+    IonPage,
+    AppHeader,
+    AppDrawerHost,
+    AppModalHost,
+    AppToastHost,
+    OverlayWait
+  }
+};
 </script>

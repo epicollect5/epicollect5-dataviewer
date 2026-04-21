@@ -2,6 +2,13 @@
   <AppShell />
 </template>
 
-<script setup>
+<script>
 import AppShell from '@/components/app/AppShell.vue';
+
+export default {
+  name: 'App',
+  components: {
+    AppShell
+  }
+};
 </script>

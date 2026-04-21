@@ -29,8 +29,8 @@
         @update:order="handleOrderChange"
         @reset-filters="handleResetFilters"
         @open-upload="handleOpenUpload"
-        @previous-page="loadPage(tableStore.links?.prev)"
-        @next-page="loadPage(tableStore.links?.next)"
+        @previous-page="handlePreviousPage"
+        @next-page="handleNextPage"
       />
 
       <div v-if="tableStore.isRejectedPage" class="placeholder-view">
@@ -50,8 +50,8 @@
   </section>
 </template>
 
-<script setup>
-import { computed, onMounted, watch } from 'vue';
+<script>
+import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import env from '@/config/env';
 import PARAMETERS from '@/config/parameters';
@@ -65,107 +65,134 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
 import { useUploadStore } from '@/stores/uploadStore';
 
-const route = useRoute();
-const projectStore = useProjectStore();
-const navigationStore = useNavigationStore();
-const filtersStore = useFiltersStore();
-const tableStore = useTableStore();
-const modalStore = useModalStore();
-const uploadStore = useUploadStore();
+export default {
+  name: 'PageTable',
+  components: {
+    EntriesGrid,
+    TableEmptyState,
+    TableToolbar
+  },
+  setup() {
+    const route = useRoute();
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const filtersStore = useFiltersStore();
+    const tableStore = useTableStore();
+    const modalStore = useModalStore();
+    const uploadStore = useUploadStore();
 
-let titleDebounceId = null;
+    const state = reactive({
+      projectStore,
+      navigationStore,
+      filtersStore,
+      tableStore,
+      modalStore,
+      uploadStore,
+      titleDebounceId: null
+    });
 
-const resolvedProjectSlug = computed(() => {
-  return route.params.projectSlug || route.query.project || env.projectSlug || '';
-});
+    const methods = {
+      async bootstrap() {
+        if (!computedState.resolvedProjectSlug.value) {
+          return;
+        }
 
-const missingProjectSlug = computed(() => !resolvedProjectSlug.value);
-const projectErrors = computed(() => {
-  return Array.isArray(projectStore.errors) ? projectStore.errors.join(', ') : projectStore.errors;
-});
-const tableErrors = computed(() => {
-  return Array.isArray(tableStore.errors) ? tableStore.errors.join(', ') : tableStore.errors;
-});
+        navigationStore.setActivePage('table');
 
-const bootstrap = async () => {
-  if (!resolvedProjectSlug.value) {
-    return;
+        const didLoadProject =
+          projectStore.projectSlug === computedState.resolvedProjectSlug.value
+            ? true
+            : await projectStore.loadProject(computedState.resolvedProjectSlug.value);
+
+        if (didLoadProject && navigationStore.currentFormRef) {
+          await tableStore.loadEntries();
+        }
+      },
+      handleTitleChange(title) {
+        filtersStore.setTitle(title);
+        window.clearTimeout(state.titleDebounceId);
+        state.titleDebounceId = window.setTimeout(() => {
+          tableStore.loadEntries({ params: { page: 1 } });
+        }, title.length === 0 ? 0 : 350);
+      },
+      async handleDateChange({ startDate, endDate }) {
+        filtersStore.setDates(startDate, endDate);
+        await tableStore.loadEntries({ params: { page: 1 } });
+      },
+      async handleOrderChange(selectedOrderBy) {
+        const orderMap = {
+          [PARAMETERS.ORDER_BY.NEWEST]: {
+            sortBy: 'created_at',
+            sortOrder: 'DESC'
+          },
+          [PARAMETERS.ORDER_BY.OLDEST]: {
+            sortBy: 'created_at',
+            sortOrder: 'ASC'
+          },
+          [PARAMETERS.ORDER_BY.AZ]: {
+            sortBy: 'title',
+            sortOrder: 'ASC'
+          },
+          [PARAMETERS.ORDER_BY.ZA]: {
+            sortBy: 'title',
+            sortOrder: 'DESC'
+          }
+        };
+
+        const nextOrder = orderMap[selectedOrderBy] || orderMap[PARAMETERS.ORDER_BY.NEWEST];
+        filtersStore.setOrder(selectedOrderBy, nextOrder.sortBy, nextOrder.sortOrder);
+        await tableStore.loadEntries({ params: { page: 1 } });
+      },
+      async handleResetFilters() {
+        filtersStore.reset();
+        await tableStore.loadEntries({ params: { page: 1 } });
+      },
+      async loadPage(url) {
+        if (!url) {
+          return;
+        }
+
+        await tableStore.loadEntries({ pageUrl: url });
+      },
+      handlePreviousPage() {
+        return methods.loadPage(tableStore.links?.prev);
+      },
+      handleNextPage() {
+        return methods.loadPage(tableStore.links?.next);
+      },
+      handleOpenUpload() {
+        uploadStore.reset();
+        modalStore.open('upload');
+      }
+    };
+
+    const computedState = {
+      resolvedProjectSlug: computed(() => {
+        return route.params.projectSlug || route.query.project || env.projectSlug || '';
+      }),
+      missingProjectSlug: computed(() => !computedState.resolvedProjectSlug.value),
+      projectErrors: computed(() => {
+        return Array.isArray(projectStore.errors) ? projectStore.errors.join(', ') : projectStore.errors;
+      }),
+      tableErrors: computed(() => {
+        return Array.isArray(tableStore.errors) ? tableStore.errors.join(', ') : tableStore.errors;
+      })
+    };
+
+    onMounted(methods.bootstrap);
+
+    watch(computedState.resolvedProjectSlug, async (nextSlug, previousSlug) => {
+      if (nextSlug && nextSlug !== previousSlug) {
+        filtersStore.reset();
+        await methods.bootstrap();
+      }
+    });
+
+    return {
+      ...state,
+      ...methods,
+      ...computedState
+    };
   }
-
-  navigationStore.setActivePage('table');
-
-  const didLoadProject =
-    projectStore.projectSlug === resolvedProjectSlug.value
-      ? true
-      : await projectStore.loadProject(resolvedProjectSlug.value);
-
-  if (didLoadProject && navigationStore.currentFormRef) {
-    await tableStore.loadEntries();
-  }
 };
-
-const handleTitleChange = (title) => {
-  filtersStore.setTitle(title);
-  window.clearTimeout(titleDebounceId);
-  titleDebounceId = window.setTimeout(() => {
-    tableStore.loadEntries({ params: { page: 1 } });
-  }, title.length === 0 ? 0 : 350);
-};
-
-const handleDateChange = async ({ startDate, endDate }) => {
-  filtersStore.setDates(startDate, endDate);
-  await tableStore.loadEntries({ params: { page: 1 } });
-};
-
-const handleOrderChange = async (selectedOrderBy) => {
-  const orderMap = {
-    [PARAMETERS.ORDER_BY.NEWEST]: {
-      sortBy: 'created_at',
-      sortOrder: 'DESC'
-    },
-    [PARAMETERS.ORDER_BY.OLDEST]: {
-      sortBy: 'created_at',
-      sortOrder: 'ASC'
-    },
-    [PARAMETERS.ORDER_BY.AZ]: {
-      sortBy: 'title',
-      sortOrder: 'ASC'
-    },
-    [PARAMETERS.ORDER_BY.ZA]: {
-      sortBy: 'title',
-      sortOrder: 'DESC'
-    }
-  };
-
-  const nextOrder = orderMap[selectedOrderBy] || orderMap[PARAMETERS.ORDER_BY.NEWEST];
-  filtersStore.setOrder(selectedOrderBy, nextOrder.sortBy, nextOrder.sortOrder);
-  await tableStore.loadEntries({ params: { page: 1 } });
-};
-
-const handleResetFilters = async () => {
-  filtersStore.reset();
-  await tableStore.loadEntries({ params: { page: 1 } });
-};
-
-const loadPage = async (url) => {
-  if (!url) {
-    return;
-  }
-
-  await tableStore.loadEntries({ pageUrl: url });
-};
-
-const handleOpenUpload = () => {
-  uploadStore.reset();
-  modalStore.open('upload');
-};
-
-onMounted(bootstrap);
-
-watch(resolvedProjectSlug, async (nextSlug, previousSlug) => {
-  if (nextSlug && nextSlug !== previousSlug) {
-    filtersStore.reset();
-    await bootstrap();
-  }
-});
 </script>

@@ -50,8 +50,8 @@
   </section>
 </template>
 
-<script setup>
-import { computed, onMounted, watch } from 'vue';
+<script>
+import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import env from '@/config/env';
 import { useDrawerStore } from '@/stores/drawerStore';
@@ -61,131 +61,149 @@ import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 
-const route = useRoute();
-const drawerStore = useDrawerStore();
-const projectStore = useProjectStore();
-const navigationStore = useNavigationStore();
-const mapStore = useMapStore();
+export default {
+  name: 'PageMap',
+  components: {
+    LeafletMap,
+    MapProgressBar
+  },
+  setup() {
+    const route = useRoute();
+    const drawerStore = useDrawerStore();
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const mapStore = useMapStore();
 
-const resolvedProjectSlug = computed(() => {
-  return route.params.projectSlug || route.query.project || env.projectSlug || '';
-});
+    const state = reactive({
+      drawerStore,
+      projectStore,
+      navigationStore,
+      mapStore
+    });
 
-const missingProjectSlug = computed(() => !resolvedProjectSlug.value);
-const projectErrors = computed(() => {
-  return Array.isArray(projectStore.errors) ? projectStore.errors.join(', ') : projectStore.errors;
-});
-const mapErrors = computed(() => {
-  return Array.isArray(mapStore.errors) ? mapStore.errors.join(', ') : mapStore.errors;
-});
-const locationQuestions = computed(() => mapStore.getLocationQuestions());
-const hasLocationQuestions = computed(() => locationQuestions.value.length > 0);
+    const methods = {
+      async bootstrap() {
+        if (!computedState.resolvedProjectSlug.value) {
+          return;
+        }
 
-const bootstrap = async () => {
-  if (!resolvedProjectSlug.value) {
-    return;
-  }
+        navigationStore.setActivePage('map');
 
-  navigationStore.setActivePage('map');
+        const didLoadProject =
+          projectStore.projectSlug === computedState.resolvedProjectSlug.value
+            ? true
+            : await projectStore.loadProject(computedState.resolvedProjectSlug.value);
 
-  const didLoadProject =
-    projectStore.projectSlug === resolvedProjectSlug.value
-      ? true
-      : await projectStore.loadProject(resolvedProjectSlug.value);
+        if (didLoadProject && navigationStore.currentFormRef) {
+          await mapStore.loadLocations({ resetFilters: true });
+        }
+      },
+      async handleLocationQuestionChange(question) {
+        await mapStore.loadLocations({
+          selectedLocationQuestion: question,
+          resetFilters: true
+        });
+      },
+      handleClusterToggle(enabled) {
+        mapStore.setClustersEnabled(enabled);
+      },
+      handleDateChange({ startDate, endDate }) {
+        mapStore.setDateFilter(startDate, endDate);
+      },
+      handleDateReset() {
+        mapStore.resetDateFilter();
+      },
+      async handleDrawerEvent(eventName, value) {
+        if (eventName === 'change-location') {
+          await methods.handleLocationQuestionChange(value);
+        }
 
-  if (didLoadProject && navigationStore.currentFormRef) {
-    await mapStore.loadLocations({ resetFilters: true });
+        if (eventName === 'toggle-clusters') {
+          methods.handleClusterToggle(value);
+        }
+
+        if (eventName === 'update-dates') {
+          methods.handleDateChange(value);
+        }
+
+        if (eventName === 'reset-dates') {
+          methods.handleDateReset();
+        }
+      },
+      openFiltersDrawer() {
+        drawerStore.open('map-filters', {
+          side: 'right',
+          locationQuestions: computedState.locationQuestions.value,
+          selectedLocationQuestion: mapStore.selectedLocationQuestion,
+          clustersEnabled: mapStore.clustersEnabled,
+          startDate: mapStore.startDate,
+          endDate: mapStore.endDate,
+          minDate: mapStore.minDate,
+          maxDate: mapStore.maxDate,
+          visibleCount: mapStore.markers.length,
+          totalCount: mapStore.locations.length,
+          onEvent: methods.handleDrawerEvent
+        });
+      },
+      async handleMarkerClick(marker) {
+        if (!marker?.entryUuid) {
+          return;
+        }
+
+        drawerStore.open('map-entry', {
+          side: 'left'
+        });
+        await mapStore.loadEntry(marker.entryUuid);
+      }
+    };
+
+    const computedState = {
+      resolvedProjectSlug: computed(() => {
+        return route.params.projectSlug || route.query.project || env.projectSlug || '';
+      }),
+      missingProjectSlug: computed(() => !computedState.resolvedProjectSlug.value),
+      projectErrors: computed(() => {
+        return Array.isArray(projectStore.errors) ? projectStore.errors.join(', ') : projectStore.errors;
+      }),
+      mapErrors: computed(() => {
+        return Array.isArray(mapStore.errors) ? mapStore.errors.join(', ') : mapStore.errors;
+      }),
+      locationQuestions: computed(() => mapStore.getLocationQuestions()),
+      hasLocationQuestions: computed(() => computedState.locationQuestions.value.length > 0)
+    };
+
+    onMounted(methods.bootstrap);
+
+    watch(computedState.resolvedProjectSlug, async (nextSlug, previousSlug) => {
+      if (nextSlug && nextSlug !== previousSlug) {
+        mapStore.reset();
+        drawerStore.close();
+        await methods.bootstrap();
+      }
+    });
+
+    watch(
+      () => [
+        mapStore.selectedLocationQuestion,
+        mapStore.clustersEnabled,
+        mapStore.startDate,
+        mapStore.endDate,
+        mapStore.markers.length,
+        mapStore.locations.length,
+        navigationStore.currentFormRef
+      ],
+      () => {
+        if (drawerStore.activeDrawer === 'map-filters') {
+          methods.openFiltersDrawer();
+        }
+      }
+    );
+
+    return {
+      ...state,
+      ...methods,
+      ...computedState
+    };
   }
 };
-
-const handleLocationQuestionChange = async (question) => {
-  await mapStore.loadLocations({
-    selectedLocationQuestion: question,
-    resetFilters: true
-  });
-};
-
-const handleClusterToggle = (enabled) => {
-  mapStore.setClustersEnabled(enabled);
-};
-
-const handleDateChange = ({ startDate, endDate }) => {
-  mapStore.setDateFilter(startDate, endDate);
-};
-
-const handleDateReset = () => {
-  mapStore.resetDateFilter();
-};
-
-const handleDrawerEvent = async (eventName, value) => {
-  if (eventName === 'change-location') {
-    await handleLocationQuestionChange(value);
-  }
-
-  if (eventName === 'toggle-clusters') {
-    handleClusterToggle(value);
-  }
-
-  if (eventName === 'update-dates') {
-    handleDateChange(value);
-  }
-
-  if (eventName === 'reset-dates') {
-    handleDateReset();
-  }
-};
-
-const openFiltersDrawer = () => {
-  drawerStore.open('map-filters', {
-    side: 'right',
-    locationQuestions: locationQuestions.value,
-    selectedLocationQuestion: mapStore.selectedLocationQuestion,
-    clustersEnabled: mapStore.clustersEnabled,
-    startDate: mapStore.startDate,
-    endDate: mapStore.endDate,
-    minDate: mapStore.minDate,
-    maxDate: mapStore.maxDate,
-    visibleCount: mapStore.markers.length,
-    totalCount: mapStore.locations.length,
-    onEvent: handleDrawerEvent
-  });
-};
-
-const handleMarkerClick = async (marker) => {
-  if (!marker?.entryUuid) {
-    return;
-  }
-
-  drawerStore.open('map-entry', {
-    side: 'left'
-  });
-  await mapStore.loadEntry(marker.entryUuid);
-};
-
-onMounted(bootstrap);
-
-watch(resolvedProjectSlug, async (nextSlug, previousSlug) => {
-  if (nextSlug && nextSlug !== previousSlug) {
-    mapStore.reset();
-    drawerStore.close();
-    await bootstrap();
-  }
-});
-
-watch(
-  () => [
-    mapStore.selectedLocationQuestion,
-    mapStore.clustersEnabled,
-    mapStore.startDate,
-    mapStore.endDate,
-    mapStore.markers.length,
-    mapStore.locations.length,
-    navigationStore.currentFormRef
-  ],
-  () => {
-    if (drawerStore.activeDrawer === 'map-filters') {
-      openFiltersDrawer();
-    }
-  }
-);
 </script>

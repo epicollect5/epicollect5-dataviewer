@@ -3,7 +3,7 @@
     <ion-toolbar>
       <ion-title>Delete entry</ion-title>
       <ion-buttons slot="end">
-        <ion-button shape="round" class="photo-lightbox__close-button" aria-label="Close delete dialog" @click="modalStore.close()">
+        <ion-button shape="round" class="photo-lightbox__close-button" aria-label="Close delete dialog" @click="closeModal">
           <ion-icon slot="icon-only" :icon="close" />
         </ion-button>
       </ion-buttons>
@@ -26,7 +26,7 @@
           <p class="delete-entry-modal__warning">This action cannot be undone.</p>
 
           <div class="delete-entry-modal__actions">
-            <ion-button fill="outline" color="medium" @click="modalStore.close()">Dismiss</ion-button>
+            <ion-button fill="outline" color="medium" @click="closeModal">Dismiss</ion-button>
             <ion-button color="danger" @click="confirmDelete">Confirm</ion-button>
           </div>
         </template>
@@ -35,7 +35,7 @@
   </ion-content>
 </template>
 
-<script setup>
+<script>
 import {
   IonButton,
   IonButtons,
@@ -48,36 +48,71 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed, ref } from 'vue';
+import { computed, reactive } from 'vue';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import { useModalStore } from '@/stores/modalStore';
 import { useTableStore } from '@/stores/tableStore';
 import { useToastStore } from '@/stores/toastStore';
 
-const modalStore = useModalStore();
-const tableStore = useTableStore();
-const toastStore = useToastStore();
-const isDeleting = ref(false);
+export default {
+  name: 'ModalDeleteEntry',
+  components: {
+    IonButton,
+    IonButtons,
+    IonCard,
+    IonCardContent,
+    IonContent,
+    IonHeader,
+    IonIcon,
+    IonTitle,
+    IonToolbar,
+    LoaderSpinner
+  },
+  setup() {
+    const modalStore = useModalStore();
+    const tableStore = useTableStore();
+    const toastStore = useToastStore();
 
-const payload = computed(() => modalStore.payload || {});
-const entryTitle = computed(() => payload.value.entryTitle || 'Untitled entry');
-
-const confirmDelete = async () => {
-  isDeleting.value = true;
-
-  try {
-    await tableStore.deleteCurrentEntry(payload.value);
-    toastStore.show(`Deleted "${entryTitle.value}".`, {
-      color: 'success'
+    const state = reactive({
+      modalStore,
+      isDeleting: false
     });
-    modalStore.close();
-  } catch (error) {
-    toastStore.show(error.message || 'Delete failed.', {
-      color: 'danger',
-      duration: 2600
-    });
-  } finally {
-    isDeleting.value = false;
+
+    const methods = {
+      closeModal() {
+        modalStore.close();
+      },
+      async confirmDelete() {
+        state.isDeleting = true;
+
+        try {
+          await tableStore.deleteCurrentEntry(computedState.payload.value);
+          toastStore.show(`Deleted "${computedState.entryTitle.value}".`, {
+            color: 'success'
+          });
+          modalStore.close();
+        } catch (error) {
+          toastStore.show(error.message || 'Delete failed.', {
+            color: 'danger',
+            duration: 2600
+          });
+        } finally {
+          state.isDeleting = false;
+        }
+      }
+    };
+
+    const computedState = {
+      payload: computed(() => modalStore.payload || {}),
+      entryTitle: computed(() => computedState.payload.value.entryTitle || 'Untitled entry')
+    };
+
+    return {
+      ...state,
+      ...methods,
+      ...computedState,
+      close
+    };
   }
 };
 </script>

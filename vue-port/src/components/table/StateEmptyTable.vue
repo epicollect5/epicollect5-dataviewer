@@ -4,3 +4,9 @@
     <p>The current form and filter combination returned no rows.</p>
   </section>
 </template>
+
+<script>
+export default {
+  name: 'StateEmptyTable'
+};
+</script>

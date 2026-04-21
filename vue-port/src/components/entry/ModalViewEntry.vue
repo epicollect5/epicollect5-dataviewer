@@ -3,7 +3,7 @@
     <ion-toolbar>
       <ion-title>Entry: {{ entryTitle }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button shape="round" class="photo-lightbox__close-button" aria-label="Close entry view" @click="modalStore.close()">
+        <ion-button shape="round" class="photo-lightbox__close-button" aria-label="Close entry view" @click="closeModal">
           <ion-icon slot="icon-only" :icon="close" />
         </ion-button>
       </ion-buttons>
@@ -97,7 +97,7 @@
   </ion-content>
 </template>
 
-<script setup>
+<script>
 import {
   IonButton,
   IonButtons,
@@ -111,122 +111,152 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive } from 'vue';
 import PARAMETERS from '@/config/parameters';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import { useModalStore } from '@/stores/modalStore';
-
-const modalStore = useModalStore();
-const payload = computed(() => modalStore.payload || {});
-const entryTitle = computed(() => payload.value.entryTitle || 'Entry');
-const headers = computed(() => payload.value.viewHeaders || []);
-const answers = computed(() => payload.value.viewAnswers || []);
-const activeMedia = ref(null);
-const isPhotoLoading = ref(false);
-const photoAspectRatio = ref(4 / 3);
-const viewportWidth = ref(0);
-const viewportHeight = ref(0);
 
 const FRAME_BORDER = 6;
 const MODAL_PADDING = 24;
 const MODAL_CHROME_HEIGHT = 84;
 
-const syncViewport = () => {
-  if (typeof window === 'undefined') {
-    return;
-  }
+export default {
+  name: 'ModalViewEntry',
+  components: {
+    IonButton,
+    IonButtons,
+    IonCard,
+    IonCardContent,
+    IonContent,
+    IonHeader,
+    IonIcon,
+    IonModal,
+    IonTitle,
+    IonToolbar,
+    LoaderSpinner
+  },
+  setup() {
+    const modalStore = useModalStore();
 
-  viewportWidth.value = window.innerWidth;
-  viewportHeight.value = window.innerHeight;
-};
+    const state = reactive({
+      modalStore,
+      activeMedia: null,
+      isPhotoLoading: false,
+      photoAspectRatio: 4 / 3,
+      viewportWidth: 0,
+      viewportHeight: 0
+    });
 
-const rows = computed(() => {
-  return answers.value.map((answer, index) => {
-    const question = headers.value[index]?.question || `Question ${index + 1}`;
+    const methods = {
+      syncViewport() {
+        if (typeof window === 'undefined') {
+          return;
+        }
 
-    if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE && answer.answer) {
-      return { key: `${question}-${index}`, question, kind: 'photo', value: answer.answer };
-    }
+        state.viewportWidth = window.innerWidth;
+        state.viewportHeight = window.innerHeight;
+      },
+      openMedia(type, title, src) {
+        methods.syncViewport();
+        state.activeMedia = { type, title, src };
+        state.isPhotoLoading = type === 'photo';
+      },
+      closeMedia() {
+        state.activeMedia = null;
+        state.isPhotoLoading = false;
+      },
+      closeModal() {
+        modalStore.close();
+      },
+      handlePhotoLoad(event) {
+        const image = event.target;
 
-    if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE && answer.answer) {
-      return { key: `${question}-${index}`, question, kind: 'audio', value: answer.answer };
-    }
+        if (image?.naturalWidth && image?.naturalHeight) {
+          state.photoAspectRatio = image.naturalWidth / image.naturalHeight;
+        }
 
-    if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE && answer.answer) {
-      return { key: `${question}-${index}`, question, kind: 'video', value: answer.answer };
-    }
+        state.isPhotoLoading = false;
+      }
+    };
 
-    return { key: `${question}-${index}`, question, kind: 'text', value: answer.answer };
-  });
-});
+    const computedState = {
+      payload: computed(() => modalStore.payload || {}),
+      entryTitle: computed(() => computedState.payload.value.entryTitle || 'Entry'),
+      headers: computed(() => computedState.payload.value.viewHeaders || []),
+      answers: computed(() => computedState.payload.value.viewAnswers || []),
+      rows: computed(() => {
+        return computedState.answers.value.map((answer, index) => {
+          const question = computedState.headers.value[index]?.question || `Question ${index + 1}`;
 
-const photoLayout = computed(() => {
-  const maxWidth = Math.max(320, viewportWidth.value - 48);
-  const maxHeight = Math.max(240, viewportHeight.value - 120);
-  let width = maxHeight * photoAspectRatio.value;
-  let height = maxHeight;
+          if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE && answer.answer) {
+            return { key: `${question}-${index}`, question, kind: 'photo', value: answer.answer };
+          }
 
-  if (width > maxWidth) {
-    width = maxWidth;
-    height = width / photoAspectRatio.value;
-  }
+          if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE && answer.answer) {
+            return { key: `${question}-${index}`, question, kind: 'audio', value: answer.answer };
+          }
 
-  return {
-    width: Math.round(width),
-    height: Math.round(height)
-  };
-});
+          if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE && answer.answer) {
+            return { key: `${question}-${index}`, question, kind: 'video', value: answer.answer };
+          }
 
-const photoFrameStyle = computed(() => ({
-  width: `${photoLayout.value.width + FRAME_BORDER}px`,
-  height: `${photoLayout.value.height + FRAME_BORDER}px`
-}));
+          return { key: `${question}-${index}`, question, kind: 'text', value: answer.answer };
+        });
+      }),
+      photoLayout: computed(() => {
+        const maxWidth = Math.max(320, state.viewportWidth - 48);
+        const maxHeight = Math.max(240, state.viewportHeight - 120);
+        let width = maxHeight * state.photoAspectRatio;
+        let height = maxHeight;
 
-const mediaModalStyle = computed(() => {
-  if (activeMedia.value?.type === 'photo') {
+        if (width > maxWidth) {
+          width = maxWidth;
+          height = width / state.photoAspectRatio;
+        }
+
+        return {
+          width: Math.round(width),
+          height: Math.round(height)
+        };
+      }),
+      photoFrameStyle: computed(() => ({
+        width: `${computedState.photoLayout.value.width + FRAME_BORDER}px`,
+        height: `${computedState.photoLayout.value.height + FRAME_BORDER}px`
+      })),
+      mediaModalStyle: computed(() => {
+        if (state.activeMedia?.type === 'photo') {
+          return {
+            '--width': `${computedState.photoLayout.value.width + FRAME_BORDER + MODAL_PADDING}px`,
+            '--height': `${computedState.photoLayout.value.height + FRAME_BORDER + MODAL_PADDING + MODAL_CHROME_HEIGHT}px`,
+            '--max-width': '96vw',
+            '--max-height': '94vh'
+          };
+        }
+
+        return {
+          '--width': 'min(92vw, 960px)',
+          '--height': 'min(70vh, 680px)',
+          '--max-width': '92vw',
+          '--max-height': '70vh'
+        };
+      })
+    };
+
+    onMounted(() => {
+      methods.syncViewport();
+      window.addEventListener('resize', methods.syncViewport);
+    });
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', methods.syncViewport);
+    });
+
     return {
-      '--width': `${photoLayout.value.width + FRAME_BORDER + MODAL_PADDING}px`,
-      '--height': `${photoLayout.value.height + FRAME_BORDER + MODAL_PADDING + MODAL_CHROME_HEIGHT}px`,
-      '--max-width': '96vw',
-      '--max-height': '94vh'
+      ...state,
+      ...methods,
+      ...computedState,
+      close
     };
   }
-
-  return {
-    '--width': 'min(92vw, 960px)',
-    '--height': 'min(70vh, 680px)',
-    '--max-width': '92vw',
-    '--max-height': '70vh'
-  };
-});
-
-const openMedia = (type, title, src) => {
-  syncViewport();
-  activeMedia.value = { type, title, src };
-  isPhotoLoading.value = type === 'photo';
 };
-
-const closeMedia = () => {
-  activeMedia.value = null;
-  isPhotoLoading.value = false;
-};
-
-const handlePhotoLoad = (event) => {
-  const image = event.target;
-
-  if (image?.naturalWidth && image?.naturalHeight) {
-    photoAspectRatio.value = image.naturalWidth / image.naturalHeight;
-  }
-
-  isPhotoLoading.value = false;
-};
-
-onMounted(() => {
-  syncViewport();
-  window.addEventListener('resize', syncViewport);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', syncViewport);
-});
 </script>

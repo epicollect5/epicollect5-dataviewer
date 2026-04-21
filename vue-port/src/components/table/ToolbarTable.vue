@@ -4,10 +4,10 @@
       <label class="table-toolbar__field table-toolbar__field--search">
         <span>Title</span>
         <input
-          :value="filterByTitle"
+          :value="props.filterByTitle"
           type="search"
           placeholder="Filter by title"
-          @input="$emit('update:title', $event.target.value)"
+          @input="handleTitleChange($event.target.value)"
         />
       </label>
 
@@ -23,22 +23,22 @@
 
       <label class="table-toolbar__field">
         <span>Order</span>
-        <select :value="selectedOrderBy" @change="$emit('update:order', $event.target.value)">
+        <select :value="props.selectedOrderBy" @change="handleOrderChange($event.target.value)">
           <option v-for="option in orderOptions" :key="option" :value="option">{{ option }}</option>
         </select>
       </label>
     </div>
 
     <div class="table-toolbar__secondary">
-      <button type="button" class="table-toolbar__ghost" @click="$emit('reset-filters')">Reset</button>
-      <button type="button" class="table-toolbar__ghost" @click="$emit('open-upload')">Upload</button>
+      <button type="button" class="table-toolbar__ghost" @click="handleResetFilters">Reset</button>
+      <button type="button" class="table-toolbar__ghost" @click="handleOpenUpload">Upload</button>
 
-      <div v-if="pagination" class="table-toolbar__pagination">
-        <span>Total {{ pagination.total }} · Page {{ pagination.current_page }}/{{ pagination.last_page }}</span>
-        <button type="button" :disabled="!links?.prev || isLoading" @click="$emit('previous-page')">
+      <div v-if="props.pagination" class="table-toolbar__pagination">
+        <span>Total {{ props.pagination.total }} · Page {{ props.pagination.current_page }}/{{ props.pagination.last_page }}</span>
+        <button type="button" :disabled="!props.links?.prev || props.isLoading" @click="handlePreviousPage">
           Prev
         </button>
-        <button type="button" :disabled="!links?.next || isLoading" @click="$emit('next-page')">
+        <button type="button" :disabled="!props.links?.next || props.isLoading" @click="handleNextPage">
           Next
         </button>
       </div>
@@ -46,62 +46,97 @@
   </section>
 </template>
 
-<script setup>
-import { computed } from 'vue';
+<script>
+import { computed, reactive } from 'vue';
 import PARAMETERS from '@/config/parameters';
 
-const props = defineProps({
-  isLoading: {
-    type: Boolean,
-    default: false
+export default {
+  name: 'ToolbarTable',
+  props: {
+    isLoading: {
+      type: Boolean,
+      default: false
+    },
+    pagination: {
+      type: Object,
+      default: null
+    },
+    links: {
+      type: Object,
+      default: null
+    },
+    filterByTitle: {
+      type: String,
+      default: ''
+    },
+    startDate: {
+      type: String,
+      default: ''
+    },
+    endDate: {
+      type: String,
+      default: ''
+    },
+    selectedOrderBy: {
+      type: String,
+      default: PARAMETERS.ORDER_BY.NEWEST
+    }
   },
-  pagination: {
-    type: Object,
-    default: null
-  },
-  links: {
-    type: Object,
-    default: null
-  },
-  filterByTitle: {
-    type: String,
-    default: ''
-  },
-  startDate: {
-    type: String,
-    default: ''
-  },
-  endDate: {
-    type: String,
-    default: ''
-  },
-  selectedOrderBy: {
-    type: String,
-    default: PARAMETERS.ORDER_BY.NEWEST
+  emits: [
+    'update:title',
+    'update:start-date',
+    'update:end-date',
+    'update:order',
+    'reset-filters',
+    'open-upload',
+    'previous-page',
+    'next-page'
+  ],
+  setup(props, { emit }) {
+    const state = reactive({
+      orderOptions: Object.values(PARAMETERS.ORDER_BY)
+    });
+
+    const methods = {
+      handleTitleChange(value) {
+        emit('update:title', value);
+      },
+      handleOrderChange(value) {
+        emit('update:order', value);
+      },
+      handleResetFilters() {
+        emit('reset-filters');
+      },
+      handleOpenUpload() {
+        emit('open-upload');
+      },
+      handlePreviousPage() {
+        emit('previous-page');
+      },
+      handleNextPage() {
+        emit('next-page');
+      },
+      emitDateChange(field, value) {
+        const nextPayload = {
+          startDate: field === 'startDate' ? value : computedState.startDateValue.value,
+          endDate: field === 'endDate' ? value : computedState.endDateValue.value
+        };
+
+        emit(field === 'startDate' ? 'update:start-date' : 'update:end-date', nextPayload);
+      }
+    };
+
+    const computedState = {
+      startDateValue: computed(() => (props.startDate ? props.startDate.slice(0, 10) : '')),
+      endDateValue: computed(() => (props.endDate ? props.endDate.slice(0, 10) : ''))
+    };
+
+    return {
+      props,
+      ...state,
+      ...methods,
+      ...computedState
+    };
   }
-});
-
-const emit = defineEmits([
-  'update:title',
-  'update:start-date',
-  'update:end-date',
-  'update:order',
-  'reset-filters',
-  'open-upload',
-  'previous-page',
-  'next-page'
-]);
-
-const orderOptions = Object.values(PARAMETERS.ORDER_BY);
-const startDateValue = computed(() => (props.startDate ? props.startDate.slice(0, 10) : ''));
-const endDateValue = computed(() => (props.endDate ? props.endDate.slice(0, 10) : ''));
-
-const emitDateChange = (field, value) => {
-  const nextPayload = {
-    startDate: field === 'startDate' ? value : startDateValue.value,
-    endDate: field === 'endDate' ? value : endDateValue.value
-  };
-
-  emit(field === 'startDate' ? 'update:start-date' : 'update:end-date', nextPayload);
 };
 </script>

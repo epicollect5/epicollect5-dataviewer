@@ -5,7 +5,7 @@
       class="app-drawer__backdrop"
       type="button"
       aria-label="Close drawer"
-      @click="drawerStore.close()"
+      @click="closeDrawer"
     ></button>
 
     <aside
@@ -18,7 +18,7 @@
     >
       <header class="app-drawer__header">
         <h2>{{ drawerTitle }}</h2>
-        <ion-button fill="clear" color="primary" class="app-drawer__close-icon" aria-label="Close drawer" @click="drawerStore.close()">
+        <ion-button fill="clear" color="primary" class="app-drawer__close-icon" aria-label="Close drawer" @click="closeDrawer">
           <ion-icon :icon="close" />
         </ion-button>
       </header>
@@ -38,33 +38,61 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { IonButton, IonIcon } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed } from 'vue';
-import { storeToRefs } from 'pinia';
+import { computed, reactive } from 'vue';
 import DrawerEntry from '@/components/entry/DrawerEntry.vue';
 import MapControls from '@/components/map/MapControls.vue';
 import { useDrawerStore } from '@/stores/drawerStore';
 
-const drawerStore = useDrawerStore();
-const { activeDrawer, payload } = storeToRefs(drawerStore);
+export default {
+  name: 'DrawerAppHost',
+  components: {
+    IonButton,
+    IonIcon,
+    DrawerEntry,
+    MapControls
+  },
+  setup() {
+    const drawerStore = useDrawerStore();
 
-const drawerTitle = computed(() => {
-  if (activeDrawer.value === 'map-entry') {
-    return 'Entry';
+    const state = reactive({
+      drawerStore
+    });
+
+    const methods = {
+      closeDrawer() {
+        drawerStore.close();
+      },
+      forward(eventName, value) {
+        drawerStore.payload?.onEvent?.(eventName, value);
+      }
+    };
+
+    const computedState = {
+      activeDrawer: computed(() => drawerStore.activeDrawer),
+      payload: computed(() => drawerStore.payload),
+      drawerTitle: computed(() => {
+        if (drawerStore.activeDrawer === 'map-entry') {
+          return 'Entry';
+        }
+
+        if (drawerStore.activeDrawer === 'map-filters') {
+          return 'Map Filters';
+        }
+
+        return 'Drawer';
+      }),
+      drawerSide: computed(() => drawerStore.payload?.side || 'right')
+    };
+
+    return {
+      ...state,
+      ...methods,
+      ...computedState,
+      close
+    };
   }
-
-  if (activeDrawer.value === 'map-filters') {
-    return 'Map Filters';
-  }
-
-  return 'Drawer';
-});
-
-const drawerSide = computed(() => payload.value?.side || 'right');
-
-const forward = (eventName, value) => {
-  payload.value?.onEvent?.(eventName, value);
 };
 </script>

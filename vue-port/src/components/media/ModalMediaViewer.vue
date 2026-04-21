@@ -3,7 +3,7 @@
     <ion-toolbar>
       <ion-title>{{ title }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button shape="round" class="photo-lightbox__close-button" aria-label="Close media viewer" @click="modalStore.close()">
+        <ion-button shape="round" class="photo-lightbox__close-button" aria-label="Close media viewer" @click="closeModal">
           <ion-icon slot="icon-only" :icon="close" />
         </ion-button>
       </ion-buttons>
@@ -40,7 +40,7 @@
   </ion-content>
 </template>
 
-<script setup>
+<script>
 import {
   IonButton,
   IonButtons,
@@ -51,105 +51,135 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive } from 'vue';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import { useModalStore } from '@/stores/modalStore';
-
-const modalStore = useModalStore();
-
-const payload = computed(() => modalStore.payload || {});
-const mediaType = computed(() => payload.value.mediaType || 'photo');
-const title = computed(() => payload.value.title || 'Media');
-const src = computed(() => payload.value.src || '');
-const isPhoto = computed(() => mediaType.value === 'photo');
-const isAudio = computed(() => mediaType.value === 'audio');
-const isPhotoLoading = ref(isPhoto.value);
-const photoAspectRatio = ref(4 / 3);
-const viewportWidth = ref(0);
-const viewportHeight = ref(0);
 
 const FRAME_BORDER = 6;
 const MODAL_PADDING = 24;
 const MODAL_CHROME_HEIGHT = 84;
 
-const syncViewport = () => {
-  if (typeof window === 'undefined') {
-    return;
-  }
+export default {
+  name: 'ModalMediaViewer',
+  components: {
+    IonButton,
+    IonButtons,
+    IonContent,
+    IonHeader,
+    IonIcon,
+    IonTitle,
+    IonToolbar,
+    LoaderSpinner
+  },
+  setup(props, { expose }) {
+    const modalStore = useModalStore();
 
-  viewportWidth.value = window.innerWidth;
-  viewportHeight.value = window.innerHeight;
-};
+    const state = reactive({
+      modalStore,
+      isPhotoLoading: true,
+      photoAspectRatio: 4 / 3,
+      viewportWidth: 0,
+      viewportHeight: 0
+    });
 
-const photoLayout = computed(() => {
-  const maxWidth = Math.max(320, viewportWidth.value - 48);
-  const maxHeight = Math.max(240, viewportHeight.value - 120);
-  let width = maxHeight * photoAspectRatio.value;
-  let height = maxHeight;
+    const methods = {
+      syncViewport() {
+        if (typeof window === 'undefined') {
+          return;
+        }
 
-  if (width > maxWidth) {
-    width = maxWidth;
-    height = width / photoAspectRatio.value;
-  }
+        state.viewportWidth = window.innerWidth;
+        state.viewportHeight = window.innerHeight;
+      },
+      handlePhotoLoad(event) {
+        const image = event.target;
 
-  return {
-    width: Math.round(width),
-    height: Math.round(height)
-  };
-});
+        if (image?.naturalWidth && image?.naturalHeight) {
+          state.photoAspectRatio = image.naturalWidth / image.naturalHeight;
+        }
 
-const photoFrameStyle = computed(() => {
-  if (!isPhoto.value) {
-    return {};
-  }
+        state.isPhotoLoading = false;
+      },
+      closeModal() {
+        modalStore.close();
+      }
+    };
 
-  return {
-    width: `${photoLayout.value.width + FRAME_BORDER}px`,
-    height: `${photoLayout.value.height + FRAME_BORDER}px`
-  };
-});
+    const computedState = {
+      payload: computed(() => modalStore.payload || {}),
+      mediaType: computed(() => computedState.payload.value.mediaType || 'photo'),
+      title: computed(() => computedState.payload.value.title || 'Media'),
+      src: computed(() => computedState.payload.value.src || ''),
+      isPhoto: computed(() => computedState.mediaType.value === 'photo'),
+      isAudio: computed(() => computedState.mediaType.value === 'audio'),
+      photoLayout: computed(() => {
+        const maxWidth = Math.max(320, state.viewportWidth - 48);
+        const maxHeight = Math.max(240, state.viewportHeight - 120);
+        let width = maxHeight * state.photoAspectRatio;
+        let height = maxHeight;
 
-const contentClass = computed(() => {
-  return isPhoto.value ? 'photo-lightbox__content' : 'media-player-modal__content';
-});
+        if (width > maxWidth) {
+          width = maxWidth;
+          height = width / state.photoAspectRatio;
+        }
 
-const handlePhotoLoad = (event) => {
-  const image = event.target;
+        return {
+          width: Math.round(width),
+          height: Math.round(height)
+        };
+      }),
+      photoFrameStyle: computed(() => {
+        if (!computedState.isPhoto.value) {
+          return {};
+        }
 
-  if (image?.naturalWidth && image?.naturalHeight) {
-    photoAspectRatio.value = image.naturalWidth / image.naturalHeight;
-  }
+        return {
+          width: `${computedState.photoLayout.value.width + FRAME_BORDER}px`,
+          height: `${computedState.photoLayout.value.height + FRAME_BORDER}px`
+        };
+      }),
+      contentClass: computed(() => {
+        return computedState.isPhoto.value ? 'photo-lightbox__content' : 'media-player-modal__content';
+      }),
+      modalStyle: computed(() => {
+        if (!computedState.isPhoto.value) {
+          return {
+            '--width': 'min(92vw, 960px)',
+            '--height': 'min(70vh, 680px)',
+            '--max-width': '92vw',
+            '--max-height': '70vh'
+          };
+        }
 
-  isPhotoLoading.value = false;
-};
+        return {
+          '--width': `${computedState.photoLayout.value.width + FRAME_BORDER + MODAL_PADDING}px`,
+          '--height': `${computedState.photoLayout.value.height + FRAME_BORDER + MODAL_PADDING + MODAL_CHROME_HEIGHT}px`,
+          '--max-width': '96vw',
+          '--max-height': '94vh'
+        };
+      })
+    };
 
-onMounted(() => {
-  syncViewport();
-  window.addEventListener('resize', syncViewport);
-  isPhotoLoading.value = isPhoto.value;
-});
+    onMounted(() => {
+      methods.syncViewport();
+      window.addEventListener('resize', methods.syncViewport);
+      state.isPhotoLoading = computedState.isPhoto.value;
+    });
 
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', syncViewport);
-});
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', methods.syncViewport);
+    });
 
-defineExpose({
-  modalStyle: computed(() => {
-    if (!isPhoto.value) {
-      return {
-        '--width': 'min(92vw, 960px)',
-        '--height': 'min(70vh, 680px)',
-        '--max-width': '92vw',
-        '--max-height': '70vh'
-      };
-    }
+    expose({
+      modalStyle: computedState.modalStyle
+    });
 
     return {
-      '--width': `${photoLayout.value.width + FRAME_BORDER + MODAL_PADDING}px`,
-      '--height': `${photoLayout.value.height + FRAME_BORDER + MODAL_PADDING + MODAL_CHROME_HEIGHT}px`,
-      '--max-width': '96vw',
-      '--max-height': '94vh'
+      ...state,
+      ...methods,
+      ...computedState,
+      close
     };
-  })
-});
+  }
+};
 </script>
