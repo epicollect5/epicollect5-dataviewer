@@ -7,6 +7,7 @@
     :visible="isVisible"
     :imgs="images"
     :index="0"
+    teleport="body"
     :title-disabled="true"
     :move-disabled="true"
     :rotate-disabled="true"
@@ -99,14 +100,14 @@ export default {
       },
       closeModal() {
         methods.stopOverlayLoader();
-        modalStore.close();
+        modalStore.closePhotoViewer();
       }
     };
 
     const computedState = {
-      isVisible: computed(() => modalStore.activeModal === 'photo-viewer'),
+      isVisible: computed(() => modalStore.photoViewerPayload !== null),
       images: computed(() => {
-        const payload = modalStore.payload || {};
+        const payload = modalStore.photoViewerPayload || {};
 
         if (!payload.src) {
           return [];

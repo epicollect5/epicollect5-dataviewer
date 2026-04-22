@@ -1,7 +1,7 @@
 <template>
-  <PhotoViewerModal v-if="activeModal === 'photo-viewer'" />
+  <PhotoViewerModal />
 
-  <ion-modal :is-open="activeModal !== null && activeModal !== 'photo-viewer'" :style="modalStyle" @didDismiss="closeModal">
+  <ion-modal :is-open="activeModal !== null" :style="modalStyle" @didDismiss="closeModal">
     <UploadModal v-if="activeModal === 'upload'" />
     <DeleteEntryModal v-else-if="activeModal === 'delete-entry'" />
     <MediaViewerModal v-else-if="activeModal === 'media-viewer'" :ref="setMediaViewerModal" />

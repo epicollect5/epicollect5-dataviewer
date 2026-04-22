@@ -2,13 +2,15 @@ import { mount } from '@vue/test-utils';
 import { defineComponent, h, reactive } from 'vue';
 
 const modalStore = reactive({
-  activeModal: 'photo-viewer',
-  payload: {
+  activeModal: null,
+  payload: null,
+  photoViewerPayload: {
     title: 'Photo',
     src: 'https://example.com/original.jpg',
     previewSrc: 'https://example.com/thumb.jpg'
   },
-  close: vi.fn()
+  close: vi.fn(),
+  closePhotoViewer: vi.fn()
 });
 
 vi.mock('@/stores/modalStore', () => ({
@@ -49,13 +51,15 @@ describe('components/media/ModalPhotoViewer', () => {
   const originalImage = window.Image;
 
   beforeEach(() => {
-    modalStore.activeModal = 'photo-viewer';
-    modalStore.payload = {
+    modalStore.activeModal = null;
+    modalStore.payload = null;
+    modalStore.photoViewerPayload = {
       title: 'Photo',
       src: 'https://example.com/original.jpg',
       previewSrc: 'https://example.com/thumb.jpg'
     };
     modalStore.close.mockClear();
+    modalStore.closePhotoViewer.mockClear();
 
     class MockImage {
       constructor() {
@@ -96,6 +100,6 @@ describe('components/media/ModalPhotoViewer', () => {
 
     await wrapper.get('.lightbox-stub').trigger('click');
 
-    expect(modalStore.close).toHaveBeenCalled();
+    expect(modalStore.closePhotoViewer).toHaveBeenCalled();
   });
 });

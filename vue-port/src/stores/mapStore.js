@@ -13,6 +13,8 @@ export const useMapStore = defineStore('map', {
     locations: [],
     filteredLocations: [],
     markers: [],
+    hasLoadedInitialPage: false,
+    lastLoadedProjectSlug: '',
     selectedLocationQuestion: null,
     selectedEntry: null,
     pagination: null,
@@ -41,6 +43,8 @@ export const useMapStore = defineStore('map', {
       this.locations = [];
       this.filteredLocations = [];
       this.markers = [];
+      this.hasLoadedInitialPage = false;
+      this.lastLoadedProjectSlug = '';
       this.selectedLocationQuestion = null;
       this.selectedEntry = null;
       this.pagination = null;
@@ -88,6 +92,7 @@ export const useMapStore = defineStore('map', {
       this.locations = [];
       this.filteredLocations = [];
       this.markers = [];
+      this.hasLoadedInitialPage = true;
       this.selectedLocationQuestion = null;
       this.pagination = null;
       this.links = null;
@@ -159,6 +164,11 @@ export const useMapStore = defineStore('map', {
         return;
       }
 
+      if (this.lastLoadedProjectSlug !== projectStore.projectSlug) {
+        this.hasLoadedInitialPage = false;
+        this.lastLoadedProjectSlug = projectStore.projectSlug;
+      }
+
       const locationQuestions = this.getLocationQuestions();
 
       if (locationQuestions.length === 0) {
@@ -199,6 +209,7 @@ export const useMapStore = defineStore('map', {
         this.markers = [];
       } finally {
         this.isFetchingPage = false;
+        this.hasLoadedInitialPage = true;
       }
     },
 

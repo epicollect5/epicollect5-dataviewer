@@ -1,46 +1,55 @@
 <template>
-  <section class="map-controls">
-    <div class="map-controls__group">
-      <label class="map-controls__field">
-        <span>Location question</span>
-        <select :value="selectedLocationKey" @change="emitLocationChange($event.target.value)">
-          <option v-for="question in props.locationQuestions" :key="getLocationKey(question)" :value="getLocationKey(question)">
-            {{ question.question }}
-          </option>
-        </select>
-      </label>
+  <div class="drawer-map">
+    <ion-list lines="none" class="drawer-map__list">
+      <ion-item class="drawer-map__item" :detail="false">
+        <label class="drawer-map__field">
+          <span>Location question</span>
+          <select :value="selectedLocationKey" @change="emitLocationChange($event.target.value)">
+            <option v-for="question in props.locationQuestions" :key="getLocationKey(question)" :value="getLocationKey(question)">
+              {{ question.question }}
+            </option>
+          </select>
+        </label>
+      </ion-item>
 
-      <label class="map-controls__checkbox">
-        <input :checked="props.clustersEnabled" type="checkbox" @change="emitClusterToggle($event.target.checked)" />
-        <span>Group markers by coordinates</span>
-      </label>
-    </div>
+      <ion-item class="drawer-map__item" :detail="false">
+        <label class="drawer-map__checkbox">
+          <input :checked="props.clustersEnabled" type="checkbox" @change="emitClusterToggle($event.target.checked)" />
+          <span>Group markers by coordinates</span>
+        </label>
+      </ion-item>
 
-    <div class="map-controls__group">
-      <label class="map-controls__field">
-        <span>From</span>
-        <input :value="props.startDate" :min="props.minDate" :max="props.maxDate" type="date" @change="emitDateChange('startDate', $event.target.value)" />
-      </label>
+      <ion-item class="drawer-map__item" :detail="false">
+        <label class="drawer-map__field">
+          <span>From</span>
+          <input :value="props.startDate" :min="props.minDate" :max="props.maxDate" type="date" @change="emitDateChange('startDate', $event.target.value)" />
+        </label>
+      </ion-item>
 
-      <label class="map-controls__field">
-        <span>To</span>
-        <input :value="props.endDate" :min="props.minDate" :max="props.maxDate" type="date" @change="emitDateChange('endDate', $event.target.value)" />
-      </label>
+      <ion-item class="drawer-map__item" :detail="false">
+        <label class="drawer-map__field">
+          <span>To</span>
+          <input :value="props.endDate" :min="props.minDate" :max="props.maxDate" type="date" @change="emitDateChange('endDate', $event.target.value)" />
+        </label>
+      </ion-item>
 
-      <button class="map-controls__reset-button" type="button" @click="resetDates">Reset dates</button>
-    </div>
+      <ion-item class="drawer-map__item" :detail="false">
+        <button class="drawer-map__reset-button" type="button" @click="resetDates">Reset dates</button>
+      </ion-item>
+    </ion-list>
 
-    <p class="map-controls__summary">
+    <p class="drawer-map__summary">
       Showing {{ props.visibleCount }} marker{{ props.visibleCount === 1 ? '' : 's' }} from {{ props.totalCount }} location feature{{ props.totalCount === 1 ? '' : 's' }}.
     </p>
-  </section>
+  </div>
 </template>
 
 <script>
+import { IonItem, IonList } from '@ionic/vue';
 import { computed } from 'vue';
 
 export default {
-  name: 'MapControls',
+  name: 'DrawerMap',
   props: {
     locationQuestions: {
       type: Array,
@@ -80,6 +89,10 @@ export default {
     }
   },
   emits: ['change-location', 'toggle-clusters', 'update-dates', 'reset-dates'],
+  components: {
+    IonItem,
+    IonList
+  },
   setup(props, { emit }) {
     const methods = {
       getLocationKey(question) {
@@ -118,4 +131,4 @@ export default {
   }
 };
 </script>
-<style src="@/theme/map/MapControls.scss" lang="scss"></style>
+<style src="@/theme/map/DrawerMap.scss" lang="scss"></style>

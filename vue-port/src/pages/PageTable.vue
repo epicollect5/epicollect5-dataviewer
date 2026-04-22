@@ -5,10 +5,6 @@
       <p>Open the Vue port with `?project=your-project-slug` or use `/:projectSlug/data`.</p>
     </div>
 
-    <div v-else-if="state.projectStore.isFetching" class="placeholder-view">
-      <h1>Loading project…</h1>
-    </div>
-
     <div v-else-if="state.projectStore.isRejected" class="placeholder-view">
       <h1>Project Load Failed</h1>
       <p>{{ projectErrors }}</p>

@@ -5,10 +5,6 @@
       <p>Open the Vue port with `?project=your-project-slug` or use `/:projectSlug/data/map`.</p>
     </div>
 
-    <div v-else-if="state.projectStore.isFetching" class="placeholder-view">
-      <h1>Loading project…</h1>
-    </div>
-
     <div v-else-if="state.projectStore.isRejected" class="placeholder-view">
       <h1>Project Load Failed</h1>
       <p>{{ projectErrors }}</p>
@@ -52,7 +48,7 @@
             <p>The current form has a location question, but the API returned no location features for this selection.</p>
           </div>
 
-          <LeafletMap v-else :markers="state.mapStore.markers" @marker-click="handleMarkerClick" />
+          <LeafletMap v-else :ref="setLeafletMap" :markers="state.mapStore.markers" @marker-click="handleMarkerClick" />
         </template>
       </div>
     </template>
@@ -90,10 +86,14 @@ export default {
       drawerStore,
       projectStore,
       navigationStore,
-      mapStore
+      mapStore,
+      leafletMap: null
     });
 
     const methods = {
+      setLeafletMap(instance) {
+        state.leafletMap = instance;
+      },
       async bootstrap() {
         if (!computedState.resolvedProjectSlug.value) {
           return;
@@ -166,6 +166,9 @@ export default {
           side: 'left'
         });
         await mapStore.loadEntry(marker.entryUuid);
+      },
+      closeEntryPopup() {
+        state.leafletMap?.closeActivePopup?.();
       }
     };
 
@@ -208,6 +211,15 @@ export default {
       () => {
         if (drawerStore.activeDrawer === 'map-filters') {
           methods.openFiltersDrawer();
+        }
+      }
+    );
+
+    watch(
+      () => drawerStore.activeDrawer,
+      (activeDrawer, previousDrawer) => {
+        if (previousDrawer === 'map-entry' && activeDrawer !== 'map-entry') {
+          methods.closeEntryPopup();
         }
       }
     );

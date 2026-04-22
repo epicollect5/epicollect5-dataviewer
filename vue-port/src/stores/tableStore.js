@@ -14,6 +14,8 @@ export const useTableStore = defineStore('table', {
     requestParams: {},
     pagination: null,
     links: null,
+    hasLoadedInitialPage: false,
+    lastLoadedProjectSlug: '',
     isFetchingPage: false,
     isRejectedPage: false,
     isBranchTable: false,
@@ -61,6 +63,11 @@ export const useTableStore = defineStore('table', {
         return;
       }
 
+      if (this.lastLoadedProjectSlug !== projectStore.projectSlug) {
+        this.hasLoadedInitialPage = false;
+        this.lastLoadedProjectSlug = projectStore.projectSlug;
+      }
+
       this.isFetchingPage = true;
       this.isRejectedPage = false;
       this.errors = [];
@@ -83,6 +90,7 @@ export const useTableStore = defineStore('table', {
         this.errors = error.response?.data?.errors || [error.message];
       } finally {
         this.isFetchingPage = false;
+        this.hasLoadedInitialPage = true;
       }
     },
 

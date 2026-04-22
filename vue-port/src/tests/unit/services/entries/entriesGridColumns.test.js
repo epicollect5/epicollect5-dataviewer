@@ -46,8 +46,8 @@ describe('services/entries/entriesGridColumns', () => {
 
     cellElement.click();
 
-    expect(modalStore.activeModal).toBe('photo-viewer');
-    expect(modalStore.payload).toEqual({
+    expect(modalStore.activeModal).toBe(null);
+    expect(modalStore.photoViewerPayload).toEqual({
       title: 'Entry title',
       src: 'https://example.com/original.jpg',
       previewSrc: 'https://example.com/thumb.jpg'

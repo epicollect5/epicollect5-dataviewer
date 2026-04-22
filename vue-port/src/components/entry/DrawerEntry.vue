@@ -1,88 +1,92 @@
 <template>
-  <div class="drawer-entry-host">
-    <section class="drawer-entry">
-      <transition name="fade" mode="out-in">
-        <div v-if="state.mapStore.isFetchingEntry" key="loading" class="drawer-entry__loader">
-          <LoaderSpinner />
+  <transition name="fade" mode="out-in">
+    <div v-if="state.mapStore.isFetchingEntry" key="loading" class="drawer-entry__loader">
+      <LoaderSpinner />
+    </div>
+
+    <div v-else-if="!entrySections.length" key="empty" class="drawer-entry__loader drawer-entry__loader--empty">
+      No entry selected.
+    </div>
+
+    <ion-list v-else key="content" class="drawer-entry__content" lines="none">
+      <ion-item class="drawer-entry__group" :detail="false">
+        <div class="drawer-entry__item-content">
+          <div class="drawer-entry__question drawer-entry__question--title">{{ entryTitle }}</div>
         </div>
+      </ion-item>
 
-        <div v-else-if="!entrySections.length" key="empty" class="drawer-entry__loader drawer-entry__loader--empty">
-          No entry selected.
+      <ion-item class="drawer-entry__group" :detail="false">
+        <div class="drawer-entry__item-content">
+          <div class="drawer-entry__question">Created At</div>
+          <div class="drawer-entry__answer">{{ entryCreatedAt }}</div>
         </div>
+      </ion-item>
 
-        <div v-else key="content" class="drawer-entry__content">
-          <section class="drawer-entry__group">
-            <div class="drawer-entry__question drawer-entry__question--title">{{ entryTitle }}</div>
-          </section>
-
-          <section class="drawer-entry__group">
-            <div class="drawer-entry__question">Created At</div>
-            <div class="drawer-entry__answer">{{ entryCreatedAt }}</div>
-          </section>
-
-          <section
-            v-for="section in entrySections"
-            :key="section.key"
-            class="drawer-entry__group"
-          >
-            <div class="drawer-entry__question">{{ section.question }}</div>
-            <div class="drawer-entry__answer">
-              <template v-if="section.kind === 'photo'">
-                <button
-                  type="button"
-                  class="drawer-entry__photo-button"
-                  @click="openPhoto(entryTitle, section.value.entry_original, section.value.entry_thumb || section.value.entry_default)"
-                >
-                  <span class="drawer-entry__photo-frame">
-                    <span class="drawer-entry__photo-mat">
-                      <span class="drawer-entry__photo-viewport">
-                        <transition name="fade">
-                          <span v-if="isThumbLoading(section.key)" class="drawer-entry__photo-loader">
-                            <LoaderSpinner />
-                          </span>
-                        </transition>
-                        <img
-                          :src="section.value.entry_thumb || section.value.entry_default"
-                          :alt="section.question"
-                          class="drawer-entry__photo"
-                          :class="{ 'drawer-entry__photo--ready': !isThumbLoading(section.key) }"
-                          @load="handleThumbLoad(section.key)"
-                        />
-                      </span>
+      <ion-item
+        v-for="section in entrySections"
+        :key="section.key"
+        class="drawer-entry__group"
+        :detail="false"
+      >
+        <div class="drawer-entry__item-content">
+          <div class="drawer-entry__question">{{ section.question }}</div>
+          <div class="drawer-entry__answer">
+            <template v-if="section.kind === 'photo'">
+              <button
+                type="button"
+                class="drawer-entry__photo-button"
+                @click="openPhoto(entryTitle, section.value.entry_original, section.value.entry_thumb || section.value.entry_default)"
+              >
+                <span class="drawer-entry__photo-frame">
+                  <span class="drawer-entry__photo-mat">
+                    <span class="drawer-entry__photo-viewport">
+                      <transition name="fade">
+                        <span v-if="isThumbLoading(section.key)" class="drawer-entry__photo-loader">
+                          <LoaderSpinner />
+                        </span>
+                      </transition>
+                      <img
+                        :src="section.value.entry_thumb || section.value.entry_default"
+                        :alt="section.question"
+                        class="drawer-entry__photo"
+                        :class="{ 'drawer-entry__photo--ready': !isThumbLoading(section.key) }"
+                        @load="handleThumbLoad(section.key)"
+                      />
                     </span>
                   </span>
-                </button>
-              </template>
-              <template v-else-if="section.kind === 'audio'">
-                <button
-                  type="button"
-                  class="drawer-entry__media-button"
-                  @click="openMedia('audio', section.question, section.value.entry_original)"
-                >
-                  Play audio
-                </button>
-              </template>
-              <template v-else-if="section.kind === 'video'">
-                <button
-                  type="button"
-                  class="drawer-entry__media-button"
-                  @click="openMedia('video', section.question, section.value.entry_original)"
-                >
-                  Play video
-                </button>
-              </template>
-              <template v-else>
-                {{ section.value }}
-              </template>
-            </div>
-          </section>
+                </span>
+              </button>
+            </template>
+            <template v-else-if="section.kind === 'audio'">
+              <button
+                type="button"
+                class="drawer-entry__media-button"
+                @click="openMedia('audio', section.question, section.value.entry_original)"
+              >
+                Play audio
+              </button>
+            </template>
+            <template v-else-if="section.kind === 'video'">
+              <button
+                type="button"
+                class="drawer-entry__media-button"
+                @click="openMedia('video', section.question, section.value.entry_original)"
+              >
+                Play video
+              </button>
+            </template>
+            <template v-else>
+              {{ section.value }}
+            </template>
+          </div>
         </div>
-      </transition>
-    </section>
-  </div>
+      </ion-item>
+    </ion-list>
+  </transition>
 </template>
 
 <script>
+import { IonItem, IonList } from '@ionic/vue';
 import { computed, reactive } from 'vue';
 import PARAMETERS from '@/core/config/parameters';
 import tableModel from '@/core/entries/tableModel';
@@ -95,6 +99,8 @@ import { useProjectStore } from '@/stores/projectStore';
 export default {
   name: 'DrawerEntry',
   components: {
+    IonItem,
+    IonList,
     LoaderSpinner
   },
   setup() {
@@ -112,7 +118,7 @@ export default {
 
     const methods = {
       openPhoto(title, src, previewSrc) {
-        modalStore.open('photo-viewer', {
+        modalStore.openPhotoViewer({
           title,
           src,
           previewSrc

@@ -1,5 +1,9 @@
 <template>
   <div class="entries-grid-shell">
+    <div v-if="isLoading" class="entries-grid__loading">
+      <LoaderSpinner />
+    </div>
+
     <AgGridVue
       class="ag-theme-quartz entries-grid"
       theme="legacy"
@@ -7,6 +11,7 @@
       :default-col-def="state.defaultColDef"
       :row-data="rowData"
       :animate-rows="true"
+      :class="{ 'entries-grid--hidden': isLoading }"
       :suppress-drag-leave-hides-columns="true"
       :ensure-dom-order="true"
       :suppress-cell-focus="true"
@@ -17,6 +22,7 @@
 
 <script>
 import { computed, reactive } from 'vue';
+import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import { AgGridVue } from 'ag-grid-vue3';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import { mapTableRowsToGrid } from '@/core/entries/ag-grid/columnDefs';
@@ -27,7 +33,8 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 export default {
   name: 'GridEntries',
   components: {
-    AgGridVue
+    AgGridVue,
+    LoaderSpinner
   },
   props: {
     headers: {

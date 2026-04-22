@@ -21,7 +21,8 @@ export default {
     const state = reactive({
       mapElement: null,
       map: null,
-      markersLayer: null
+      markersLayer: null,
+      hasInvalidatedInitialSize: false
     });
 
     const methods = {
@@ -50,6 +51,17 @@ export default {
         window.setTimeout(() => {
           state.map?.invalidateSize();
         }, 0);
+      },
+      ensureInitialMapSize() {
+        if (state.hasInvalidatedInitialSize) {
+          return;
+        }
+
+        state.hasInvalidatedInitialSize = true;
+        methods.invalidateMapSize();
+      },
+      closeActivePopup() {
+        state.map?.closePopup();
       },
       renderMarkers() {
         if (!state.map || !state.markersLayer) {
@@ -106,14 +118,13 @@ export default {
 
       state.markersLayer = L.layerGroup().addTo(state.map);
       methods.renderMarkers();
-      methods.invalidateMapSize();
+      methods.ensureInitialMapSize();
     });
 
     watch(
       () => props.markers,
       () => {
         methods.renderMarkers();
-        methods.invalidateMapSize();
       },
       {
         deep: true

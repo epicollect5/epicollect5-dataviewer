@@ -111,7 +111,7 @@ const createMediaCell = (value, entryTitle = 'Untitled entry') => {
     frame.appendChild(mat);
     wrapper.appendChild(frame);
     wrapper.addEventListener('click', () => {
-      modalStore.open('photo-viewer', {
+      modalStore.openPhotoViewer({
         title: entryTitle,
         src: value.entry_original,
         previewSrc: value.entry_thumb || value.entry_default

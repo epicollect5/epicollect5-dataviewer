@@ -1,6 +1,22 @@
 .entries-grid-shell {
+  position: relative;
   width: 100%;
   min-height: 70vh;
+}
+
+.entries-grid__loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--app-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  z-index: 2;
+}
+
+.entries-grid--hidden {
+  visibility: hidden;
 }
 
 .entries-grid {

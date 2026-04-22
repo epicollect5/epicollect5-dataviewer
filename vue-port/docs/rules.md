@@ -12,7 +12,12 @@ This file defines the folder and naming rules for the Vue rewrite in `vue-port/`
 ## Top-Level `src/` Structure
 
 - `src/components/`
-  All Vue UI components.
+- 
+- All Vue UI components must use Ionic Vue components where appropriate.
+- Prefer existing Ionic components over custom implementations.
+- If a suitable Ionic component does not exist, implement a custom component.
+- Do not guess or substitute with unrelated Ionic components.
+
 
 - `src/composable/`
   Reusable Vue composables only.

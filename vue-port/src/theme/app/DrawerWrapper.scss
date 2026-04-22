@@ -1,0 +1,38 @@
+.drawer-wrapper {
+  --background: rgba(255, 255, 255, 0.96);
+}
+
+.drawer-wrapper__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.drawer-wrapper__header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.drawer-wrapper__close-icon {
+  --color: var(--ion-color-primary);
+}
+
+.menu-pane-visible {
+  .menu-inner {
+    width: min(420px, 92vw);
+    border-inline: 1px solid var(--app-border);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(18px);
+  }
+}
+
+@media (max-width: 768px) {
+  .menu-pane-visible {
+    .menu-inner {
+      width: 100%;
+    }
+  }
+}

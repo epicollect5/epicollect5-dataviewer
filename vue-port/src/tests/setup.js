@@ -8,6 +8,9 @@ config.global.stubs = {
   'ion-content': {
     template: '<div><slot /></div>'
   },
+  'ion-menu': {
+    template: '<div><slot /></div>'
+  },
   'ion-header': {
     template: '<header><slot /></header>'
   },
@@ -22,6 +25,12 @@ config.global.stubs = {
   },
   'ion-button': {
     template: '<button><slot /></button>'
+  },
+  'ion-item': {
+    template: '<div><slot /></div>'
+  },
+  'ion-list': {
+    template: '<div><slot /></div>'
   },
   'ion-datetime': {
     template: '<div><slot /></div>'

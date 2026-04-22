@@ -96,7 +96,7 @@ export default {
 
     const methods = {
       openPhoto(title, src, previewSrc) {
-        modalStore.open('photo-viewer', {
+        modalStore.openPhotoViewer({
           title,
           src,
           previewSrc
