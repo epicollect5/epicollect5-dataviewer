@@ -1,5 +1,5 @@
-import client from '@/api/client';
-import PARAMETERS from '@/config/parameters';
+import client from '@/services/api/client';
+import PARAMETERS from '@/core/config/parameters';
 
 export const fetchUploadHeaders = (projectSlug, params = {}) => {
   return client.get(`${PARAMETERS.API_UPLOAD_HEADERS_ENDPOINT}${projectSlug}`, { params });

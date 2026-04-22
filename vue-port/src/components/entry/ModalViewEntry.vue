@@ -75,7 +75,7 @@ import {
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed } from 'vue';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import { useModalStore } from '@/stores/modalStore';
 
 export default {

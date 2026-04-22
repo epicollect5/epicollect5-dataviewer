@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
-import client from '@/api/client';
-import { deleteEntry as deleteEntryRequest } from '@/api/deleteApi';
-import { fetchEntries } from '@/api/entriesApi';
+import client from '@/services/api/client';
+import { deleteEntry as deleteEntryRequest } from '@/services/api/deleteApi';
+import { fetchEntries } from '@/services/api/entriesApi';
 import tableModel from '@/core/entries/tableModel';
 import { useFiltersStore } from '@/stores/filtersStore';
 import { useNavigationStore } from '@/stores/navigationStore';

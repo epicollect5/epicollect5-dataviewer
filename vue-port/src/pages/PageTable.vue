@@ -55,8 +55,8 @@
 <script>
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import env from '@/config/env';
-import PARAMETERS from '@/config/parameters';
+import env from '@/core/config/env';
+import PARAMETERS from '@/core/config/parameters';
 import EntriesGrid from '@/components/table/GridEntries.vue';
 import TableEmptyState from '@/components/table/StateEmptyTable.vue';
 import TableToolbar from '@/components/table/ToolbarTable.vue';

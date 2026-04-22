@@ -1,10 +1,6 @@
-import Papa from 'papaparse';
 import { defineStore } from 'pinia';
-import PARAMETERS from '@/config/parameters';
-import reverseEntryParser from '@/core/entries/reverseEntryParser';
 import { buildUploadRowPairs } from '@/core/upload/uploadRowPairing';
-import helpers from '@/utils/helpers';
-import { fetchUploadHeaders, uploadEntryWithResult } from '@/api/uploadApi';
+import { prepareUploadFile, uploadPreparedEntries } from '@/services/upload/uploadWorkflow';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 
@@ -79,135 +75,34 @@ export const useUploadStore = defineStore('upload', {
 
       this.parsingError = '';
 
-      if (!file) {
-        return false;
-      }
-
-      if (!file.name.endsWith(`.${PARAMETERS.FORMAT_CSV}`)) {
-        this.parsingError = PARAMETERS.LABELS.FILE_UPLOAD_ERROR;
-        return false;
-      }
-
-      if (file.size > PARAMETERS.BULK_MAX_FILE_SIZE_BYTES) {
-        this.parsingError = PARAMETERS.LABELS.FILE_SIZE_ERROR;
-        return false;
-      }
-
-      if (!activeMapping || !projectStore.projectDefinition.project) {
-        this.parsingError = PARAMETERS.LABELS.FILE_UPLOAD_ERROR;
-        return false;
-      }
-
       this.isPreparing = true;
       this.uploadResults = [];
       this.failedReverseEntries = [];
       this.filterByFailed = false;
 
       try {
-        const content = await file.text();
-        const parsed = Papa.parse(content, {
-          header: true,
-          skipEmptyLines: true
+        const result = await prepareUploadFile({
+          file,
+          activeMapping,
+          projectSlug: projectStore.projectSlug,
+          projectExtra: projectStore.projectExtra,
+          projectDefinition: projectStore.projectDefinition,
+          projectMapping: projectStore.projectMapping,
+          projectStats: projectStore.projectStats,
+          currentFormRef: navigationStore.currentFormRef,
+          navigationStore
         });
 
-        if (parsed.errors.length > 0) {
-          this.parsingError = PARAMETERS.LABELS.FILE_UPLOAD_ERROR;
+        if (!result.success) {
+          this.parsingError = result.parsingError;
           return false;
         }
 
-        const rows = parsed.data.slice(0, PARAMETERS.TABLE_UPLOAD_MAX_ROWS).map((row) => {
-          const trimmed = {};
-
-          Object.entries(row).forEach(([key, value]) => {
-            trimmed[key.trim()] = typeof value === 'string' ? value.trim() : value;
-          });
-
-          return trimmed;
-        });
-
-        if (rows.length === 0) {
-          this.parsingError = PARAMETERS.LABELS.FILE_UPLOAD_ERROR_NO_ROWS;
-          return false;
-        }
-
-        const currentFormRef = navigationStore.currentFormRef;
-        const forms = projectStore.projectDefinition.project.forms;
-        const formIndex = helpers.getFormIndexFromRef(forms, currentFormRef);
-        const currentFormMapping = activeMapping.forms[currentFormRef];
-        const reverseMapping = reverseEntryParser.getReverseMapping(
-          currentFormRef,
-          currentFormMapping,
-          projectStore.projectExtra,
-          projectStore.projectDefinition,
-          null
-        );
-
-        const headersResponse = await fetchUploadHeaders(projectStore.projectSlug, {
-          map_index: activeMapping.map_index,
-          form_index: formIndex,
-          branch_ref: '',
-          format: 'json'
-        });
-
-        const bulkUploadableHeaders = headersResponse.data.data.headers;
-        const parsedHeaders = parsed.meta.fields.map((header) => header.trim());
-
-        if (!bulkUploadableHeaders.every((header) => parsedHeaders.includes(header))) {
-          this.parsingError = PARAMETERS.LABELS.FILE_MAPPING_ERROR;
-          return false;
-        }
-
-        const branches = Object.keys(projectStore.projectExtra.forms[currentFormRef].branch || {});
-        const reverseAnswers = reverseEntryParser.getReverseAnswers(
-          rows,
-          reverseMapping,
-          branches,
-          null,
-          projectStore.projectExtra.inputs
-        );
-        const groupRefs = projectStore.projectExtra.forms[currentFormRef].group || {};
-
-        Object.keys(groupRefs).forEach((groupInputRef) => {
-          reverseAnswers.forEach((reverseAnswer) => {
-            reverseAnswer.answer[groupInputRef] = {
-              answer: '',
-              was_jumped: false
-            };
-          });
-        });
-
-        const parentFormForUpload =
-          navigationStore.hierarchyNavigator.length > 1
-            ? helpers.getParentFormForUpload(navigationStore.hierarchyNavigator, currentFormRef)
-            : { parentFormRef: null, parentEntryUuid: null };
-
-        const generatedUuids = [];
-        const entries = reverseAnswers.map((reverseAnswer) => {
-          let uuid = reverseAnswer.uuid;
-
-          if (!uuid) {
-            uuid = helpers.generateUuid();
-            generatedUuids.push(uuid);
-          }
-
-          return reverseEntryParser.getEntry({
-            currentBranchRef: null,
-            uuid,
-            currentFormRef,
-            entryTitle: reverseAnswer.title,
-            reverseAnswer,
-            projectVersion: projectStore.projectStats.structure_last_updated,
-            parentEntryUuid: parentFormForUpload.parentEntryUuid,
-            parentFormRef: parentFormForUpload.parentFormRef,
-            currentBranchOwnerUuid: null
-          });
-        });
-
-        this.uploadedRows = rows;
-        this.bulkUploadableHeaders = bulkUploadableHeaders;
-        this.reverseEntries = entries;
-        this.reverseMapping = reverseMapping;
-        this.generatedUuids = generatedUuids;
+        this.uploadedRows = result.data.uploadedRows;
+        this.bulkUploadableHeaders = result.data.bulkUploadableHeaders;
+        this.reverseEntries = result.data.reverseEntries;
+        this.reverseMapping = result.data.reverseMapping;
+        this.generatedUuids = result.data.generatedUuids;
 
         return true;
       } finally {
@@ -227,16 +122,13 @@ export const useUploadStore = defineStore('upload', {
       this.failedReverseEntries = [];
 
       try {
-        for (let index = 0; index < this.reverseEntries.length; index += 1) {
-          const entry = this.reverseEntries[index];
-          const result = await uploadEntryWithResult(projectStore.projectSlug, entry);
+        const result = await uploadPreparedEntries({
+          projectSlug: projectStore.projectSlug,
+          reverseEntries: this.reverseEntries
+        });
 
-          this.uploadResults.push(result);
-
-          if (result.status === 'error') {
-            this.failedReverseEntries.push(entry);
-          }
-        }
+        this.uploadResults = result.uploadResults;
+        this.failedReverseEntries = result.failedReverseEntries;
       } finally {
         this.isUploading = false;
       }

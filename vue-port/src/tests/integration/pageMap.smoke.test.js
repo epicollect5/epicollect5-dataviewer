@@ -90,10 +90,11 @@ describe('PageMap smoke', () => {
     expect(navigationStore.activePage).toBe('map');
     expect(mapStore.loadLocations).toHaveBeenCalledWith({ resetFilters: true });
 
-    const filtersButton = wrapper.findAll('button').find((button) => button.text() === 'Filters');
+    const filtersButton = wrapper.find('button[aria-label="Open filters drawer"]');
     await filtersButton.trigger('click');
 
     expect(drawerStore.activeDrawer).toBe('map-filters');
+    expect(drawerStore.payload.side).toBe('left');
     expect(drawerStore.payload.visibleCount).toBe(1);
     expect(drawerStore.payload.totalCount).toBe(1);
     expect(drawerStore.payload.locationQuestions).toHaveLength(1);

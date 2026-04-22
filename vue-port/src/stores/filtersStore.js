@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 
 export const useFiltersStore = defineStore('filters', {
   state: () => ({

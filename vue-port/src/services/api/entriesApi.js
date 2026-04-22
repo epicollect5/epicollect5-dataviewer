@@ -1,5 +1,5 @@
-import client from '@/api/client';
-import PARAMETERS from '@/config/parameters';
+import client from '@/services/api/client';
+import PARAMETERS from '@/core/config/parameters';
 
 export const fetchEntries = (projectSlug, params = {}) => {
   return client.get(`${PARAMETERS.API_ENTRIES_ENDPOINT}${projectSlug}`, { params });

@@ -84,7 +84,7 @@
 
 <script>
 import { computed, reactive } from 'vue';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import tableModel from '@/core/entries/tableModel';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import { useMapStore } from '@/stores/mapStore';

@@ -15,10 +15,10 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
 import { AgGridVue } from 'ag-grid-vue3';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
-import { createUploadColumnDefs } from '@/components/upload/ag-grid/uploadColumnDefs';
+import { createUploadColumnDefs } from '@/core/upload/ag-grid/uploadColumnDefs';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -38,12 +38,12 @@ export default {
     }
   },
   setup(props) {
-    const state = {
+    const state = reactive({
       defaultColDef: {
         resizable: true,
         wrapHeaderText: true
       }
-    };
+    });
 
     const methods = {
       getRowHeight(params) {

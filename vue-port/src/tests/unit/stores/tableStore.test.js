@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import { useFiltersStore } from '@/stores/filtersStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';

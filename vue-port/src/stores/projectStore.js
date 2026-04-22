@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { fetchProject } from '@/api/projectApi';
+import { fetchProject } from '@/services/api/projectApi';
 import { useNavigationStore } from '@/stores/navigationStore';
 
 export const useProjectStore = defineStore('project', {

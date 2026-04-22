@@ -1,4 +1,4 @@
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 
 const buildUrl = (path) => new URL(path, PARAMETERS.SERVER_URL).toString();
 

@@ -91,7 +91,7 @@
 import { IonDatetime, IonDatetimeButton, IonIcon, IonModal } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, reactive } from 'vue';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 
 export default {
   name: 'ToolbarTable',

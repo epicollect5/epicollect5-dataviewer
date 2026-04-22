@@ -16,10 +16,11 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
 import { AgGridVue } from 'ag-grid-vue3';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
-import { createEntriesColumnDefs, mapTableRowsToGrid } from '@/components/table/ag-grid/columnDefs';
+import { mapTableRowsToGrid } from '@/core/entries/ag-grid/columnDefs';
+import { createEntriesColumnDefs } from '@/services/entries/entriesGridColumns';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -43,13 +44,13 @@ export default {
     }
   },
   setup(props) {
-    const state = {
+    const state = reactive({
       defaultColDef: {
         sortable: false,
         resizable: false,
         wrapHeaderText: false
       }
-    };
+    });
 
     const computedState = {
       columnDefs: computed(() => createEntriesColumnDefs(props.headers)),

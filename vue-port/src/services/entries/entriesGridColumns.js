@@ -1,4 +1,4 @@
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import { create, eye, trash } from 'ionicons/icons';
 import { useModalStore } from '@/stores/modalStore';
 
@@ -44,22 +44,26 @@ const createActionColumn = (headerName, field, headers = [], width = 92) => ({
     button.className = `entries-grid__action-button entries-grid__action-button--${field}`;
     button.type = 'button';
     button.setAttribute('aria-label', headerName);
+
     const icon = document.createElement('ion-icon');
     icon.className = 'entries-grid__action-icon';
     icon.icon = ACTION_ICONS[field] || eye;
     button.appendChild(icon);
+
     if (field === 'view') {
       const modalStore = useModalStore();
       button.addEventListener('click', () => {
         modalStore.open('view-entry', buildViewPayload(headers, params.data.__cells || []));
       });
     }
+
     if (field === 'delete') {
       const modalStore = useModalStore();
       button.addEventListener('click', () => {
         modalStore.open('delete-entry', buildDeletePayload(params.data.__cells || []));
       });
     }
+
     return button;
   }
 });
@@ -87,6 +91,7 @@ const createMediaCell = (value, entryTitle = 'Untitled entry') => {
 
     const loader = document.createElement('span');
     loader.className = 'entries-grid__photo-loader';
+
     const loaderSpinner = document.createElement('span');
     loaderSpinner.className = 'loader-spinner';
     loader.appendChild(loaderSpinner);
@@ -129,6 +134,7 @@ const createMediaCell = (value, entryTitle = 'Untitled entry') => {
         src: value.entry_original
       });
     });
+
     return button;
   }
 
@@ -140,6 +146,7 @@ const createMediaCell = (value, entryTitle = 'Untitled entry') => {
       src: value.entry_original
     });
   });
+
   return button;
 };
 
@@ -149,6 +156,7 @@ const createTextCell = (value, isLastDynamicColumn = false) => {
     ? 'entries-grid__text-value entries-grid__text-value--last'
     : 'entries-grid__text-value';
   content.textContent = value ?? '';
+
   return content;
 };
 
@@ -235,26 +243,4 @@ export const createEntriesColumnDefs = (headers = []) => {
   });
 
   return [...fixedColumns, ...dynamicColumns];
-};
-
-export const mapTableRowsToGrid = (rows = []) => {
-  return rows.map((row) => {
-    const cells = row.cells;
-    const gridRow = {
-      id: row.id,
-      view: 'View',
-      delete: 'Delete',
-      edit: 'Edit',
-      children: cells[3]?.answer ?? 0,
-      title: cells[4]?.answer ?? '',
-      createdAt: cells[5]?.answer ?? ''
-    };
-    gridRow.__cells = cells;
-
-    for (let index = 6; index < cells.length; index += 1) {
-      gridRow[`answer_${index - 6}`] = cells[index]?.answer ?? '';
-    }
-
-    return gridRow;
-  });
 };

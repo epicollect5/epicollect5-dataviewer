@@ -1,4 +1,4 @@
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import bulkUpload from '@/core/upload/bulkUpload';
 
 describe('domain/upload/bulkUpload', () => {

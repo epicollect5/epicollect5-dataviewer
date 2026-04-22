@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
-import routes from '@/config/routes';
+import routes from '@/router/routes';
 
 const router = createRouter({
   history: createWebHistory(),

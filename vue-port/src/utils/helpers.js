@@ -1,5 +1,5 @@
 import moment from 'moment';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 
 const stringifyQuery = (params) => {
   const searchParams = new URLSearchParams();

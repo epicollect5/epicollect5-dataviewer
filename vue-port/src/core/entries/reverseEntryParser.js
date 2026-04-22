@@ -1,6 +1,6 @@
 import moment from 'moment';
 import Papa from 'papaparse';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import helpers from '@/utils/helpers';
 
 const reverseEntryParser = {

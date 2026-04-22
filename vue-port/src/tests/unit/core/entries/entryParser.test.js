@@ -1,4 +1,4 @@
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import entryParser from '@/core/entries/entryParser';
 import entryGroupParser from '@/core/entries/entryGroupParser';
 import tableModel from '@/core/entries/tableModel';

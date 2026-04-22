@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { fetchEntriesLocations, fetchEntry } from '@/api/entriesApi';
+import { fetchEntriesLocations, fetchEntry } from '@/services/api/entriesApi';
 import mapUtils from '@/core/map/mapUtils';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';

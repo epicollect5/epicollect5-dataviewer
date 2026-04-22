@@ -1,5 +1,5 @@
 <template>
-  <section class="table-view">
+  <section class="page-map">
     <div v-if="missingProjectSlug" class="placeholder-view">
       <h1>Project Required</h1>
       <p>Open the Vue port with `?project=your-project-slug` or use `/:projectSlug/data/map`.</p>
@@ -15,45 +15,56 @@
     </div>
 
     <template v-else>
-      <section class="page-map__toolbar">
-        <div class="page-map__toolbar-primary">
-          <button v-if="hasLocationQuestions" class="page-map__filter-button" type="button" @click="openFiltersDrawer">Filters</button>
-        </div>
+      <section v-if="hasLocationQuestions" class="page-map__secondary-navbar">
+        <button
+          class="page-map__drawer-button"
+          type="button"
+          aria-label="Open filters drawer"
+          @click="openFiltersDrawer"
+        >
+          <ion-icon :icon="menu" />
+        </button>
+
+        <span class="page-map__entries-total">Total: {{ entriesTotal }}</span>
       </section>
 
-      <div v-if="!hasLocationQuestions" class="placeholder-view">
-        <h1>No map questions in this form</h1>
-        <p>This form does not expose any location inputs, so there is nothing to render on the map.</p>
+      <div class="page-map__body">
+        <div v-if="!hasLocationQuestions" class="placeholder-view">
+          <h1>No map questions in this form</h1>
+          <p>This form does not expose any location inputs, so there is nothing to render on the map.</p>
+        </div>
+
+        <template v-else>
+          <MapProgressBar
+            :is-visible="state.mapStore.progressBarIsVisible || state.mapStore.isFetchingPage"
+            :processed="state.mapStore.progressBarMarkersProcessed"
+            :total="state.mapStore.progressBarMarkersTotal"
+            :percentage="state.mapStore.progressBarPercentage"
+          />
+
+          <div v-if="state.mapStore.isRejectedPage" class="placeholder-view">
+            <h1>Locations Load Failed</h1>
+            <p>{{ mapErrors }}</p>
+          </div>
+
+          <div v-else-if="!state.mapStore.isFetchingPage && state.mapStore.locations.length === 0" class="placeholder-view">
+            <h1>No mapped entries</h1>
+            <p>The current form has a location question, but the API returned no location features for this selection.</p>
+          </div>
+
+          <LeafletMap v-else :markers="state.mapStore.markers" @marker-click="handleMarkerClick" />
+        </template>
       </div>
-
-      <template v-else>
-        <MapProgressBar
-          :is-visible="state.mapStore.progressBarIsVisible || state.mapStore.isFetchingPage"
-          :processed="state.mapStore.progressBarMarkersProcessed"
-          :total="state.mapStore.progressBarMarkersTotal"
-          :percentage="state.mapStore.progressBarPercentage"
-        />
-
-        <div v-if="state.mapStore.isRejectedPage" class="placeholder-view">
-          <h1>Locations Load Failed</h1>
-          <p>{{ mapErrors }}</p>
-        </div>
-
-        <div v-else-if="!state.mapStore.isFetchingPage && state.mapStore.locations.length === 0" class="placeholder-view">
-          <h1>No mapped entries</h1>
-          <p>The current form has a location question, but the API returned no location features for this selection.</p>
-        </div>
-
-        <LeafletMap v-else :markers="state.mapStore.markers" @marker-click="handleMarkerClick" />
-      </template>
     </template>
   </section>
 </template>
 
 <script>
+import { IonIcon } from '@ionic/vue';
+import { menu } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import env from '@/config/env';
+import env from '@/core/config/env';
 import { useDrawerStore } from '@/stores/drawerStore';
 import LeafletMap from '@/components/map/MapLeaflet.vue';
 import MapProgressBar from '@/components/map/MapProgressBar.vue';
@@ -64,6 +75,7 @@ import { useProjectStore } from '@/stores/projectStore';
 export default {
   name: 'PageMap',
   components: {
+    IonIcon,
     LeafletMap,
     MapProgressBar
   },
@@ -132,7 +144,7 @@ export default {
       },
       openFiltersDrawer() {
         drawerStore.open('map-filters', {
-          side: 'right',
+          side: 'left',
           locationQuestions: computedState.locationQuestions.value,
           selectedLocationQuestion: mapStore.selectedLocationQuestion,
           clustersEnabled: mapStore.clustersEnabled,
@@ -169,7 +181,8 @@ export default {
         return Array.isArray(mapStore.errors) ? mapStore.errors.join(', ') : mapStore.errors;
       }),
       locationQuestions: computed(() => mapStore.getLocationQuestions()),
-      hasLocationQuestions: computed(() => computedState.locationQuestions.value.length > 0)
+      hasLocationQuestions: computed(() => computedState.locationQuestions.value.length > 0),
+      entriesTotal: computed(() => mapStore.locations.length)
     };
 
     onMounted(methods.bootstrap);
@@ -202,7 +215,8 @@ export default {
     return {
       state,
       ...methods,
-      ...computedState
+      ...computedState,
+      menu
     };
   }
 };

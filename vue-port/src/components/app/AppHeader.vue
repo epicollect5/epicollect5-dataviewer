@@ -79,7 +79,7 @@ import { IonHeader, IonIcon, IonToolbar } from '@ionic/vue';
 import { cloudDownload, globe, grid, logIn, logOut, power } from 'ionicons/icons';
 import { computed, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import { useDrawerStore } from '@/stores/drawerStore';
 import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';

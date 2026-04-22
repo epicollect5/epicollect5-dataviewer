@@ -1,5 +1,5 @@
 import moment from 'moment';
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import formatters from '@/core/datetime/formatters';
 import entryGroupParser from '@/core/entries/entryGroupParser';
 

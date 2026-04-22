@@ -1,4 +1,4 @@
-import PARAMETERS from '@/config/parameters';
+import PARAMETERS from '@/core/config/parameters';
 import entryParser from '@/core/entries/entryParser';
 
 const entryGroupParser = {
