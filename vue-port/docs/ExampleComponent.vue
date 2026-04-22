@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { reactive } from 'vue';
+import { reactive, toRefs } from 'vue';
 import {
   IonButton,
   IonContent,
@@ -91,10 +91,12 @@ export default {
     };
 
     return {
-      ...state,
+      ...toRefs(state),
       ...methods,
       ...computed
     };
   }
 };
 </script>
+<style src="@/theme/ExampleComponent.scss" lang="scss"></style>
+

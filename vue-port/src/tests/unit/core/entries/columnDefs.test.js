@@ -1,6 +1,12 @@
+import { createPinia, setActivePinia } from 'pinia';
 import { createEntriesColumnDefs, mapTableRowsToGrid } from '@/components/table/ag-grid/columnDefs';
+import { useModalStore } from '@/stores/modalStore';
 
 describe('components/table/ag-grid/columnDefs', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   it('creates fixed pinned columns before dynamic question columns', () => {
     const headers = [
       { inputRef: 'q1', question: 'Question 1' },
@@ -48,5 +54,32 @@ describe('components/table/ag-grid/columnDefs', () => {
         answer_1: 'Beta'
       })
     ]);
+  });
+
+  it('passes both original and preview photo urls to the dedicated photo viewer modal', () => {
+    const modalStore = useModalStore();
+    const columnDefs = createEntriesColumnDefs([
+      { inputRef: 'photo_1', question: 'Photo 1' }
+    ]);
+    const photoColumn = columnDefs[6];
+    const cellElement = photoColumn.cellRenderer({
+      data: {
+        title: 'Entry title'
+      },
+      value: {
+        entry_thumb: 'https://example.com/thumb.jpg',
+        entry_default: 'https://example.com/preview.jpg',
+        entry_original: 'https://example.com/original.jpg'
+      }
+    });
+
+    cellElement.click();
+
+    expect(modalStore.activeModal).toBe('photo-viewer');
+    expect(modalStore.payload).toEqual({
+      title: 'Entry title',
+      src: 'https://example.com/original.jpg',
+      previewSrc: 'https://example.com/thumb.jpg'
+    });
   });
 });

@@ -5,11 +5,11 @@
       <p>Open the Vue port with `?project=your-project-slug` or use `/:projectSlug/data/map`.</p>
     </div>
 
-    <div v-else-if="projectStore.isFetching" class="placeholder-view">
+    <div v-else-if="state.projectStore.isFetching" class="placeholder-view">
       <h1>Loading project…</h1>
     </div>
 
-    <div v-else-if="projectStore.isRejected" class="placeholder-view">
+    <div v-else-if="state.projectStore.isRejected" class="placeholder-view">
       <h1>Project Load Failed</h1>
       <p>{{ projectErrors }}</p>
     </div>
@@ -28,23 +28,23 @@
 
       <template v-else>
         <MapProgressBar
-          :is-visible="mapStore.progressBarIsVisible || mapStore.isFetchingPage"
-          :processed="mapStore.progressBarMarkersProcessed"
-          :total="mapStore.progressBarMarkersTotal"
-          :percentage="mapStore.progressBarPercentage"
+          :is-visible="state.mapStore.progressBarIsVisible || state.mapStore.isFetchingPage"
+          :processed="state.mapStore.progressBarMarkersProcessed"
+          :total="state.mapStore.progressBarMarkersTotal"
+          :percentage="state.mapStore.progressBarPercentage"
         />
 
-        <div v-if="mapStore.isRejectedPage" class="placeholder-view">
+        <div v-if="state.mapStore.isRejectedPage" class="placeholder-view">
           <h1>Locations Load Failed</h1>
           <p>{{ mapErrors }}</p>
         </div>
 
-        <div v-else-if="!mapStore.isFetchingPage && mapStore.locations.length === 0" class="placeholder-view">
+        <div v-else-if="!state.mapStore.isFetchingPage && state.mapStore.locations.length === 0" class="placeholder-view">
           <h1>No mapped entries</h1>
           <p>The current form has a location question, but the API returned no location features for this selection.</p>
         </div>
 
-        <LeafletMap v-else :markers="mapStore.markers" @marker-click="handleMarkerClick" />
+        <LeafletMap v-else :markers="state.mapStore.markers" @marker-click="handleMarkerClick" />
       </template>
     </template>
   </section>
@@ -200,7 +200,7 @@ export default {
     );
 
     return {
-      ...state,
+      state,
       ...methods,
       ...computedState
     };

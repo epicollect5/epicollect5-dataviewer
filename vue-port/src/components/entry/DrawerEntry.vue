@@ -2,7 +2,7 @@
   <div class="drawer-entry-host">
     <section class="drawer-entry">
       <transition name="fade" mode="out-in">
-        <div v-if="mapStore.isFetchingEntry" key="loading" class="drawer-entry__loader">
+        <div v-if="state.mapStore.isFetchingEntry" key="loading" class="drawer-entry__loader">
           <LoaderSpinner />
         </div>
 
@@ -31,7 +31,7 @@
                 <button
                   type="button"
                   class="drawer-entry__photo-button"
-                  @click="openPhoto(section.question, section.value.entry_original)"
+                  @click="openPhoto(entryTitle, section.value.entry_original, section.value.entry_thumb || section.value.entry_default)"
                 >
                   <span class="drawer-entry__photo-frame">
                     <span class="drawer-entry__photo-mat">
@@ -42,7 +42,7 @@
                           </span>
                         </transition>
                         <img
-                          :src="section.value.entry_original"
+                          :src="section.value.entry_thumb || section.value.entry_default"
                           :alt="section.question"
                           class="drawer-entry__photo"
                           :class="{ 'drawer-entry__photo--ready': !isThumbLoading(section.key) }"
@@ -79,68 +79,11 @@
         </div>
       </transition>
     </section>
-
-    <ion-modal
-      class="photo-lightbox-modal"
-      :is-open="activePhoto !== null"
-      :style="photoModalStyle"
-      @didDismiss="closePhoto"
-    >
-      <ion-header>
-        <ion-toolbar>
-        <ion-title>{{ activePhoto?.title || 'Photo' }}</ion-title>
-        <ion-buttons slot="end">
-            <ion-button shape="round" class="photo-lightbox__close-button" aria-label="Close photo viewer" @click="closePhoto">
-              <ion-icon slot="icon-only" :icon="close" />
-            </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-content :scroll-y="false" class="photo-lightbox__content">
-        <div v-if="activePhoto" class="photo-lightbox">
-          <transition name="fade">
-            <div v-if="isPhotoLoading" class="photo-lightbox__loader">
-              <LoaderSpinner />
-            </div>
-          </transition>
-
-          <div
-            class="photo-lightbox__frame"
-            :class="{ 'photo-lightbox__frame--loading': isPhotoLoading }"
-            :style="photoFrameStyle"
-          >
-            <div class="photo-lightbox__mat">
-              <span class="photo-lightbox__viewport">
-                <img
-                  :src="activePhoto.src"
-                  :alt="activePhoto.title"
-                  class="photo-lightbox__image"
-                  :class="{ 'photo-lightbox__image--ready': !isPhotoLoading }"
-                  @load="handlePhotoLoad"
-                />
-              </span>
-            </div>
-          </div>
-        </div>
-      </ion-content>
-    </ion-modal>
   </div>
 </template>
 
 <script>
-import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonModal,
-  IonTitle,
-  IonToolbar
-} from '@ionic/vue';
-import { close } from 'ionicons/icons';
-import { computed, onBeforeUnmount, onMounted, reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import PARAMETERS from '@/config/parameters';
 import tableModel from '@/core/entries/tableModel';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
@@ -149,21 +92,9 @@ import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 
-const FRAME_BORDER = 6;
-const MODAL_PADDING = 24;
-const MODAL_CHROME_HEIGHT = 84;
-
 export default {
   name: 'DrawerEntry',
   components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonModal,
-    IonTitle,
-    IonToolbar,
     LoaderSpinner
   },
   setup() {
@@ -176,34 +107,16 @@ export default {
       projectStore,
       navigationStore,
       mapStore,
-      activePhoto: null,
-      isPhotoLoading: false,
-      loadedThumbs: {},
-      photoAspectRatio: 4 / 3,
-      viewportWidth: 0,
-      viewportHeight: 0
+      loadedThumbs: {}
     });
 
     const methods = {
-      syncViewport() {
-        if (typeof window === 'undefined') {
-          return;
-        }
-
-        state.viewportWidth = window.innerWidth;
-        state.viewportHeight = window.innerHeight;
-      },
-      openPhoto(title, src) {
-        methods.syncViewport();
-        state.isPhotoLoading = true;
-        state.activePhoto = {
+      openPhoto(title, src, previewSrc) {
+        modalStore.open('photo-viewer', {
           title,
-          src
-        };
-      },
-      closePhoto() {
-        state.activePhoto = null;
-        state.isPhotoLoading = false;
+          src,
+          previewSrc
+        });
       },
       openMedia(mediaType, title, src) {
         modalStore.open('media-viewer', {
@@ -211,15 +124,6 @@ export default {
           title,
           src
         });
-      },
-      handlePhotoLoad(event) {
-        const image = event.target;
-
-        if (image?.naturalWidth && image?.naturalHeight) {
-          state.photoAspectRatio = image.naturalWidth / image.naturalHeight;
-        }
-
-        state.isPhotoLoading = false;
       },
       isThumbLoading(key) {
         return state.loadedThumbs[key] !== true;
@@ -233,36 +137,6 @@ export default {
     };
 
     const computedState = {
-      photoLayout: computed(() => {
-        const maxWidth = Math.max(320, state.viewportWidth - 48);
-        const maxHeight = Math.max(240, state.viewportHeight - 120);
-        let width = maxHeight * state.photoAspectRatio;
-        let height = maxHeight;
-
-        if (width > maxWidth) {
-          width = maxWidth;
-          height = width / state.photoAspectRatio;
-        }
-
-        return {
-          width: Math.round(width),
-          height: Math.round(height)
-        };
-      }),
-      photoFrameStyle: computed(() => {
-        return {
-          width: `${computedState.photoLayout.value.width + FRAME_BORDER}px`,
-          height: `${computedState.photoLayout.value.height + FRAME_BORDER}px`
-        };
-      }),
-      photoModalStyle: computed(() => {
-        return {
-          '--width': `${computedState.photoLayout.value.width + FRAME_BORDER + MODAL_PADDING}px`,
-          '--height': `${computedState.photoLayout.value.height + FRAME_BORDER + MODAL_PADDING + MODAL_CHROME_HEIGHT}px`,
-          '--max-width': '96vw',
-          '--max-height': '94vh'
-        };
-      }),
       entryData: computed(() => {
         if (!mapStore.selectedEntry || !navigationStore.currentFormRef) {
           return null;
@@ -356,20 +230,10 @@ export default {
       })
     };
 
-    onMounted(() => {
-      methods.syncViewport();
-      window.addEventListener('resize', methods.syncViewport);
-    });
-
-    onBeforeUnmount(() => {
-      window.removeEventListener('resize', methods.syncViewport);
-    });
-
     return {
-      ...state,
+      state,
       ...methods,
-      ...computedState,
-      close
+      ...computedState
     };
   }
 };

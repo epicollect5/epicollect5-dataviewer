@@ -4,7 +4,7 @@
       class="ag-theme-quartz entries-grid"
       theme="legacy"
       :column-defs="columnDefs"
-      :default-col-def="defaultColDef"
+      :default-col-def="state.defaultColDef"
       :row-data="rowData"
       :animate-rows="true"
       :suppress-drag-leave-hides-columns="true"
@@ -58,7 +58,7 @@ export default {
     };
 
     return {
-      ...state,
+      state,
       ...computedState
     };
   }

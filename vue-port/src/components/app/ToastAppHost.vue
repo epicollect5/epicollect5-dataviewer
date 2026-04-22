@@ -4,7 +4,7 @@
     :message="toast.message"
     :color="toast.color"
     :duration="toast.duration"
-    @didDismiss="toastStore.dismiss()"
+    @didDismiss="state.toastStore.dismiss()"
   />
 </template>
 
@@ -30,7 +30,7 @@ export default {
     };
 
     return {
-      ...state,
+      state,
       ...computed
     };
   }

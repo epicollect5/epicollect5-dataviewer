@@ -17,8 +17,8 @@ ion-app {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top, rgba(var(--ion-color-primary-rgb, 103, 60, 144), 0.18), transparent 38%),
-    linear-gradient(180deg, #ffffff 0%, var(--app-bg) 100%);
+          radial-gradient(circle at top, rgba(var(--ion-color-primary-rgb, 103, 60, 144), 0.18), transparent 38%),
+          linear-gradient(180deg, #ffffff 0%, var(--app-bg) 100%);
   color: var(--app-text);
 }
 
@@ -357,16 +357,7 @@ ion-button {
   border-width: 2px;
 }
 
-.entries-grid__media-button {
-  min-height: 36px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--ion-color-secondary);
-  color: #333333;
-  cursor: pointer;
-}
-
+.entries-grid__media-button,
 .drawer-entry__media-button {
   min-height: 36px;
   padding: 0 12px;
@@ -659,57 +650,6 @@ ion-button {
   opacity: 1;
 }
 
-.photo-lightbox {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-  padding: 12px;
-  position: relative;
-}
-
-.photo-lightbox__frame {
-  flex: 0 0 auto;
-}
-
-.photo-lightbox__frame--loading .photo-lightbox__image {
-  opacity: 0;
-}
-
-.photo-lightbox__image {
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  margin: auto;
-  object-fit: contain;
-  opacity: 0;
-  transition: opacity 220ms ease;
-}
-
-.photo-lightbox__viewport {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #f4f5f8;
-}
-
-.photo-lightbox__image--ready {
-  opacity: 1;
-}
-
-.photo-lightbox__loader {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  z-index: 1;
-}
-
 .drawer-entry__photo-loader {
   position: absolute;
   inset: 0;
@@ -718,30 +658,13 @@ ion-button {
   z-index: 1;
 }
 
-.photo-lightbox__content {
-  --padding-top: 0;
-  --padding-bottom: 0;
-  --padding-start: 0;
-  --padding-end: 0;
-}
-
-.photo-lightbox__close-button {
-  --background: var(--ion-color-secondary);
-  --background-hover: var(--ion-color-secondary-shade);
-  --background-activated: var(--ion-color-secondary-shade);
-  --color: #333333;
-  --padding-start: 0;
-  --padding-end: 0;
-  width: 42px;
-  height: 42px;
-}
-
-.photo-lightbox-modal {
-  --border-radius: 0;
-}
-
-.photo-lightbox-modal::part(content) {
-  border-radius: 0;
+.photo-lightbox__overlay-loader {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 9999;
 }
 
 .media-player-modal__content {
@@ -778,10 +701,6 @@ ion-button {
 .view-entry-modal__table th,
 .view-entry-modal__table td {
   width: 50%;
-}
-
-.view-entry-modal__table th,
-.view-entry-modal__table td {
   padding: 12px;
   border: 1px solid var(--app-border);
   vertical-align: top;
@@ -837,20 +756,21 @@ ion-button {
   gap: 12px;
 }
 
-.drawer-entry__loader .loader-spinner,
-.photo-lightbox__loader .loader-spinner {
+.drawer-entry__loader .loader-spinner {
   border-color: rgba(var(--ion-color-secondary-rgb, 135, 199, 166), 0.2);
   border-top-color: var(--ion-color-secondary, #87c7a6);
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 220ms ease;
+.photo-lightbox__overlay-loader .loader-spinner {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+  border-color: rgba(255, 255, 255, 0.22);
+  border-top-color: var(--ion-color-secondary, #87c7a6);
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.vel-img-wrapper {
+  z-index: 10000;
 }
 
 .map-controls {

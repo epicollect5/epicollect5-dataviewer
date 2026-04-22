@@ -4,7 +4,7 @@
       <div class="primary-navbar__inner">
         <div class="primary-navbar__brand">
           <a :href="projectHomeUrl" class="primary-navbar__brand-link">
-            <img class="primary-navbar__project-logo" :src="projectLogoSrc" :alt="projectName" @error="handleLogoError" />
+            <img class="primary-navbar__project-logo" :src="state.projectLogoSrc" :alt="projectName" @error="handleLogoError" />
           </a>
           <span class="primary-navbar__project-name">{{ projectName }}</span>
         </div>
@@ -55,7 +55,7 @@
 
           <template v-if="isLoggedIn">
             <span class="primary-navbar__user">
-              <img class="primary-navbar__avatar" :src="avatarSrc" alt="avatar" @error="handleAvatarError" />
+              <img class="primary-navbar__avatar" :src="state.avatarSrc" alt="avatar" @error="handleAvatarError" />
               <span>Hi,<strong> {{ userName }}</strong></span>
             </span>
             <a class="primary-navbar__nav-link" :href="logoutHref">
@@ -250,7 +250,7 @@ export default {
     );
 
     return {
-      ...state,
+      state,
       ...methods,
       ...computedState,
       cloudDownload,

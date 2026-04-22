@@ -3,7 +3,7 @@
     <ion-toolbar>
       <ion-title>Bulk Upload</ion-title>
       <ion-buttons slot="end">
-        <ion-button :disabled="uploadStore.isUploading" @click="handleClose">Close</ion-button>
+        <ion-button :disabled="state.uploadStore.isUploading" @click="handleClose">Close</ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -13,8 +13,8 @@
       <div class="upload-modal__controls">
         <label class="table-toolbar__field">
           <span>Mapping</span>
-          <select :value="uploadStore.activeMappingIndex" @change="handleMappingChange($event.target.value)">
-            <option v-for="(mapping, index) in projectStore.projectMapping" :key="mapping.name" :value="index">
+          <select :value="state.uploadStore.activeMappingIndex" @change="handleMappingChange($event.target.value)">
+            <option v-for="(mapping, index) in state.projectStore.projectMapping" :key="mapping.name" :value="index">
               {{ mapping.name }}
             </option>
           </select>
@@ -26,12 +26,12 @@
         </label>
 
         <div class="upload-modal__actions">
-          <ion-button :disabled="!selectedFile || uploadStore.isPreparing" @click="prepareUpload">
+          <ion-button :disabled="!state.selectedFile || state.uploadStore.isPreparing" @click="prepareUpload">
             Prepare
           </ion-button>
           <ion-button
             color="secondary"
-            :disabled="uploadStore.reverseEntries.length === 0 || uploadStore.isUploading"
+            :disabled="state.uploadStore.reverseEntries.length === 0 || state.uploadStore.isUploading"
             @click="startUpload"
           >
             Upload
@@ -39,21 +39,21 @@
         </div>
       </div>
 
-      <p v-if="uploadStore.parsingError" class="upload-modal__error">{{ uploadStore.parsingError }}</p>
+      <p v-if="state.uploadStore.parsingError" class="upload-modal__error">{{ state.uploadStore.parsingError }}</p>
 
-      <div v-if="uploadStore.reverseEntries.length > 0" class="upload-modal__status">
+      <div v-if="state.uploadStore.reverseEntries.length > 0" class="upload-modal__status">
         <label>
           <input
             type="checkbox"
-            :checked="uploadStore.filterByFailed"
-            :disabled="uploadStore.failedReverseEntries.length === 0"
+            :checked="state.uploadStore.filterByFailed"
+            :disabled="state.uploadStore.failedReverseEntries.length === 0"
             @change="handleFailedFilterChange($event.target.checked)"
           />
           Show only failed rows
         </label>
         <span>
-          Uploaded {{ uploadStore.uploadResults.length }} / {{ uploadStore.reverseEntries.length }}
-          <template v-if="uploadStore.isUploading"> · {{ uploadStore.uploadProgress }}%</template>
+          Uploaded {{ state.uploadStore.uploadResults.length }} / {{ state.uploadStore.reverseEntries.length }}
+          <template v-if="state.uploadStore.isUploading"> · {{ state.uploadStore.uploadProgress }}%</template>
         </span>
         <div class="upload-modal__actions">
           <ion-button
@@ -68,15 +68,15 @@
 
       <UploadGrid
         v-if="pagedRows.length > 0"
-        :headers="uploadStore.availableHeaders"
+        :headers="state.uploadStore.availableHeaders"
         :rows="pagedRows"
       />
 
       <div v-if="totalPages > 1" class="upload-modal__pagination">
-        <span>Page {{ currentPage }} / {{ totalPages }}</span>
+        <span>Page {{ state.currentPage }} / {{ totalPages }}</span>
         <div class="upload-modal__actions">
-          <ion-button fill="outline" :disabled="currentPage === 1" @click="goToPreviousPage">Prev</ion-button>
-          <ion-button fill="outline" :disabled="currentPage === totalPages" @click="goToNextPage">Next</ion-button>
+          <ion-button fill="outline" :disabled="state.currentPage === 1" @click="goToPreviousPage">Prev</ion-button>
+          <ion-button fill="outline" :disabled="state.currentPage === totalPages" @click="goToNextPage">Next</ion-button>
         </div>
       </div>
 
@@ -270,7 +270,7 @@ export default {
     );
 
     return {
-      ...state,
+      state,
       ...methods,
       ...computedState
     };

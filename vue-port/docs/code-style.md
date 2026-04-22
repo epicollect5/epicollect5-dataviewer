@@ -154,7 +154,7 @@ Always return a structured grouped API:
 
 ```javascript
 return {
-  ...state,
+  state,
   ...methods,
   ...computed
 };
@@ -162,6 +162,8 @@ return {
 
 - Do **NOT** return an unstructured mix of variables and functions.
 - Keep the order consistent: `state` → `methods` → `computed`.
+- Important: NEVER spread `state`
+
 
 ---
 
@@ -181,6 +183,12 @@ return {
 ```
 
 ---
+
+## Theme
+
+- Always put component styles in separate scss named after the component.
+- Reference the style in the component like `<style src="@/theme/media/Component.scss" lang="scss"></style>`
+
 
 ## Services & Architecture
 

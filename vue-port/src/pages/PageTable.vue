@@ -5,24 +5,24 @@
       <p>Open the Vue port with `?project=your-project-slug` or use `/:projectSlug/data`.</p>
     </div>
 
-    <div v-else-if="projectStore.isFetching" class="placeholder-view">
+    <div v-else-if="state.projectStore.isFetching" class="placeholder-view">
       <h1>Loading project…</h1>
     </div>
 
-    <div v-else-if="projectStore.isRejected" class="placeholder-view">
+    <div v-else-if="state.projectStore.isRejected" class="placeholder-view">
       <h1>Project Load Failed</h1>
       <p>{{ projectErrors }}</p>
     </div>
 
     <template v-else>
       <TableToolbar
-        :is-loading="tableStore.isFetchingPage"
-        :pagination="tableStore.pagination"
-        :links="tableStore.links"
-        :filter-by-title="filtersStore.filterByTitle"
-        :start-date="filtersStore.startDate"
-        :end-date="filtersStore.endDate"
-        :selected-order-by="filtersStore.selectedOrderBy"
+        :is-loading="state.tableStore.isFetchingPage"
+        :pagination="state.tableStore.pagination"
+        :links="state.tableStore.links"
+        :filter-by-title="state.filtersStore.filterByTitle"
+        :start-date="state.filtersStore.startDate"
+        :end-date="state.filtersStore.endDate"
+        :selected-order-by="state.filtersStore.selectedOrderBy"
         @update:title="handleTitleChange"
         @update:start-date="handleDateChange"
         @update:end-date="handleDateChange"
@@ -33,18 +33,18 @@
         @next-page="handleNextPage"
       />
 
-      <div v-if="tableStore.isRejectedPage" class="placeholder-view">
+      <div v-if="state.tableStore.isRejectedPage" class="placeholder-view">
         <h1>Entries Load Failed</h1>
         <p>{{ tableErrors }}</p>
       </div>
 
-      <TableEmptyState v-else-if="!tableStore.isFetchingPage && tableStore.flatRows.length === 0" />
+      <TableEmptyState v-else-if="!state.tableStore.isFetchingPage && state.tableStore.flatRows.length === 0" />
 
       <EntriesGrid
         v-else
-        :headers="tableStore.headers"
-        :rows="tableStore.flatRows"
-        :is-loading="tableStore.isFetchingPage"
+        :headers="state.tableStore.headers"
+        :rows="state.tableStore.flatRows"
+        :is-loading="state.tableStore.isFetchingPage"
       />
     </template>
   </section>
@@ -189,7 +189,7 @@ export default {
     });
 
     return {
-      ...state,
+      state,
       ...methods,
       ...computedState
     };

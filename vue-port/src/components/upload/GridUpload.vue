@@ -4,7 +4,7 @@
       class="ag-theme-quartz upload-grid"
       theme="legacy"
       :column-defs="columnDefs"
-      :default-col-def="defaultColDef"
+      :default-col-def="state.defaultColDef"
       :row-data="rows"
       :get-row-height="getRowHeight"
       :get-row-class="getRowClass"
@@ -59,7 +59,7 @@ export default {
     };
 
     return {
-      ...state,
+      state,
       ...methods,
       ...computedState
     };

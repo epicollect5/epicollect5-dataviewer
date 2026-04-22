@@ -24,7 +24,7 @@
       <label class="table-toolbar__field">
         <span>Order</span>
         <select :value="props.selectedOrderBy" @change="handleOrderChange($event.target.value)">
-          <option v-for="option in orderOptions" :key="option" :value="option">{{ option }}</option>
+          <option v-for="option in state.orderOptions" :key="option" :value="option">{{ option }}</option>
         </select>
       </label>
     </div>
@@ -133,7 +133,7 @@ export default {
 
     return {
       props,
-      ...state,
+      state,
       ...methods,
       ...computedState
     };

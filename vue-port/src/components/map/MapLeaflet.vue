@@ -128,7 +128,7 @@ export default {
     });
 
     return {
-      ...state,
+      state,
       ...methods
     };
   }

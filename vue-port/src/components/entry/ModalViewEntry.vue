@@ -25,11 +25,15 @@
               <td>{{ row.question }}</td>
               <td>
                 <template v-if="row.kind === 'photo'">
-                  <button type="button" class="view-entry-modal__photo-button" @click="openMedia('photo', row.question, row.value.entry_original)">
+                  <button
+                    type="button"
+                    class="view-entry-modal__photo-button"
+                    @click="openPhoto(entryTitle, row.value.entry_original, row.value.entry_thumb || row.value.entry_default)"
+                  >
                     <span class="entries-grid__photo-frame">
                       <span class="entries-grid__photo-mat">
                         <span class="entries-grid__photo-viewport entries-grid__photo-viewport--large">
-                          <img :src="row.value.entry_default" :alt="row.question" class="entries-grid__photo-thumb entries-grid__photo-thumb--ready" />
+                          <img :src="row.value.entry_thumb || row.value.entry_default" :alt="row.question" class="entries-grid__photo-thumb entries-grid__photo-thumb--ready" />
                         </span>
                       </span>
                     </span>
@@ -54,46 +58,6 @@
         </table>
       </ion-card-content>
     </ion-card>
-
-    <ion-modal class="photo-lightbox-modal" :is-open="activeMedia !== null" :style="mediaModalStyle" @didDismiss="closeMedia">
-      <ion-header>
-        <ion-toolbar>
-          <ion-title>{{ activeMedia?.title || 'Media' }}</ion-title>
-          <ion-buttons slot="end">
-            <ion-button shape="round" class="photo-lightbox__close-button" aria-label="Close media viewer" @click="closeMedia">
-              <ion-icon slot="icon-only" :icon="close" />
-            </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-content :scroll-y="false" :class="activeMedia?.type === 'photo' ? 'photo-lightbox__content' : 'media-player-modal__content'">
-        <div v-if="activeMedia?.type === 'photo'" class="photo-lightbox">
-          <transition name="fade">
-            <div v-if="isPhotoLoading" class="photo-lightbox__loader">
-              <LoaderSpinner />
-            </div>
-          </transition>
-          <div class="photo-lightbox__frame" :class="{ 'photo-lightbox__frame--loading': isPhotoLoading }" :style="photoFrameStyle">
-            <div class="photo-lightbox__mat">
-              <span class="photo-lightbox__viewport">
-                <img
-                  :src="activeMedia.src"
-                  :alt="activeMedia.title"
-                  class="photo-lightbox__image"
-                  :class="{ 'photo-lightbox__image--ready': !isPhotoLoading }"
-                  @load="handlePhotoLoad"
-                />
-              </span>
-            </div>
-          </div>
-        </div>
-        <div v-else-if="activeMedia" class="media-player-modal">
-          <audio v-if="activeMedia.type === 'audio'" :src="activeMedia.src" controls autoplay class="media-player-modal__player"></audio>
-          <video v-else :src="activeMedia.src" controls autoplay class="media-player-modal__player"></video>
-        </div>
-      </ion-content>
-    </ion-modal>
   </ion-content>
 </template>
 
@@ -106,19 +70,13 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
-  IonModal,
   IonTitle,
   IonToolbar
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed, onBeforeUnmount, onMounted, reactive } from 'vue';
+import { computed } from 'vue';
 import PARAMETERS from '@/config/parameters';
-import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import { useModalStore } from '@/stores/modalStore';
-
-const FRAME_BORDER = 6;
-const MODAL_PADDING = 24;
-const MODAL_CHROME_HEIGHT = 84;
 
 export default {
   name: 'ModalViewEntry',
@@ -130,52 +88,29 @@ export default {
     IonContent,
     IonHeader,
     IonIcon,
-    IonModal,
     IonTitle,
-    IonToolbar,
-    LoaderSpinner
+    IonToolbar
   },
   setup() {
     const modalStore = useModalStore();
 
-    const state = reactive({
-      modalStore,
-      activeMedia: null,
-      isPhotoLoading: false,
-      photoAspectRatio: 4 / 3,
-      viewportWidth: 0,
-      viewportHeight: 0
-    });
-
     const methods = {
-      syncViewport() {
-        if (typeof window === 'undefined') {
-          return;
-        }
-
-        state.viewportWidth = window.innerWidth;
-        state.viewportHeight = window.innerHeight;
+      openPhoto(title, src, previewSrc) {
+        modalStore.open('photo-viewer', {
+          title,
+          src,
+          previewSrc
+        });
       },
       openMedia(type, title, src) {
-        methods.syncViewport();
-        state.activeMedia = { type, title, src };
-        state.isPhotoLoading = type === 'photo';
-      },
-      closeMedia() {
-        state.activeMedia = null;
-        state.isPhotoLoading = false;
+        modalStore.open('media-viewer', {
+          mediaType: type,
+          title,
+          src
+        });
       },
       closeModal() {
         modalStore.close();
-      },
-      handlePhotoLoad(event) {
-        const image = event.target;
-
-        if (image?.naturalWidth && image?.naturalHeight) {
-          state.photoAspectRatio = image.naturalWidth / image.naturalHeight;
-        }
-
-        state.isPhotoLoading = false;
       }
     };
 
@@ -202,57 +137,10 @@ export default {
 
           return { key: `${question}-${index}`, question, kind: 'text', value: answer.answer };
         });
-      }),
-      photoLayout: computed(() => {
-        const maxWidth = Math.max(320, state.viewportWidth - 48);
-        const maxHeight = Math.max(240, state.viewportHeight - 120);
-        let width = maxHeight * state.photoAspectRatio;
-        let height = maxHeight;
-
-        if (width > maxWidth) {
-          width = maxWidth;
-          height = width / state.photoAspectRatio;
-        }
-
-        return {
-          width: Math.round(width),
-          height: Math.round(height)
-        };
-      }),
-      photoFrameStyle: computed(() => ({
-        width: `${computedState.photoLayout.value.width + FRAME_BORDER}px`,
-        height: `${computedState.photoLayout.value.height + FRAME_BORDER}px`
-      })),
-      mediaModalStyle: computed(() => {
-        if (state.activeMedia?.type === 'photo') {
-          return {
-            '--width': `${computedState.photoLayout.value.width + FRAME_BORDER + MODAL_PADDING}px`,
-            '--height': `${computedState.photoLayout.value.height + FRAME_BORDER + MODAL_PADDING + MODAL_CHROME_HEIGHT}px`,
-            '--max-width': '96vw',
-            '--max-height': '94vh'
-          };
-        }
-
-        return {
-          '--width': 'min(92vw, 960px)',
-          '--height': 'min(70vh, 680px)',
-          '--max-width': '92vw',
-          '--max-height': '70vh'
-        };
       })
     };
 
-    onMounted(() => {
-      methods.syncViewport();
-      window.addEventListener('resize', methods.syncViewport);
-    });
-
-    onBeforeUnmount(() => {
-      window.removeEventListener('resize', methods.syncViewport);
-    });
-
     return {
-      ...state,
       ...methods,
       ...computedState,
       close

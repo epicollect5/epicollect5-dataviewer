@@ -13,7 +13,7 @@
   <ion-content class="ion-padding">
     <ion-card class="delete-entry-modal">
       <ion-card-content>
-        <div v-if="isDeleting" class="delete-entry-modal__loader">
+        <div v-if="state.isDeleting" class="delete-entry-modal__loader">
           <LoaderSpinner />
         </div>
 
@@ -108,7 +108,7 @@ export default {
     };
 
     return {
-      ...state,
+      state,
       ...methods,
       ...computedState,
       close

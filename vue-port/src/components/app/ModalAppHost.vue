@@ -1,5 +1,7 @@
 <template>
-  <ion-modal :is-open="activeModal !== null" :style="modalStyle" @didDismiss="closeModal">
+  <PhotoViewerModal v-if="activeModal === 'photo-viewer'" />
+
+  <ion-modal :is-open="activeModal !== null && activeModal !== 'photo-viewer'" :style="modalStyle" @didDismiss="closeModal">
     <UploadModal v-if="activeModal === 'upload'" />
     <DeleteEntryModal v-else-if="activeModal === 'delete-entry'" />
     <MediaViewerModal v-else-if="activeModal === 'media-viewer'" :ref="setMediaViewerModal" />
@@ -17,6 +19,7 @@ import { computed, reactive } from 'vue';
 import DeleteEntryModal from '@/components/entry/ModalDeleteEntry.vue';
 import ViewEntryModal from '@/components/entry/ModalViewEntry.vue';
 import MediaViewerModal from '@/components/media/ModalMediaViewer.vue';
+import PhotoViewerModal from '@/components/media/ModalPhotoViewer.vue';
 import UploadModal from '@/components/upload/ModalUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
 
@@ -28,6 +31,7 @@ export default {
     DeleteEntryModal,
     ViewEntryModal,
     MediaViewerModal,
+    PhotoViewerModal,
     UploadModal
   },
   setup() {
@@ -69,7 +73,7 @@ export default {
     };
 
     return {
-      ...state,
+      state,
       ...methods,
       ...computedState
     };

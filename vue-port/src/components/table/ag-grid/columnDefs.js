@@ -64,7 +64,7 @@ const createActionColumn = (headerName, field, headers = [], width = 92) => ({
   }
 });
 
-const createMediaCell = (value) => {
+const createMediaCell = (value, entryTitle = 'Untitled entry') => {
   if (!value || typeof value !== 'object' || !value.entry_default) {
     return value ?? '';
   }
@@ -106,10 +106,10 @@ const createMediaCell = (value) => {
     frame.appendChild(mat);
     wrapper.appendChild(frame);
     wrapper.addEventListener('click', () => {
-      modalStore.open('media-viewer', {
-        mediaType: 'photo',
-        title: 'Photo',
-        src: value.entry_original
+      modalStore.open('photo-viewer', {
+        title: entryTitle,
+        src: value.entry_original,
+        previewSrc: value.entry_thumb || value.entry_default
       });
     });
 
@@ -209,7 +209,7 @@ export const createEntriesColumnDefs = (headers = []) => {
 
         if (value && typeof value === 'object') {
           if (value.entry_default) {
-            return createMediaCell(value);
+            return createMediaCell(value, params.data?.title || 'Untitled entry');
           }
 
           return createTextCell(JSON.stringify(value), isLastDynamicColumn);
