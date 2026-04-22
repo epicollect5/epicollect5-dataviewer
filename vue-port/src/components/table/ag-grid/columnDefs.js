@@ -152,6 +152,22 @@ const createTextCell = (value, isLastDynamicColumn = false) => {
   return content;
 };
 
+const getDynamicCellClass = (value, isLastDynamicColumn = false) => {
+  const classes = [];
+
+  if (value && typeof value === 'object' && value.entry_default) {
+    classes.push('entries-grid__media-cell');
+  } else {
+    classes.push('entries-grid__text-cell');
+  }
+
+  if (isLastDynamicColumn) {
+    classes.push(classes[0] === 'entries-grid__media-cell' ? 'entries-grid__media-cell--last' : 'entries-grid__text-cell--last');
+  }
+
+  return classes.join(' ');
+};
+
 export const createEntriesColumnDefs = (headers = []) => {
   const fixedColumns = [
     createActionColumn('View', 'view', headers),
@@ -201,9 +217,7 @@ export const createEntriesColumnDefs = (headers = []) => {
       headerClass: isLastDynamicColumn
         ? 'entries-grid__dynamic-header entries-grid__dynamic-header--last'
         : 'entries-grid__dynamic-header',
-      cellClass: isLastDynamicColumn
-        ? 'entries-grid__text-cell entries-grid__text-cell--last'
-        : 'entries-grid__text-cell',
+      cellClass: (params) => getDynamicCellClass(params.value, isLastDynamicColumn),
       cellRenderer: (params) => {
         const value = params.value;
 

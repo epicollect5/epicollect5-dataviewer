@@ -9,7 +9,6 @@
       :animate-rows="true"
       :suppress-drag-leave-hides-columns="true"
       :ensure-dom-order="true"
-      :suppress-row-click-selection="true"
       :suppress-cell-focus="true"
       :row-height="50"
     />

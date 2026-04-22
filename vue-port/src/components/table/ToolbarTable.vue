@@ -12,11 +12,6 @@
 
       <div class="table-toolbar__field table-toolbar__field--date">
         <span class="table-toolbar__date-prefix">From:</span>
-        <ion-datetime-button
-          :datetime="state.startDatetimeId"
-          :disabled="!hasDateBounds"
-          class="table-toolbar__datetime-button"
-        />
         <ion-modal :keep-contents-mounted="true">
           <ion-datetime
             :id="state.startDatetimeId"
@@ -28,15 +23,16 @@
             @ionChange="handleDateTimeChange('startDate', $event)"
           />
         </ion-modal>
+        <ion-datetime-button
+          v-if="state.datetimeButtonsReady"
+          :datetime="state.startDatetimeId"
+          :disabled="!hasDateBounds"
+          class="table-toolbar__datetime-button"
+        />
       </div>
 
       <div class="table-toolbar__field table-toolbar__field--date">
         <span class="table-toolbar__date-prefix">To:</span>
-        <ion-datetime-button
-          :datetime="state.endDatetimeId"
-          :disabled="!hasDateBounds"
-          class="table-toolbar__datetime-button"
-        />
         <ion-modal :keep-contents-mounted="true">
           <ion-datetime
             :id="state.endDatetimeId"
@@ -48,6 +44,12 @@
             @ionChange="handleDateTimeChange('endDate', $event)"
           />
         </ion-modal>
+        <ion-datetime-button
+          v-if="state.datetimeButtonsReady"
+          :datetime="state.endDatetimeId"
+          :disabled="!hasDateBounds"
+          class="table-toolbar__datetime-button"
+        />
       </div>
 
       <div class="table-toolbar__controls">
@@ -88,7 +90,7 @@
 <script>
 import { IonDatetime, IonDatetimeButton, IonIcon, IonModal } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed, reactive } from 'vue';
+import { computed, onMounted, reactive } from 'vue';
 import PARAMETERS from '@/config/parameters';
 
 export default {
@@ -151,7 +153,8 @@ export default {
     const state = reactive({
       orderOptions: Object.values(PARAMETERS.ORDER_BY),
       startDatetimeId: 'table-toolbar-start-date',
-      endDatetimeId: 'table-toolbar-end-date'
+      endDatetimeId: 'table-toolbar-end-date',
+      datetimeButtonsReady: false
     });
 
     const computedState = {
@@ -201,6 +204,12 @@ export default {
         methods.emitDateChange(field, detailValue.slice(0, 10));
       }
     };
+
+    onMounted(() => {
+      window.requestAnimationFrame(() => {
+        state.datetimeButtonsReady = true;
+      });
+    });
 
     return {
       props,

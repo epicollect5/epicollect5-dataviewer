@@ -66,6 +66,24 @@
   cursor: zoom-in;
 }
 
+.entries-grid__media-cell {
+  justify-content: center;
+  text-align: center;
+}
+
+.entries-grid__media-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ion-color-secondary);
+  color: #333333;
+  cursor: pointer;
+}
+
 .entries-grid__photo-frame {
   display: inline-block;
   width: 100%;
