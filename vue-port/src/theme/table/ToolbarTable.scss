@@ -26,9 +26,19 @@
   font-size: 0.85rem;
 }
 
+.table-toolbar__field--date {
+  position: relative;
+  min-width: 190px;
+}
+
 .table-toolbar__field--search {
   min-width: 240px;
   flex: 1 1 280px;
+}
+
+.table-toolbar__field--sort {
+  min-width: 0;
+  width: 100px;
 }
 
 .table-toolbar input,
@@ -39,6 +49,46 @@
   border-radius: 12px;
   background: #fff;
   color: var(--app-text);
+}
+
+.table-toolbar__controls {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+}
+
+.table-toolbar__date-prefix {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.95rem;
+  color: var(--app-text);
+}
+
+.table-toolbar__datetime-button {
+  --padding-start: 56px;
+  --padding-end: 12px;
+  --border-radius: 12px;
+  --border-width: 1px;
+  --border-color: var(--app-border);
+  --background: #fff;
+  --background-hover: #fff;
+  --background-focused: #fff;
+  --background-activated: #fff;
+  --color: var(--app-text);
+  min-height: 42px;
+}
+
+.table-toolbar__datetime-button::part(native) {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--app-border);
+  background: #fff;
+  font-size: 0.95rem;
 }
 
 .table-toolbar__pagination {
@@ -63,6 +113,25 @@
 .table-toolbar__ghost {
   background: var(--ion-color-secondary);
   color: var(--ion-color-secondary-contrast);
+}
+
+.table-toolbar__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--app-text);
+  cursor: pointer;
+}
+
+.table-toolbar__icon-button ion-icon {
+  font-size: 1rem;
 }
 
 .table-toolbar__pagination button:disabled {

@@ -22,6 +22,8 @@
         :filter-by-title="state.filtersStore.filterByTitle"
         :start-date="state.filtersStore.startDate"
         :end-date="state.filtersStore.endDate"
+        :min-date="dateBounds.minDate"
+        :max-date="dateBounds.maxDate"
         :selected-order-by="state.filtersStore.selectedOrderBy"
         @update:title="handleTitleChange"
         @update:start-date="handleDateChange"
@@ -58,6 +60,7 @@ import PARAMETERS from '@/config/parameters';
 import EntriesGrid from '@/components/table/GridEntries.vue';
 import TableEmptyState from '@/components/table/StateEmptyTable.vue';
 import TableToolbar from '@/components/table/ToolbarTable.vue';
+import mapUtils from '@/core/map/mapUtils';
 import { useFiltersStore } from '@/stores/filtersStore';
 import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
@@ -176,6 +179,13 @@ export default {
       }),
       tableErrors: computed(() => {
         return Array.isArray(tableStore.errors) ? tableStore.errors.join(', ') : tableStore.errors;
+      }),
+      dateBounds: computed(() => {
+        return mapUtils.getDateBounds({
+          projectStats: projectStore.projectStats,
+          currentFormRef: navigationStore.currentFormRef,
+          projectCreatedAt: projectStore.projectDefinition?.project?.created_at
+        });
       })
     };
 

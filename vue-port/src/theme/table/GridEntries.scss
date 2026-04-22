@@ -60,7 +60,7 @@
 .entries-grid__photo-button {
   display: block;
   width: 50px;
-  padding: 0;
+  padding: 2px;
   border: 0;
   background: transparent;
   cursor: zoom-in;
@@ -70,8 +70,8 @@
   display: inline-block;
   width: 100%;
   padding: 1px;
-  background: #333333;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  background: #bbb
+  //box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
 }
 
 .entries-grid__photo-mat {

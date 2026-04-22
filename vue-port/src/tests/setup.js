@@ -23,6 +23,12 @@ config.global.stubs = {
   'ion-button': {
     template: '<button><slot /></button>'
   },
+  'ion-datetime': {
+    template: '<div><slot /></div>'
+  },
+  'ion-datetime-button': {
+    template: '<button><slot /></button>'
+  },
   'ion-page': {
     template: '<div><slot /></div>'
   },
