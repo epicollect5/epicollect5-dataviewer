@@ -16,25 +16,20 @@ The goal is **consistency, predictability, and maintainability at scale**.
 
 ---
 
-### Architectural Principles
+## Architecture
 
-- Components are **UI orchestration only**
-- Business logic lives in **services**
-- State is centralized and structured
-- Data flow is explicit and predictable
-
-This separation avoids:
-- duplicated logic
-- hard-to-test components
-- tightly coupled UI and business logic
-
----
+- Components orchestrate UI only
+- Stores own shared reactive state
+- Composables contain reusable Vue composition logic
+- Core contains dataviewer-specific helper and transformation logic
+- Services contain API and workflow-facing code
+- Do not put business logic directly in components
 
 ### Vue Style Decisions
 
 #### reactive() only
 
-We use `reactive()` for all component state.
+We use `reactive()` for all component states.
 
 Reason:
 - single mental model for state
@@ -69,21 +64,46 @@ Reason:
 
 ---
 
-#### Services over component logic
+## Services & Architecture
 
-All business logic must live in services.
+- Business logic does not belong directly in components.
+- Components orchestrate UI; they do not implement workflow logic.
+- Put code in the correct architectural layer.
 
-Components:
-- call services
-- display results
-- manage UI state only
+Use the Vue port structure rules:
 
-Reason:
-- reuse across the app
-- easier testing
-- clear separation of concerns
+- `src/stores/`
+  Shared reactive state and model-like app state
 
----
+- `src/composable/`
+  Reusable Vue composition logic only
+
+- `src/core/`
+  Dataviewer-specific helper and transformation logic
+
+- `src/services/api/`
+  Backend communication and endpoint-specific request functions
+
+- `src/services/upload/`
+  Upload-specific workflow logic
+
+- `src/services/entries/`
+  Entry-specific workflow logic
+
+- `src/components/`
+  Reusable UI components only
+
+- `src/pages/`
+  Route-level page components only
+
+### Rules
+
+- If code is about backend requests, put it in `services/api/`
+- If code is dataviewer-specific helper logic or shaping, put it in `core/`
+- If code is shared state, put it in `stores/`
+- If code is reusable Vue composition logic, put it in `composable/`
+- If code is entry or upload workflow logic, put it in `services/entries/` or `services/upload/`
+- Do not put workflow or business logic directly in components
 
 ## Reference Implementation
 
@@ -106,6 +126,10 @@ When generating Vue components:
 - Do **NOT** introduce new patterns unless explicitly requested.
 
 ---
+
+## Linting
+
+ - Always use the rules defined in the .eslintrc.js file
 
 ## State
 
@@ -188,20 +212,7 @@ return {
 
 - Always put component styles in separate scss named after the component.
 - Reference the style in the component like `<style src="@/theme/media/Component.scss" lang="scss"></style>`
-
-
-## Services & Architecture
-
-- Business logic belongs in services.
-- Components orchestrate; they do not implement logic.
-
-```javascript
-import entryService from '@/services/...';
-```
-
-- Always prefer calling a service over writing logic inside the component.
-
----
+- theme folder structure mirrors component folder structure 1:1
 
 ## Anti-Patterns (STRICT)
 

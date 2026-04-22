@@ -11,20 +11,14 @@ This file defines the folder and naming rules for the Vue rewrite in `vue-port/`
 
 ## Top-Level `src/` Structure
 
-- `src/api/`
-  Backend clients and endpoint-specific request functions.
-
 - `src/components/`
   All Vue UI components.
 
 - `src/composable/`
   Reusable Vue composables only.
 
-- `src/config/`
-  App configuration, routes, constants, env helpers.
-
 - `src/core/`
-  Core dataviewer logic and product-specific transformations.
+  Dataviewer-specific helper logic and transformations.
 
 - `src/pages/`
   Route-level page components.
@@ -32,8 +26,20 @@ This file defines the folder and naming rules for the Vue rewrite in `vue-port/`
 - `src/router/`
   Vue Router setup.
 
+- `src/services/`
+  Workflow-facing and request-facing code.
+
+    - `src/services/api/`
+      Backend clients and endpoint-specific request functions.
+
+    - `src/services/upload/`
+      Upload-specific workflow logic.
+
+    - `src/services/entries/`
+      Entry-specific workflow logic.
+
 - `src/stores/`
-  Pinia stores.
+  Pinia stores and shared reactive app state.
 
 - `src/tests/`
   Unit and integration tests.
@@ -139,7 +145,7 @@ Examples:
 
 ## Core vs. Utils
 
-Use `src/core/` for dataviewer-specific behavior.
+Use `src/core/` for dataviewer-specific helpers and transformations.
 
 Examples:
 
@@ -149,19 +155,19 @@ Examples:
 - map data shaping
 - datetime formatting tied to app behavior
 
-Use `src/utils/` only for generic helpers that are not specific to the dataviewer business rules.
+Use `src/utils/` only for generic helpers that are not specific to dataviewer rules.
 
-If a file encodes Epicollect or dataviewer rules, it belongs in `core`, not `utils`.
+If a file encodes Epicollect or dataviewer-specific behavior, it belongs in `core`, not `utils`.
+## Services
 
-## API
-
-`src/api/` is for backend communication only.
+`src/services/` contains workflow-facing and request-facing code.
 
 Rules:
 
-- one module per API area where practical
-- keep request/response normalization close to the API module
-- do not mix UI rendering logic into API files
+- use `services/api/` for backend communication and endpoint-specific request functions
+- use `services/upload/` for upload-specific workflow logic
+- use `services/entries/` for entry-related workflow logic
+- do not mix UI rendering logic into services
 
 ## Stores
 
@@ -169,9 +175,10 @@ Rules:
 
 Rules:
 
-- stores own app state and orchestration
-- stores may call `api/` and `core/`
-- stores should not contain large view templates or DOM logic
+- stores own shared app state
+- stores act as the model layer for the app
+- stores may coordinate with `services/` and `core/`
+- stores should not contain DOM logic or large view-specific logic
 
 ## Theme
 
@@ -215,14 +222,18 @@ When adding a file, ask:
 5. Is it a generic helper?
    Put it in `src/utils/`.
 
-6. Is it an HTTP/API module?
-   Put it in `src/api/`.
+6. Is it backend communication?
+   Put it in `src/services/api/`.
 
-7. Is it shared styling or tokens?
-   Put it in `src/theme/`.
+7. Is it entry or upload workflow code?
+   Put it in `src/services/entries/` or `src/services/upload/`.
+
+8. Is it shared styling or tokens?
+   Put it in `src/theme/`. 
 
 ## Avoid
 
+- Do not reintroduce `src/api/`.
 - Do not reintroduce `src/features/`.
 - Do not reintroduce `src/views/`.
 - Do not reintroduce `src/styles/`.

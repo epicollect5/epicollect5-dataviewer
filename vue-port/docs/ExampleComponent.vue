@@ -91,7 +91,7 @@ export default {
     };
 
     return {
-      ...toRefs(state),
+      state,
       ...methods,
       ...computed
     };

@@ -29,3 +29,20 @@
 - AG Grid and Ionic remain the largest bundles. Route-level splitting is in place, but vendor chunks are still large.
 - Upload and map behavior rely on fixture-light smoke coverage; full API-backed integration coverage is still missing.
 - Legacy restore flows and local-storage-based deep resume behavior are only partially represented in the current stores.
+
+## Current Structure Target
+
+The Vue port is organized under:
+
+- `components/`
+- `composable/`
+- `pages/`
+- `router/`
+- `stores/`
+- `services/api/`
+- `services/upload/`
+- `services/entries/`
+- `core/`
+- `utils/`
+- `theme/`
+- `tests/`
