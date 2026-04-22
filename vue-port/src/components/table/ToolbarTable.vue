@@ -1,14 +1,14 @@
 <template>
   <section class="table-toolbar">
     <div class="table-toolbar__primary">
-      <label class="table-toolbar__field table-toolbar__field--search">
-        <input
-          :value="props.filterByTitle"
-          type="search"
-          placeholder="Filter by title"
-          @input="handleTitleChange($event.target.value)"
-        />
-      </label>
+      <ion-searchbar
+        :value="props.filterByTitle"
+        class="table-toolbar__searchbar"
+        placeholder="Filter by title"
+        :debounce="350"
+        show-clear-button="focus"
+        @ionInput="handleTitleChange($event.detail.value || '')"
+      />
 
       <div class="table-toolbar__field table-toolbar__field--date">
         <span class="table-toolbar__date-prefix">From:</span>
@@ -76,11 +76,25 @@
 
       <div v-if="props.pagination" class="table-toolbar__pagination">
         <span>Total {{ props.pagination.total }} · Page {{ props.pagination.current_page }}/{{ props.pagination.last_page }}</span>
-        <button type="button" :disabled="!props.links?.prev || props.isLoading" @click="handlePreviousPage">
-          Prev
+        <button
+          type="button"
+          class="entries-grid__action-button entries-grid__action-button--view"
+          :disabled="!props.links?.prev || props.isLoading"
+          aria-label="Previous page"
+          title="Previous page"
+          @click="handlePreviousPage"
+        >
+          <ion-icon :icon="chevronBackCircle" class="entries-grid__action-icon" />
         </button>
-        <button type="button" :disabled="!props.links?.next || props.isLoading" @click="handleNextPage">
-          Next
+        <button
+          type="button"
+          class="entries-grid__action-button entries-grid__action-button--view"
+          :disabled="!props.links?.next || props.isLoading"
+          aria-label="Next page"
+          title="Next page"
+          @click="handleNextPage"
+        >
+          <ion-icon :icon="chevronForwardCircle" class="entries-grid__action-icon" />
         </button>
       </div>
     </div>
@@ -88,8 +102,8 @@
 </template>
 
 <script>
-import { IonDatetime, IonDatetimeButton, IonIcon, IonModal } from '@ionic/vue';
-import { close } from 'ionicons/icons';
+import { IonDatetime, IonDatetimeButton, IonIcon, IonModal, IonSearchbar } from '@ionic/vue';
+import { chevronBackCircle, chevronForwardCircle, close } from 'ionicons/icons';
 import { computed, onMounted, reactive } from 'vue';
 import PARAMETERS from '@/core/config/parameters';
 
@@ -99,7 +113,8 @@ export default {
     IonDatetime,
     IonDatetimeButton,
     IonIcon,
-    IonModal
+    IonModal,
+    IonSearchbar
   },
   props: {
     isLoading: {
@@ -214,6 +229,8 @@ export default {
     return {
       props,
       state,
+      chevronBackCircle,
+      chevronForwardCircle,
       close,
       ...methods,
       ...computedState

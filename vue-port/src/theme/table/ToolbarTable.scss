@@ -36,12 +36,32 @@
   flex: 1 1 280px;
 }
 
+.table-toolbar__searchbar {
+  min-width: 240px;
+  flex: 1 1 280px;
+  padding: 0;
+  --background: #fff;
+  --border-radius: 12px;
+  --box-shadow: none;
+  --color: var(--app-text);
+  --icon-color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.6);
+  --placeholder-color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.55);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-toolbar__searchbar::part(container) {
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+}
+
 .table-toolbar__field--sort {
   min-width: 0;
   width: 100px;
 }
 
-.table-toolbar input,
 .table-toolbar select {
   min-height: 42px;
   padding: 0 12px;
@@ -113,6 +133,23 @@
 .table-toolbar__ghost {
   background: var(--ion-color-secondary);
   color: var(--ion-color-secondary-contrast);
+}
+
+.table-toolbar__pagination .entries-grid__action-button {
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #333333;
+  border: 1px solid #000000;
+}
+
+.table-toolbar__pagination .entries-grid__action-icon {
+  font-size: 24px;
+  line-height: 1;
 }
 
 .table-toolbar__icon-button {

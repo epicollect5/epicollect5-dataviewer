@@ -86,8 +86,7 @@ export default {
       filtersStore,
       tableStore,
       modalStore,
-      uploadStore,
-      titleDebounceId: null
+      uploadStore
     });
 
     const methods = {
@@ -107,12 +106,9 @@ export default {
           await tableStore.loadEntries();
         }
       },
-      handleTitleChange(title) {
+      async handleTitleChange(title) {
         filtersStore.setTitle(title);
-        window.clearTimeout(state.titleDebounceId);
-        state.titleDebounceId = window.setTimeout(() => {
-          tableStore.loadEntries({ params: { page: 1 } });
-        }, title.length === 0 ? 0 : 350);
+        await tableStore.loadEntries({ params: { page: 1 } });
       },
       async handleDateChange({ startDate, endDate }) {
         filtersStore.setDates(startDate, endDate);

@@ -78,11 +78,13 @@ describe('TableView smoke', () => {
     expect(navigationStore.activePage).toBe('table');
     expect(tableStore.loadEntries).toHaveBeenCalledTimes(1);
 
-    await wrapper.find('input[type="search"]').setValue('river');
-    await vi.advanceTimersByTimeAsync(349);
-    expect(tableStore.loadEntries).toHaveBeenCalledTimes(1);
+    await wrapper.getComponent({ name: 'IonSearchbar' }).vm.$emit('ionInput', {
+      detail: {
+        value: 'river'
+      }
+    });
+    await flushPromises();
 
-    await vi.advanceTimersByTimeAsync(1);
     expect(filtersStore.filterByTitle).toBe('river');
     expect(tableStore.loadEntries).toHaveBeenCalledTimes(2);
     expect(tableStore.loadEntries).toHaveBeenLastCalledWith({ params: { page: 1 } });
