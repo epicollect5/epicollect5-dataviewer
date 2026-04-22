@@ -10,3 +10,4 @@ export default {
   name: 'StateEmptyTable'
 };
 </script>
+<style src="@/theme/table/StateEmptyTable.scss" lang="scss"></style>

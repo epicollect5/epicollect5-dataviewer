@@ -64,3 +64,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/table/GridEntries.scss" lang="scss"></style>

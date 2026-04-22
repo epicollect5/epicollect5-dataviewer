@@ -66,3 +66,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/upload/GridUpload.scss" lang="scss"></style>

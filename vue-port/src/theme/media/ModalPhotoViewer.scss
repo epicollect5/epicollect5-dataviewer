@@ -19,18 +19,8 @@
   z-index: 10000;
 }
 
-/* Only show border when image has loaded */
-.vel-img[src]:not([src=""]) {
+/* Only show border after the real image load event fires. */
+.vel-img.photo-lightbox__image--ready {
   border: 8px solid white;
   box-sizing: border-box;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 220ms ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }

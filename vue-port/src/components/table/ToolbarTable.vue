@@ -140,3 +140,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/table/ToolbarTable.scss" lang="scss"></style>

@@ -1,0 +1,28 @@
+.upload-grid-shell {
+  width: 100%;
+  min-height: 52vh;
+}
+
+.upload-grid {
+  width: 100%;
+  height: 52vh;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  overflow: hidden;
+  --ag-border-color: var(--app-border);
+  --ag-header-background-color: rgba(var(--ion-color-primary-rgb, 103, 60, 144), 0.08);
+}
+
+.upload-grid__row--error .ag-cell {
+  font-size: 0.85rem;
+  color: var(--ion-color-danger);
+  background: rgba(var(--ion-color-danger-rgb, 169, 68, 66), 0.05);
+}
+
+@media (max-width: 768px) {
+  .upload-grid,
+  .upload-grid-shell {
+    min-height: 48vh;
+    height: 48vh;
+  }
+}

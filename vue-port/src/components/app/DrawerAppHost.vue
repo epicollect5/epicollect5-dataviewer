@@ -96,3 +96,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/app/DrawerAppHost.scss" lang="scss"></style>

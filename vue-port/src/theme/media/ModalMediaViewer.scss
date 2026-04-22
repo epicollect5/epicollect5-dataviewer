@@ -1,0 +1,20 @@
+.media-player-modal__content {
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.media-player-modal {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  background: #111111;
+}
+
+.media-player-modal__player {
+  width: min(100%, 920px);
+  max-height: calc(100vh - 180px);
+}

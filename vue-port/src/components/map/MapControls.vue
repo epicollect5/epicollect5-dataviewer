@@ -27,7 +27,7 @@
         <input :value="props.endDate" :min="props.minDate" :max="props.maxDate" type="date" @change="emitDateChange('endDate', $event.target.value)" />
       </label>
 
-      <button class="table-toolbar__ghost" type="button" @click="resetDates">Reset dates</button>
+      <button class="map-controls__reset-button" type="button" @click="resetDates">Reset dates</button>
     </div>
 
     <p class="map-controls__summary">
@@ -118,3 +118,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/map/MapControls.scss" lang="scss"></style>

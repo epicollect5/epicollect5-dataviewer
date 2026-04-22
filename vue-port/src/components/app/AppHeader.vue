@@ -263,3 +263,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/app/AppHeader.scss" lang="scss"></style>

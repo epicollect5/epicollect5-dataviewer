@@ -77,3 +77,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/media/ModalMediaViewer.scss" lang="scss"></style>

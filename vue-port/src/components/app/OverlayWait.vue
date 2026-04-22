@@ -33,3 +33,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/app/OverlayWait.scss" lang="scss"></style>

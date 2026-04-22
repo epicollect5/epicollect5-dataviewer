@@ -15,9 +15,9 @@
     </div>
 
     <template v-else>
-      <section class="table-toolbar">
-        <div class="table-toolbar__primary">
-          <button v-if="hasLocationQuestions" class="table-toolbar__ghost" type="button" @click="openFiltersDrawer">Filters</button>
+      <section class="page-map__toolbar">
+        <div class="page-map__toolbar-primary">
+          <button v-if="hasLocationQuestions" class="page-map__filter-button" type="button" @click="openFiltersDrawer">Filters</button>
         </div>
       </section>
 
@@ -207,3 +207,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/pages/PageMap.scss" lang="scss"></style>

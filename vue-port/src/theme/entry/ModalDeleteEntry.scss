@@ -1,0 +1,30 @@
+.delete-entry-modal {
+  display: grid;
+  gap: 18px;
+  min-height: 220px;
+  align-content: center;
+}
+
+.delete-entry-modal__loader {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+}
+
+.delete-entry-modal__message {
+  margin: 0;
+  text-align: center;
+}
+
+.delete-entry-modal__warning {
+  margin: 0;
+  text-align: center;
+  color: var(--ion-color-warning);
+  font-weight: 600;
+}
+
+.delete-entry-modal__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}

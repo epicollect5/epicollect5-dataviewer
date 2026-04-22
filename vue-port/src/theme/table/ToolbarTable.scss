@@ -1,0 +1,78 @@
+.table-toolbar {
+  display: grid;
+  gap: 16px;
+  margin: 0 auto 16px;
+  padding: 18px;
+  border: 1px solid var(--app-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+.table-toolbar__primary,
+.table-toolbar__secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.table-toolbar__field {
+  display: grid;
+  gap: 6px;
+  min-width: 140px;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
+  font-size: 0.85rem;
+}
+
+.table-toolbar__field--search {
+  min-width: 240px;
+  flex: 1 1 280px;
+}
+
+.table-toolbar input,
+.table-toolbar select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--app-text);
+}
+
+.table-toolbar__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
+}
+
+.table-toolbar__pagination button,
+.table-toolbar__ghost {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+  cursor: pointer;
+}
+
+.table-toolbar__ghost {
+  background: var(--ion-color-secondary);
+  color: var(--ion-color-secondary-contrast);
+}
+
+.table-toolbar__pagination button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .table-toolbar {
+    padding: 14px;
+    border-radius: 14px;
+  }
+}

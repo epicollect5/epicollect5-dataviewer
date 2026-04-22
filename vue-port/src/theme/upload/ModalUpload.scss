@@ -1,0 +1,59 @@
+.upload-modal {
+  display: grid;
+  gap: 16px;
+}
+
+.upload-modal__controls,
+.upload-modal__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.upload-modal__field {
+  display: grid;
+  gap: 6px;
+  min-width: 140px;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
+  font-size: 0.85rem;
+}
+
+.upload-modal__field--search {
+  min-width: 240px;
+  flex: 1 1 280px;
+}
+
+.upload-modal__field input,
+.upload-modal__field select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--app-text);
+}
+
+.upload-modal__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.upload-modal__error {
+  margin: 0;
+  color: var(--ion-color-danger);
+}
+
+.upload-modal__hint {
+  margin: 0;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.7);
+}
+
+.upload-modal__pagination {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}

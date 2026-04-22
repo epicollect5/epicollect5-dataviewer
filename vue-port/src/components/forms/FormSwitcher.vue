@@ -38,3 +38,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/forms/FormSwitcher.scss" lang="scss"></style>

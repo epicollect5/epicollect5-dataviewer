@@ -116,3 +116,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/entry/ModalDeleteEntry.scss" lang="scss"></style>

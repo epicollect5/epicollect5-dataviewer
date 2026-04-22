@@ -196,3 +196,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/pages/PageTable.scss" lang="scss"></style>

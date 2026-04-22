@@ -238,3 +238,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/entry/DrawerEntry.scss" lang="scss"></style>

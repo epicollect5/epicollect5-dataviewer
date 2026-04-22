@@ -7,3 +7,4 @@ export default {
   name: 'LoaderSpinner'
 };
 </script>
+<style src="@/theme/global/LoaderSpinner.scss" lang="scss"></style>

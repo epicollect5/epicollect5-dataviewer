@@ -1,0 +1,27 @@
+.map-progress-wrapper {
+  display: grid;
+  gap: 8px;
+  margin: 0 auto 16px;
+  padding: 14px 18px;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.map-progress-wrapper__summary {
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
+  font-size: 0.9rem;
+}
+
+.map-progress-bar {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.12);
+}
+
+.map-progress-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ion-color-primary), var(--ion-color-secondary));
+  transition: width 180ms ease;
+}

@@ -47,10 +47,14 @@ export default {
     };
 
     const methods = {
+      markImageReady(image) {
+        image?.classList.add('photo-lightbox__image--ready');
+      },
+      resetImageReady(image) {
+        image?.classList.remove('photo-lightbox__image--ready');
+      },
       stopOverlayLoader() {
-        console.log('stopOverlayLoader called, current state:', state.showOverlayLoader);
         state.showOverlayLoader = false;
-        console.log('stopOverlayLoader set to:', state.showOverlayLoader);
         clearPollTimer();
       },
       startOverlayLoader() {
@@ -74,14 +78,20 @@ export default {
           if (image) {
             // Check if already loaded
             if (image.complete && image.naturalHeight > 0) {
+              methods.markImageReady(image);
               methods.stopOverlayLoader();
               return;
             }
 
+            methods.resetImageReady(image);
+
             // If not loaded yet, attach listeners (only once)
             if (!image.dataset.listenerAttached) {
               image.dataset.listenerAttached = 'true';
-              image.addEventListener('load', methods.stopOverlayLoader, { once: true });
+              image.addEventListener('load', () => {
+                methods.markImageReady(image);
+                methods.stopOverlayLoader();
+              }, { once: true });
               image.addEventListener('error', methods.stopOverlayLoader, { once: true });
             }
           }

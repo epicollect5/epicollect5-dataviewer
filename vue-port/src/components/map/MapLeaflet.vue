@@ -134,3 +134,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/map/MapLeaflet.scss" lang="scss"></style>

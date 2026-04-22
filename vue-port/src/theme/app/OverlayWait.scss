@@ -1,0 +1,10 @@
+.wait-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  background: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.45);
+  color: #fff;
+  z-index: 9999;
+}

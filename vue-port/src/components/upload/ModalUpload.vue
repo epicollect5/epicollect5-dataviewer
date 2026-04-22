@@ -11,7 +11,7 @@
   <ion-content class="ion-padding">
     <section class="upload-modal">
       <div class="upload-modal__controls">
-        <label class="table-toolbar__field">
+        <label class="upload-modal__field">
           <span>Mapping</span>
           <select :value="state.uploadStore.activeMappingIndex" @change="handleMappingChange($event.target.value)">
             <option v-for="(mapping, index) in state.projectStore.projectMapping" :key="mapping.name" :value="index">
@@ -20,7 +20,7 @@
           </select>
         </label>
 
-        <label class="table-toolbar__field table-toolbar__field--search">
+        <label class="upload-modal__field upload-modal__field--search">
           <span>CSV file</span>
           <input type="file" accept=".csv,text/csv" @change="handleFileChange" />
         </label>
@@ -277,3 +277,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/upload/ModalUpload.scss" lang="scss"></style>

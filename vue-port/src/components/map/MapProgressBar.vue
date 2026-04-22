@@ -30,3 +30,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/map/MapProgressBar.scss" lang="scss"></style>

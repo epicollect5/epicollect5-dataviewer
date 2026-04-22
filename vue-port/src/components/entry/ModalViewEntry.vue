@@ -30,22 +30,22 @@
                     class="view-entry-modal__photo-button"
                     @click="openPhoto(entryTitle, row.value.entry_original, row.value.entry_thumb || row.value.entry_default)"
                   >
-                    <span class="entries-grid__photo-frame">
-                      <span class="entries-grid__photo-mat">
-                        <span class="entries-grid__photo-viewport entries-grid__photo-viewport--large">
-                          <img :src="row.value.entry_thumb || row.value.entry_default" :alt="row.question" class="entries-grid__photo-thumb entries-grid__photo-thumb--ready" />
+                    <span class="view-entry-modal__photo-frame">
+                      <span class="view-entry-modal__photo-mat">
+                        <span class="view-entry-modal__photo-viewport">
+                          <img :src="row.value.entry_thumb || row.value.entry_default" :alt="row.question" class="view-entry-modal__photo-thumb" />
                         </span>
                       </span>
                     </span>
                   </button>
                 </template>
                 <template v-else-if="row.kind === 'audio'">
-                  <button type="button" class="entries-grid__media-button" @click="openMedia('audio', row.question, row.value.entry_original)">
+                  <button type="button" class="view-entry-modal__media-button" @click="openMedia('audio', row.question, row.value.entry_original)">
                     Play audio
                   </button>
                 </template>
                 <template v-else-if="row.kind === 'video'">
-                  <button type="button" class="entries-grid__media-button" @click="openMedia('video', row.question, row.value.entry_original)">
+                  <button type="button" class="view-entry-modal__media-button" @click="openMedia('video', row.question, row.value.entry_original)">
                     Play video
                   </button>
                 </template>
@@ -148,3 +148,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/entry/ModalViewEntry.scss" lang="scss"></style>
