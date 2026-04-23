@@ -217,7 +217,6 @@ export const createEntriesColumnDefs = (headers = []) => {
       minWidth: 200,
       maxWidth: 200,
       width: 200,
-      tooltipField: `answer_${index}`,
       wrapText: false,
       autoHeight: false,
       resizable: false,

@@ -21,7 +21,6 @@ export default {
       type: String,
       default: ''
     }
-  }
   },
   emits: ['change'],
   setup(props, { emit }) {

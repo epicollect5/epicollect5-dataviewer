@@ -58,6 +58,7 @@ import TableEmptyState from '@/components/table/StateEmptyTable.vue';
 import TableToolbar from '@/components/table/ToolbarTable.vue';
 import mapUtils from '@/core/map/mapUtils';
 import { useFiltersStore } from '@/stores/filtersStore';
+import { useMapStore } from '@/stores/mapStore';
 import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -77,6 +78,7 @@ export default {
     const navigationStore = useNavigationStore();
     const filtersStore = useFiltersStore();
     const tableStore = useTableStore();
+    const mapStore = useMapStore();
     const modalStore = useModalStore();
     const uploadStore = useUploadStore();
 
@@ -85,6 +87,7 @@ export default {
       navigationStore,
       filtersStore,
       tableStore,
+      mapStore,
       modalStore,
       uploadStore
     });
@@ -104,6 +107,7 @@ export default {
 
         if (didLoadProject && navigationStore.currentFormRef) {
           await tableStore.loadEntries();
+          void mapStore.loadLocations({ resetFilters: true });
         }
       },
       async handleTitleChange(title) {

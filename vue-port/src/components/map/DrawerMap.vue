@@ -13,13 +13,6 @@
       </ion-item>
 
       <ion-item class="drawer-map__item" :detail="false">
-        <label class="drawer-map__checkbox">
-          <input :checked="props.clustersEnabled" type="checkbox" @change="emitClusterToggle($event.target.checked)" />
-          <span>Group markers by coordinates</span>
-        </label>
-      </ion-item>
-
-      <ion-item class="drawer-map__item" :detail="false">
         <label class="drawer-map__field">
           <span>From</span>
           <input :value="props.startDate" :min="props.minDate" :max="props.maxDate" type="date" @change="emitDateChange('startDate', $event.target.value)" />

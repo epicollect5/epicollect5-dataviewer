@@ -1,11 +1,11 @@
 <template>
-  <PhotoViewerModal />
+  <ModalPhotoViewer />
 
   <ion-modal :is-open="activeModal !== null" :style="modalStyle" @didDismiss="closeModal">
-    <UploadModal v-if="activeModal === 'upload'" />
-    <DeleteEntryModal v-else-if="activeModal === 'delete-entry'" />
-    <MediaViewerModal v-else-if="activeModal === 'media-viewer'" :ref="setMediaViewerModal" />
-    <ViewEntryModal v-else-if="activeModal === 'view-entry'" />
+    <ModalUpload v-if="activeModal === 'upload'" />
+    <ModalDeleteEntry v-else-if="activeModal === 'delete-entry'" />
+    <ModalMediaViewer v-else-if="activeModal === 'media-viewer'" :ref="setMediaViewerModal" />
+    <ModalViewEntry v-else-if="activeModal === 'view-entry'" />
     <ion-content v-else class="ion-padding">
       <h2>{{ modalTitle }}</h2>
       <p>Modal placeholder.</p>
@@ -16,23 +16,23 @@
 <script>
 import { IonContent, IonModal } from '@ionic/vue';
 import { computed, reactive } from 'vue';
-import DeleteEntryModal from '@/components/entry/ModalDeleteEntry.vue';
-import ViewEntryModal from '@/components/entry/ModalViewEntry.vue';
-import MediaViewerModal from '@/components/media/ModalMediaViewer.vue';
-import PhotoViewerModal from '@/components/media/ModalPhotoViewer.vue';
-import UploadModal from '@/components/upload/ModalUpload.vue';
+import ModalDeleteEntry from '@/components/entry/ModalDeleteEntry.vue';
+import ModalViewEntry from '@/components/entry/ModalViewEntry.vue';
+import ModalMediaViewer from '@/components/media/ModalMediaViewer.vue';
+import ModalPhotoViewer from '@/components/media/ModalPhotoViewer.vue';
+import ModalUpload from '@/components/upload/ModalUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
 
 export default {
-  name: 'ModalAppHost',
+  name: 'ModalWrapper',
   components: {
     IonContent,
     IonModal,
-    DeleteEntryModal,
-    ViewEntryModal,
-    MediaViewerModal,
-    PhotoViewerModal,
-    UploadModal
+    ModalDeleteEntry,
+    ModalViewEntry,
+    ModalMediaViewer,
+    ModalPhotoViewer,
+    ModalUpload
   },
   setup() {
     const modalStore = useModalStore();
@@ -51,7 +51,7 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       activeModal: computed(() => modalStore.activeModal),
       modalTitle: computed(() => modalStore.activeModal || 'Modal'),
       modalStyle: computed(() => {
@@ -75,7 +75,7 @@ export default {
     return {
       state,
       ...methods,
-      ...computedState
+      ...computedScope
     };
   }
 };

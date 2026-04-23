@@ -2,7 +2,7 @@
   <ion-app>
     <DrawerWrapper />
     <ion-page id="app-shell-content" class="app-shell-page" :class="{ 'app-shell-page--ready': !isProjectBootLoading }">
-      <AppHeader v-if="!isProjectBootLoading" />
+      <PrimaryNavbar v-if="!isProjectBootLoading" />
       <ion-content fullscreen>
         <router-view v-slot="{ Component }">
           <keep-alive include="PageMap,PageTable">
@@ -10,8 +10,8 @@
           </keep-alive>
         </router-view>
       </ion-content>
-      <AppToastHost />
-      <AppModalHost />
+      <ToastWrapper />
+      <ModalWrapper />
       <OverlayWait />
     </ion-page>
 
@@ -32,11 +32,11 @@ import {
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import env from '@/core/config/env';
-import AppHeader from '@/components/app/AppHeader.vue';
+import PrimaryNavbar from '@/components/app/PrimaryNavbar.vue';
 import DrawerWrapper from '@/components/app/DrawerWrapper.vue';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
-import AppModalHost from '@/components/app/ModalAppHost.vue';
-import AppToastHost from '@/components/app/ToastAppHost.vue';
+import ModalWrapper from '@/components/app/ModalWrapper.vue';
+import ToastWrapper from '@/components/app/ToastWrapper.vue';
 import OverlayWait from '@/components/app/OverlayWait.vue';
 import { useMapStore } from '@/stores/mapStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -48,11 +48,11 @@ export default {
     IonApp,
     IonContent,
     IonPage,
-    AppHeader,
+    PrimaryNavbar,
     DrawerWrapper,
     LoaderSpinner,
-    AppModalHost,
-    AppToastHost,
+    ModalWrapper,
+    ToastWrapper,
     OverlayWait
   },
   setup() {
@@ -103,4 +103,4 @@ export default {
   }
 };
 </script>
-<style src="@/theme/app/AppShell.scss" lang="scss"></style>
+<style src="@/theme/app/Main.scss" lang="scss"></style>

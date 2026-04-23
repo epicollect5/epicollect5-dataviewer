@@ -78,9 +78,9 @@ Component type goes first in the filename.
 
 Examples:
 
-- `AppShell.vue`
-- `AppHeader.vue`
-- `DrawerAppHost.vue`
+- `Main.vue`
+- `PrimaryNavbar.vue`
+- `DrawerWrapper.vue`
 - `DrawerEntry.vue`
 - `ModalDeleteEntry.vue`
 - `ModalMediaViewer.vue`

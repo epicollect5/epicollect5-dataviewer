@@ -5,6 +5,7 @@
     type="overlay"
     :side="drawerSide"
     :disabled="!activeDrawer"
+    :swipe-gesture="false"
     @ionDidClose="handleMenuDidClose"
   >
     <ion-header>

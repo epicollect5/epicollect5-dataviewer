@@ -8,6 +8,17 @@ const getLocationQuestions = (projectExtra, formRef) => {
   return projectExtra?.forms?.[formRef]?.lists?.location_inputs || [];
 };
 
+const getLocationQuestionKey = (question) => {
+  if (!question) {
+    return '';
+  }
+
+  return `${question.branch_ref || ''}:${question.input_ref || ''}`;
+};
+
+let pendingLocationsRequest = null;
+let pendingLocationsRequestKey = '';
+
 export const useMapStore = defineStore('map', {
   state: () => ({
     locations: [],
@@ -15,6 +26,8 @@ export const useMapStore = defineStore('map', {
     markers: [],
     hasLoadedInitialPage: false,
     lastLoadedProjectSlug: '',
+    lastLoadedFormRef: '',
+    lastLoadedLocationQuestionKey: '',
     selectedLocationQuestion: null,
     selectedEntry: null,
     pagination: null,
@@ -40,11 +53,15 @@ export const useMapStore = defineStore('map', {
   },
   actions: {
     reset() {
+      pendingLocationsRequest = null;
+      pendingLocationsRequestKey = '';
       this.locations = [];
       this.filteredLocations = [];
       this.markers = [];
       this.hasLoadedInitialPage = false;
       this.lastLoadedProjectSlug = '';
+      this.lastLoadedFormRef = '';
+      this.lastLoadedLocationQuestionKey = '';
       this.selectedLocationQuestion = null;
       this.selectedEntry = null;
       this.pagination = null;
@@ -89,10 +106,16 @@ export const useMapStore = defineStore('map', {
     },
 
     clearForFormWithoutLocation() {
+      const projectStore = useProjectStore();
+      const navigationStore = useNavigationStore();
+
       this.locations = [];
       this.filteredLocations = [];
       this.markers = [];
       this.hasLoadedInitialPage = true;
+      this.lastLoadedProjectSlug = projectStore.projectSlug;
+      this.lastLoadedFormRef = navigationStore.currentFormRef || '';
+      this.lastLoadedLocationQuestionKey = '';
       this.selectedLocationQuestion = null;
       this.pagination = null;
       this.links = null;
@@ -180,6 +203,32 @@ export const useMapStore = defineStore('map', {
         options.selectedLocationQuestion ||
         this.selectedLocationQuestion ||
         this.getDefaultLocationQuestion();
+      const locationQuestionKey = getLocationQuestionKey(selectedLocationQuestion);
+      const requestContextKey = `${projectStore.projectSlug}|${navigationStore.currentFormRef}|${locationQuestionKey}`;
+
+      if (
+        this.hasLoadedInitialPage &&
+        this.lastLoadedProjectSlug === projectStore.projectSlug &&
+        this.lastLoadedFormRef === navigationStore.currentFormRef &&
+        this.lastLoadedLocationQuestionKey === locationQuestionKey
+      ) {
+        this.isRejectedPage = false;
+        this.errors = [];
+        this.selectedLocationQuestion = selectedLocationQuestion;
+        this.syncDateBounds();
+
+        if (options.resetFilters) {
+          this.startDate = '';
+          this.endDate = '';
+          this.recomputeMarkers();
+        }
+
+        return;
+      }
+
+      if (pendingLocationsRequest && pendingLocationsRequestKey === requestContextKey) {
+        return pendingLocationsRequest;
+      }
 
       this.isFetchingPage = true;
       this.isRejectedPage = false;
@@ -192,25 +241,38 @@ export const useMapStore = defineStore('map', {
         this.endDate = '';
       }
 
-      try {
-        const response = await fetchEntriesLocations(projectStore.projectSlug, this.buildLocationsParams({ selectedLocationQuestion }));
-        const payload = response.data;
+      pendingLocationsRequestKey = requestContextKey;
+      pendingLocationsRequest = (async () => {
+        try {
+          const response = await fetchEntriesLocations(projectStore.projectSlug, this.buildLocationsParams({ selectedLocationQuestion }));
+          const payload = response.data;
 
-        this.locations = payload.data?.geojson?.features || [];
-        this.pagination = payload.meta;
-        this.links = payload.links;
-        this.selectedEntry = null;
-        this.recomputeMarkers();
-      } catch (error) {
-        this.isRejectedPage = true;
-        this.errors = error.response?.data?.errors || [error.message];
-        this.locations = [];
-        this.filteredLocations = [];
-        this.markers = [];
-      } finally {
-        this.isFetchingPage = false;
-        this.hasLoadedInitialPage = true;
-      }
+          this.locations = payload.data?.geojson?.features || [];
+          this.pagination = payload.meta;
+          this.links = payload.links;
+          this.selectedEntry = null;
+          this.lastLoadedProjectSlug = projectStore.projectSlug;
+          this.lastLoadedFormRef = navigationStore.currentFormRef;
+          this.lastLoadedLocationQuestionKey = locationQuestionKey;
+          this.recomputeMarkers();
+        } catch (error) {
+          this.isRejectedPage = true;
+          this.errors = error.response?.data?.errors || [error.message];
+          this.locations = [];
+          this.filteredLocations = [];
+          this.markers = [];
+        } finally {
+          this.isFetchingPage = false;
+          this.hasLoadedInitialPage = true;
+
+          if (pendingLocationsRequestKey === requestContextKey) {
+            pendingLocationsRequest = null;
+            pendingLocationsRequestKey = '';
+          }
+        }
+      })();
+
+      return pendingLocationsRequest;
     },
 
     async loadEntry(entryUuid) {

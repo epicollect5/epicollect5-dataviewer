@@ -154,6 +154,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  user-select: text;
   border-right: 1px solid rgba(var(--ion-color-primary-rgb, 103, 60, 144), 0.14);
 }
 
@@ -164,6 +165,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  user-select: text;
 }
 
 .entries-grid__text-value--last {
@@ -179,6 +181,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
+  user-select: text;
 }
 
 .entries-grid .ag-cell-value {
@@ -187,6 +190,7 @@
   white-space: nowrap;
   min-width: 0;
   width: 100%;
+  user-select: text;
 }
 
 .entries-grid .ag-header-cell-label,

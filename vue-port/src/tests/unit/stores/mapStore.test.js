@@ -1,9 +1,21 @@
 import { setActivePinia, createPinia } from 'pinia';
 import { useMapStore } from '@/stores/mapStore';
+import { useNavigationStore } from '@/stores/navigationStore';
+import { useProjectStore } from '@/stores/projectStore';
+
+const { fetchEntriesLocations } = vi.hoisted(() => ({
+  fetchEntriesLocations: vi.fn()
+}));
+
+vi.mock('@/services/api/entriesApi', () => ({
+  fetchEntriesLocations,
+  fetchEntry: vi.fn()
+}));
 
 describe('mapStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    fetchEntriesLocations.mockReset();
   });
 
   it('rebuilds visible markers when the cluster toggle changes', () => {
@@ -68,5 +80,53 @@ describe('mapStore', () => {
     expect(store.filteredLocations).toHaveLength(1);
     expect(store.filteredLocations[0].properties.uuid).toBe('b');
     expect(store.markers).toHaveLength(1);
+  });
+
+  it('reuses the in-flight locations request for the same project and form', async () => {
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const store = useMapStore();
+
+    projectStore.projectSlug = 'demo-project';
+    projectStore.projectExtra = {
+      forms: {
+        form_1: {
+          lists: {
+            location_inputs: [
+              {
+                input_ref: 'location_1',
+                branch_ref: ''
+              }
+            ]
+          }
+        }
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    fetchEntriesLocations.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              data: {
+                data: {
+                  geojson: {
+                    features: []
+                  }
+                },
+                meta: {},
+                links: {}
+              }
+            });
+          }, 0);
+        })
+    );
+
+    const firstRequest = store.loadLocations({ resetFilters: true });
+    const secondRequest = store.loadLocations({ resetFilters: true });
+
+    await Promise.all([firstRequest, secondRequest]);
+
+    expect(fetchEntriesLocations).toHaveBeenCalledTimes(1);
   });
 });

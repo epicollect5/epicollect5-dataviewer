@@ -3,12 +3,12 @@
 </template>
 
 <script>
-import AppShell from '@/components/app/AppShell.vue';
+import Main from '@/components/app/Main.vue';
 
 export default {
   name: 'App',
   components: {
-    AppShell
+    AppShell: Main
   }
 };
 </script>

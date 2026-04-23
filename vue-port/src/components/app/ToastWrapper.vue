@@ -14,7 +14,7 @@ import { reactive } from 'vue';
 import { useToastStore } from '@/stores/toastStore';
 
 export default {
-  name: 'ToastAppHost',
+  name: 'ToastWrapper',
   components: {
     IonToast
   },

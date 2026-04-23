@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { mount } from '@vue/test-utils';
 import { createRouter, createWebHistory } from 'vue-router';
-import AppShell from '@/components/app/AppShell.vue';
+import Main from '@/components/app/Main.vue';
 
 describe('AppShell', () => {
   it('renders the shell and current route content', async () => {
@@ -20,7 +20,7 @@ describe('AppShell', () => {
     router.push('/');
     await router.isReady();
 
-    const wrapper = mount(AppShell, {
+    const wrapper = mount(Main, {
       global: {
         plugins: [router]
       }

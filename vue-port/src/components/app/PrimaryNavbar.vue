@@ -88,7 +88,7 @@ import { useTableStore } from '@/stores/tableStore';
 import helpers from '@/utils/helpers';
 
 export default {
-  name: 'AppHeader',
+  name: 'PrimaryNavbar',
   components: {
     IonHeader,
     IonIcon,
@@ -140,6 +140,7 @@ export default {
         }
 
         await tableStore.loadEntries({ params: { page: 1 } });
+        void mapStore.loadLocations({ resetFilters: true });
       },
       handleDownload() {
         if (!computedState.currentProjectSlug.value) {
@@ -263,4 +264,4 @@ export default {
   }
 };
 </script>
-<style src="@/theme/app/AppHeader.scss" lang="scss"></style>
+<style src="@/theme/app/PrimaryNavbar.scss" lang="scss"></style>
