@@ -38,13 +38,13 @@ Reason:
 
 ---
 
-#### Grouped structure (state, methods, computed)
+#### Grouped structure (state, methods, computedScope)
 
 Each component follows a consistent structure:
 
 - `state` → data
 - `methods` → actions
-- `computed` → derived values
+- `computedScope` → derived values (computed)
 
 Reason:
 - predictable layout across all components
@@ -166,7 +166,7 @@ const methods = {
 
 ## Computed
 
-- Derived values must live in `computed: {}` (or equivalent grouped structure).
+- Derived values must live in `computedScope: {}` (or equivalent grouped structure).
 - Do **NOT** compute values inline in templates.
 - Do **NOT** mix computed logic inside methods.
 
@@ -180,12 +180,12 @@ Always return a structured grouped API:
 return {
   state,
   ...methods,
-  ...computed
+  ...computedScope
 };
 ```
 
 - Do **NOT** return an unstructured mix of variables and functions.
-- Keep the order consistent: `state` → `methods` → `computed`.
+- Keep the order consistent: `state` → `methods` → `computedScope`.
 - Important: NEVER spread `state`
 
 
@@ -230,7 +230,7 @@ Do **NOT**:
 
 - **State** = data container
 - **Methods** = actions
-- **Computed** = derived state
+- **ComputedScope** = derived state
 - **Services** = business logic
 - **Components** = UI orchestration only
 
@@ -242,3 +242,20 @@ When in doubt:
 1. Follow `ExampleComponent.vue`
 2. Follow this file
 3. Then consider general Vue guidance
+
+# ESLint & Style Rules
+You must follow these rules strictly. If you generate code that violates these, it will fail build.
+
+- **Semicolons**: ALWAYS use semicolons at the end of statements (`'semi': ['error', 'always']`).
+- **Quotes**: Use SINGLE quotes for strings (`'quotes': ['error', 'single']`).
+- **Commas**: NEVER use trailing commas (`'comma-dangle': [1, 'never']`).
+- **Variables**: Prefer `const` over `let`, and NEVER use `var`.
+- **Vue Components**:
+  - Disable multi-word component name checks.
+  - Follow this specific order for component options: props, emits, setup, data, computed, watch, methods.
+- **Environment**: This is an Ionic Vue (3) project with Cordova globals enabled and Capacitor.
+# Testing Requirements
+- **Framework**: Use Vitest for all tests. Never use Jest.
+- **Imports**: Always import testing functions from 'vitest' (e.g., `import { describe, it, expect, vi } from 'vitest';`).
+- **Mocks**: Use `vi.fn()` or `vi.spyOn()` instead of `jest.fn()` or `jest.spyOn()`.
+- **Globals**: Even if globals are enabled in `vite.config.js`, explicitly include imports in generated snippets to ensure type safety.

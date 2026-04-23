@@ -74,11 +74,11 @@ Create a new subfolder only when the component group is real and reusable, not f
 
 ## Naming Rules
 
+- `Main.vue` is always the entry point of the app
+
 Component type goes first in the filename.
 
 Examples:
-
-- `Main.vue`
 - `PrimaryNavbar.vue`
 - `DrawerWrapper.vue`
 - `DrawerEntry.vue`
@@ -119,6 +119,11 @@ Use these prefixes consistently:
 
 - `State*`
   Empty/loading/error state components.
+
+Use this suffix consistently:
+
+- `*Wrapper`
+   Containers and hosts for related components
 
 ## Pages
 
