@@ -78,7 +78,7 @@
 import { IonHeader, IonIcon, IonToolbar } from '@ionic/vue';
 import { cloudDownload, globe, grid, logIn, logOut, power } from 'ionicons/icons';
 import { computed, reactive, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import PARAMETERS from '@/core/config/parameters';
 import { useDrawerStore } from '@/stores/drawerStore';
 import { useMapStore } from '@/stores/mapStore';
@@ -96,7 +96,6 @@ export default {
   },
   setup() {
     const route = useRoute();
-    const router = useRouter();
     const drawerStore = useDrawerStore();
     const projectStore = useProjectStore();
     const navigationStore = useNavigationStore();
@@ -123,7 +122,6 @@ export default {
       async navigateToPage(page) {
         drawerStore.close();
         navigationStore.setActivePage(page);
-        await router.push(page === 'map' ? computedState.mapHref.value : computedState.tableHref.value);
       },
       async handleFormChange(formRef) {
         const nextForm = projectStore.forms.find((form) => form.ref === formRef);
@@ -177,7 +175,7 @@ export default {
     };
 
     const computedState = {
-      isMapPage: computed(() => route.path.includes('/map')),
+      isMapPage: computed(() => navigationStore.activePage === 'map'),
       isLocalhost: computed(() => ['localhost', '127.0.0.1'].includes(window.location.hostname)),
       currentProjectSlug: computed(() => {
         return projectStore.projectDefinition.project?.slug || route.params.projectSlug || route.query.project || '';
@@ -221,19 +219,6 @@ export default {
         }
 
         return '/project/data';
-      }),
-      mapHref: computed(() => {
-        if (route.params.projectSlug !== undefined) {
-          return route.params.projectSlug
-            ? `/project/${route.params.projectSlug}/data/map`
-            : '/project/data/map';
-        }
-
-        if (computedState.currentProjectSlug.value) {
-          return `/project/${computedState.currentProjectSlug.value}/data/map`;
-        }
-
-        return '/project/data/map';
       }),
       fallbackAvatarSrc: computed(() => `${PARAMETERS.SERVER_URL}${PARAMETERS.IMAGES_PATH_LARAVEL}avatar-placeholder.png`)
     };

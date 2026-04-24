@@ -1,21 +1,23 @@
 .table-toolbar {
   display: grid;
-  gap: 16px;
-  margin: 0 auto 16px;
-  padding: 18px;
-  border: 1px solid var(--app-border);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
+  width: 100%;
+  min-width: 0;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.table-toolbar__primary,
-.table-toolbar__secondary {
-  display: flex;
-  flex-wrap: wrap;
+.table-toolbar__primary {
+  display: grid;
   gap: 12px;
+  width: 100%;
+}
+
+.table-toolbar__primary {
+  grid-template-columns: minmax(0, 6fr) repeat(2, minmax(0, 2fr)) minmax(0, 2fr);
   align-items: end;
-  justify-content: space-between;
 }
 
 .table-toolbar__field {
@@ -28,17 +30,17 @@
 
 .table-toolbar__field--date {
   position: relative;
-  min-width: 190px;
+  min-width: 0;
 }
 
 .table-toolbar__field--search {
-  min-width: 240px;
-  flex: 1 1 280px;
+  min-width: 0;
 }
 
 .table-toolbar__searchbar {
-  min-width: 240px;
-  flex: 1 1 280px;
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 auto;
   padding: 0;
   --background: #fff;
   --border-radius: 12px;
@@ -75,6 +77,8 @@
   display: flex;
   gap: 8px;
   align-items: end;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .table-toolbar__date-prefix {
@@ -116,11 +120,19 @@
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  justify-content: flex-end;
   color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
 }
 
-.table-toolbar__pagination button,
-.table-toolbar__ghost {
+.table-toolbar__pagination--secondary-navbar {
+  color: var(--ion-color-primary-contrast);
+}
+
+.table-toolbar__pagination--secondary-navbar .entries-grid__action-button {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.table-toolbar__pagination button {
   min-height: 40px;
   padding: 0 14px;
   border: 0;
@@ -128,11 +140,6 @@
   background: var(--ion-color-primary);
   color: var(--ion-color-primary-contrast);
   cursor: pointer;
-}
-
-.table-toolbar__ghost {
-  background: var(--ion-color-secondary);
-  color: var(--ion-color-secondary-contrast);
 }
 
 .table-toolbar__pagination .entries-grid__action-button {
@@ -177,8 +184,15 @@
 }
 
 @media (max-width: 768px) {
-  .table-toolbar {
-    padding: 14px;
-    border-radius: 14px;
+  .table-toolbar__primary {
+    grid-template-columns: 1fr;
+  }
+
+  .table-toolbar__controls {
+    justify-content: flex-start;
+  }
+
+  .table-toolbar__pagination {
+    justify-content: flex-start;
   }
 }

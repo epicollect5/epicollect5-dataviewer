@@ -24,20 +24,6 @@
   color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
 }
 
-.page-map__secondary-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 56px;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--app-border);
-  background-color: rgba(var(--ion-color-primary-rgb), 0.8);
-  color: var(--ion-color-primary-contrast);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-}
-
 .page-map__body {
   position: relative;
   display: flex;
@@ -71,11 +57,6 @@
 }
 
 @media (max-width: 768px) {
-  .page-map__secondary-navbar {
-    min-height: 52px;
-    padding: 0 12px;
-  }
-
   .page-map__entries-total {
     font-size: 0.875rem;
   }

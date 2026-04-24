@@ -1,0 +1,20 @@
+.secondary-navbar-light {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  color: var(--app-text);
+}
+
+@media (max-width: 768px) {
+  .secondary-navbar-light {
+    min-height: 52px;
+    padding: 0 12px;
+  }
+}

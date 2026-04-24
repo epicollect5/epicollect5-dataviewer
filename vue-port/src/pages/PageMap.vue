@@ -11,18 +11,22 @@
     </div>
 
     <template v-else>
-      <section v-if="hasLocationQuestions" class="page-map__secondary-navbar">
-        <button
-          class="page-map__drawer-button"
-          type="button"
-          aria-label="Open filters drawer"
-          @click="openFiltersDrawer"
-        >
-          <ion-icon :icon="menu" />
-        </button>
+      <SecondaryNavbar v-if="hasLocationQuestions">
+        <template #start>
+          <button
+            class="page-map__drawer-button"
+            type="button"
+            aria-label="Open filters drawer"
+            @click="openFiltersDrawer"
+          >
+            <ion-icon :icon="menu" />
+          </button>
+        </template>
 
-        <span class="page-map__entries-total">Total: {{ entriesTotal }}</span>
-      </section>
+        <template #end>
+          <span class="page-map__entries-total">Total: {{ entriesTotal }}</span>
+        </template>
+      </SecondaryNavbar>
 
       <div class="page-map__body">
         <div v-if="!hasLocationQuestions" class="placeholder-view">
@@ -68,6 +72,7 @@ import { IonIcon } from '@ionic/vue';
 import { menu } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import SecondaryNavbar from '@/components/app/SecondaryNavbar.vue';
 import env from '@/core/config/env';
 import { useDrawerStore } from '@/stores/drawerStore';
 import LeafletMap from '@/components/map/MapLeaflet.vue';
@@ -80,6 +85,7 @@ export default {
   name: 'PageMap',
   components: {
     IonIcon,
+    SecondaryNavbar,
     LeafletMap,
     MapProgressBar
   },

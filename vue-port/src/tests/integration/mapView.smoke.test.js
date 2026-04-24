@@ -20,7 +20,7 @@ describe('MapView smoke', () => {
       routes
     });
 
-    router.push('/project/demo/data/map');
+    router.push('/project/demo/data');
     await router.isReady();
 
     const projectStore = useProjectStore();
@@ -46,6 +46,7 @@ describe('MapView smoke', () => {
       }
     };
 
+    navigationStore.setActivePage('map');
     navigationStore.setCurrentForm('form_1', 'Form 1');
     mapStore.loadLocations = vi.fn();
 

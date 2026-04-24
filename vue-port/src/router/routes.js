@@ -5,12 +5,12 @@ export default [
   },
   {
     path: '/project/:projectSlug?/data',
-    name: 'table',
-    component: () => import('@/pages/PageTable.vue')
+    name: 'data',
+    component: () => import('@/pages/PageData.vue')
   },
   {
-    path: '/project/:projectSlug?/data/map',
-    name: 'map',
-    component: () => import('@/pages/PageMap.vue')
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/pages/PageNotFound.vue')
   }
 ];

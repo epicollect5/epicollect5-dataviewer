@@ -11,46 +11,80 @@
     </div>
 
     <template v-else>
-      <TableToolbar
-        :is-loading="state.tableStore.isFetchingPage"
-        :pagination="state.tableStore.pagination"
-        :links="state.tableStore.links"
-        :filter-by-title="state.filtersStore.filterByTitle"
-        :start-date="state.filtersStore.startDate"
-        :end-date="state.filtersStore.endDate"
-        :min-date="dateBounds.minDate"
-        :max-date="dateBounds.maxDate"
-        :selected-order-by="state.filtersStore.selectedOrderBy"
-        @update:title="handleTitleChange"
-        @update:start-date="handleDateChange"
-        @update:end-date="handleDateChange"
-        @update:order="handleOrderChange"
-        @reset-filters="handleResetFilters"
-        @open-upload="handleOpenUpload"
-        @previous-page="handlePreviousPage"
-        @next-page="handleNextPage"
-      />
+      <SecondaryNavbar>
+        <template #end>
+          <div v-if="state.tableStore.pagination" class="table-toolbar__pagination table-toolbar__pagination--secondary-navbar">
+            <span>Total {{ state.tableStore.pagination.total }} · Page {{ state.tableStore.pagination.current_page }}/{{ state.tableStore.pagination.last_page }}</span>
+            <button
+              type="button"
+              class="entries-grid__action-button entries-grid__action-button--view"
+              :disabled="!state.tableStore.links?.prev || state.tableStore.isFetchingPage"
+              aria-label="Previous page"
+              title="Previous page"
+              @click="handlePreviousPage"
+            >
+              <ion-icon :icon="chevronBackCircle" class="entries-grid__action-icon" />
+            </button>
+            <button
+              type="button"
+              class="entries-grid__action-button entries-grid__action-button--view"
+              :disabled="!state.tableStore.links?.next || state.tableStore.isFetchingPage"
+              aria-label="Next page"
+              title="Next page"
+              @click="handleNextPage"
+            >
+              <ion-icon :icon="chevronForwardCircle" class="entries-grid__action-icon" />
+            </button>
+          </div>
+        </template>
+      </SecondaryNavbar>
 
-      <div v-if="state.tableStore.isRejectedPage" class="placeholder-view">
-        <h1>Entries Load Failed</h1>
-        <p>{{ tableErrors }}</p>
-      </div>
+      <section class="table-view__layout">
+        <TableToolbar
+          :is-loading="state.tableStore.isFetchingPage"
+          :filter-by-title="state.filtersStore.filterByTitle"
+          :start-date="state.filtersStore.startDate"
+          :end-date="state.filtersStore.endDate"
+          :min-date="dateBounds.minDate"
+          :max-date="dateBounds.maxDate"
+          :selected-order-by="state.filtersStore.selectedOrderBy"
+          @update:title="handleTitleChange"
+          @update:start-date="handleDateChange"
+          @update:end-date="handleDateChange"
+          @update:order="handleOrderChange"
+          @reset-filters="handleResetFilters"
+        />
 
-      <TableEmptyState v-else-if="!state.tableStore.isFetchingPage && state.tableStore.flatRows.length === 0" />
+        <div class="table-view__content">
+          <div v-if="state.tableStore.isRejectedPage" class="placeholder-view">
+            <h1>Entries Load Failed</h1>
+            <p>{{ tableErrors }}</p>
+          </div>
 
-      <EntriesGrid
-        v-else
-        :headers="state.tableStore.headers"
-        :rows="state.tableStore.flatRows"
-        :is-loading="state.tableStore.isFetchingPage"
-      />
+          <TableEmptyState v-else-if="!state.tableStore.isFetchingPage && state.tableStore.flatRows.length === 0" />
+
+          <EntriesGrid
+            v-else
+            :headers="state.tableStore.headers"
+            :rows="state.tableStore.flatRows"
+            :is-loading="state.tableStore.isFetchingPage"
+          />
+        </div>
+
+        <footer class="table-view__footer">
+          <button type="button" class="table-view__upload-button" @click="handleOpenUpload">Upload</button>
+        </footer>
+      </section>
     </template>
   </section>
 </template>
 
 <script>
+import { IonIcon } from '@ionic/vue';
+import { chevronBackCircle, chevronForwardCircle } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import SecondaryNavbar from '@/components/app/SecondaryNavbar.vue';
 import env from '@/core/config/env';
 import PARAMETERS from '@/core/config/parameters';
 import EntriesGrid from '@/components/table/GridEntries.vue';
@@ -68,7 +102,9 @@ import { useUploadStore } from '@/stores/uploadStore';
 export default {
   name: 'PageTable',
   components: {
+    IonIcon,
     EntriesGrid,
+    SecondaryNavbar,
     TableEmptyState,
     TableToolbar
   },
@@ -196,6 +232,8 @@ export default {
 
     return {
       state,
+      chevronBackCircle,
+      chevronForwardCircle,
       ...methods,
       ...computedState
     };

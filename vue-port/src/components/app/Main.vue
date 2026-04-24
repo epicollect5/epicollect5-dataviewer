@@ -5,7 +5,7 @@
       <PrimaryNavbar v-if="!isProjectBootLoading" />
       <ion-content fullscreen>
         <router-view v-slot="{ Component }">
-          <keep-alive include="PageMap,PageTable">
+          <keep-alive include="PageData">
             <component :is="Component" />
           </keep-alive>
         </router-view>
@@ -39,6 +39,7 @@ import ModalWrapper from '@/components/app/ModalWrapper.vue';
 import ToastWrapper from '@/components/app/ToastWrapper.vue';
 import OverlayWait from '@/components/app/OverlayWait.vue';
 import { useMapStore } from '@/stores/mapStore';
+import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
 
@@ -60,12 +61,13 @@ export default {
     const projectStore = useProjectStore();
     const tableStore = useTableStore();
     const mapStore = useMapStore();
+    const navigationStore = useNavigationStore();
 
     const resolvedProjectSlug = computed(() => {
       return route.params.projectSlug || route.query.project || env.projectSlug || '';
     });
 
-    const isMapRoute = computed(() => route.path.includes('/map'));
+    const isMapRoute = computed(() => navigationStore.activePage === 'map');
 
     return {
       isProjectBootLoading: computed(() => {
