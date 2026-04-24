@@ -16,6 +16,7 @@
     :dblclick-disabled="true"
     @hide="closeModal"
   >
+    <template #loading />
     <template #toolbar />
   </VueEasyLightbox>
 </template>

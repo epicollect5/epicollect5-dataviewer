@@ -48,7 +48,15 @@
             <p>The current form has a location question, but the API returned no location features for this selection.</p>
           </div>
 
-          <LeafletMap v-else :ref="setLeafletMap" :markers="state.mapStore.markers" @marker-click="handleMarkerClick" />
+          <LeafletMap
+            v-else
+            :ref="setLeafletMap"
+            :markers="state.mapStore.markers"
+            :locations="state.mapStore.visibleLocations"
+            :total-markers="state.mapStore.locations.length"
+            :clusters-enabled="state.mapStore.clustersEnabled"
+            @marker-click="handleMarkerClick"
+          />
         </template>
       </div>
     </template>

@@ -12,6 +12,149 @@
   min-height: 0;
 }
 
+.leaflet-map-shell .marker-cluster-small,
+.leaflet-map-shell .marker-cluster-medium,
+.leaflet-map-shell .marker-cluster-large {
+  background-color: color-mix(in srgb, var(--ion-color-primary-tint, #76509b) 90%, transparent);
+}
+
+.leaflet-map-shell .marker-cluster-small div,
+.leaflet-map-shell .marker-cluster-medium div,
+.leaflet-map-shell .marker-cluster-large div {
+  background-color: color-mix(in srgb, var(--ion-color-tertiary, #7044ff) 80%, transparent);
+  color: #ffffff;
+}
+
+.leaflet-map-shell .marker-cluster {
+  background-clip: padding-box;
+  border-radius: 20px;
+  color: #ffffff;
+}
+
+.leaflet-map-shell .marker-cluster div {
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
+  margin-top: 5px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.leaflet-map-shell .marker-cluster span {
+  color: #ffffff;
+  line-height: 30px;
+}
+
+.leaflet-map-shell .marker-cluster-large {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 25px !important;
+}
+
+.leaflet-map-shell .marker-cluster-large div {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 20px !important;
+}
+
+.leaflet-map-shell .marker-cluster-large span {
+  line-height: 40px;
+}
+
+.leaflet-map-shell .leaflet-bar a,
+.leaflet-map-shell .leaflet-bar a:hover {
+  width: 30px;
+  height: 30px;
+}
+
+.leaflet-map-shell .leaflet-control-layers {
+  border: 0;
+  box-shadow: none;
+}
+
+.leaflet-map-shell .leaflet-bar.leaflet-control,
+.leaflet-map-shell .leaflet-control-layers.leaflet-control {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+}
+
+.leaflet-map-shell .leaflet-control-layers-toggle,
+.leaflet-map-shell .leaflet-touch .leaflet-control-layers-toggle,
+.leaflet-touch .leaflet-map-shell .leaflet-control-layers-toggle {
+  width: 30px !important;
+  height: 30px !important;
+  margin-left: -1px;
+}
+
+.custom-map-layer-control .leaflet-control-layers-list,
+.custom-map-layer-control.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+  display: none;
+}
+
+.custom-map-layer-control.leaflet-control-layers-expanded .leaflet-control-layers-list {
+  display: block !important;
+  position: relative;
+}
+
+.custom-map-layer-control.leaflet-control-layers-expanded {
+  padding: 6px 10px 6px 6px !important;
+  color: #333 !important;
+  background: #fff !important;
+}
+
+.custom-map-layer-control__group {
+  display: grid;
+  gap: 8px;
+  min-width: 130px;
+}
+
+.custom-map-layer-control__option {
+  display: block;
+  margin: 0;
+  cursor: pointer;
+}
+
+.custom-map-layer-control__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ion-color-primary, #673ab7);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.custom-map-layer-control__row input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.custom-map-layer-control__bullet {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--ion-color-primary, #673ab7);
+  border-radius: 50%;
+  flex: 0 0 18px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.custom-map-layer-control__row input:checked + .custom-map-layer-control__bullet::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--ion-color-primary, #673ab7);
+}
+
+.custom-map-layer-control__label {
+  color: #333;
+  user-select: none;
+  font-weight: 700;
+}
+
 @media (max-width: 768px) {
   .leaflet-map-shell {
     min-height: 0;

@@ -46,7 +46,7 @@
                         </span>
                       </transition>
                       <img
-                        :src="section.value.entry_thumb || section.value.entry_default"
+                        :src="section.value.entry_original"
                         :alt="section.question"
                         class="drawer-entry__photo"
                         :class="{ 'drawer-entry__photo--ready': !isThumbLoading(section.key) }"

@@ -9,6 +9,19 @@ const PARAMETERS = {
   DATA_VIEWER_PATH: '/data',
   DATA_EDITOR_ADD_ENTRY_PATH: '/add-entry',
   DATA_EDITOR_EDIT_ENTRY_PATH: '/edit-entry',
+  ESRI_TILES_PROVIDER_SATELLITE: `https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=${env.esriApiToken}`,
+  ESRI_TILES_PROVIDER_ATTRIBUTION: 'Powered by Esri | Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+  CARTO_LIGHT_TILES_PROVIDER: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+  CARTO_TILES_ATTRIBUTION:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
+  CARTO_DARK_TILES_PROVIDER: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
+  CARTO_DARK_TILES_ATTRIBUTION:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
+  OSM_TILES_PROVIDER: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  OSM_TILES_ATTRIBUTION: 'Map data &copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+  OPENTOPO_TILES_PROVIDER: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+  OPENTOPO_TILES_ATTRIBUTION:
+    'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
   TABLE_FIXED_HEADERS_TITLE_INDEX: 4,
   TABLE_FIXED_HEADERS_CHILDREN_INDEX: 3,
   TABLE_FIXED_HEADERS_TOTAL: 6,
@@ -28,6 +41,7 @@ const PARAMETERS = {
   API_BULK_UPLOAD_EXTERNAL_ENDPOINT: '/api/bulk-upload/',
   API_DELETION_ENDPOINT: '/api/internal/deletion/entry/',
   IMAGES_PATH_LARAVEL: '/images/',
+  MAX_ENTRIES_FOR_UNCLUSTERING: 10000,
   MAX_TITLE_LENGHT: 20,
   TABLE_UPLOAD_PER_PAGE: 25,
   TABLE_UPLOAD_MAX_ROWS: 150,
@@ -110,6 +124,18 @@ const PARAMETERS = {
   },
   COOKIES: {
     DOWNLOAD_ENTRIES: 'epicollect5-download-entries'
+  },
+  MAP_OVERLAYS: {
+    CLUSTERS: 'Clusters',
+    HEATMAP: 'Heatmap',
+    MARKERS: 'Markers'
+  },
+  MAP_BASE_LAYERS: {
+    SATELLITE: 'Satellite',
+    TERRAIN: 'Terrain',
+    CARTO: 'Carto',
+    CARTO_DARK: 'CartoDark',
+    OPEN_STREET_MAP: 'OpenStreetMap'
   },
   LABELS: {
     FILE_UPLOAD_ERROR: 'Invalid file',
