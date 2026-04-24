@@ -210,26 +210,30 @@ export default {
         return `${PARAMETERS.SERVER_URL}${PARAMETERS.API_MEDIA_ENDPOINT}${computedState.currentProjectSlug.value}${PARAMETERS.PROJECT_LOGO_QUERY_STRING}&v=${version}`;
       }),
       tableHref: computed(() => {
-        if (route.params.projectSlug) {
-          return `/${route.params.projectSlug}/data`;
+        if (route.params.projectSlug !== undefined) {
+          return route.params.projectSlug
+            ? `/project/${route.params.projectSlug}/data`
+            : '/project/data';
         }
 
         if (computedState.currentProjectSlug.value) {
-          return `/table?project=${computedState.currentProjectSlug.value}`;
+          return `/project/${computedState.currentProjectSlug.value}/data`;
         }
 
-        return '/table';
+        return '/project/data';
       }),
       mapHref: computed(() => {
-        if (route.params.projectSlug) {
-          return `/${route.params.projectSlug}/data/map`;
+        if (route.params.projectSlug !== undefined) {
+          return route.params.projectSlug
+            ? `/project/${route.params.projectSlug}/data/map`
+            : '/project/data/map';
         }
 
         if (computedState.currentProjectSlug.value) {
-          return `/map?project=${computedState.currentProjectSlug.value}`;
+          return `/project/${computedState.currentProjectSlug.value}/data/map`;
         }
 
-        return '/map';
+        return '/project/data/map';
       }),
       fallbackAvatarSrc: computed(() => `${PARAMETERS.SERVER_URL}${PARAMETERS.IMAGES_PATH_LARAVEL}avatar-placeholder.png`)
     };

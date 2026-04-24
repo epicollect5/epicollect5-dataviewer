@@ -19,13 +19,13 @@ describe('PageMap smoke', () => {
       history: createMemoryHistory(),
       routes: [
         {
-          path: '/:projectSlug/data/map',
+          path: '/project/:projectSlug?/data/map',
           component: PageMap
         }
       ]
     });
 
-    router.push('/demo/data/map');
+    router.push('/project/demo/data/map');
     await router.isReady();
 
     const projectStore = useProjectStore();

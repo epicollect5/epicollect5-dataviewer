@@ -2,7 +2,7 @@
   <section class="table-view">
     <div v-if="missingProjectSlug" class="placeholder-view">
       <h1>Project Required</h1>
-      <p>Open the Vue port with `?project=your-project-slug` or use `/:projectSlug/data`.</p>
+      <p>Open the Vue port with `/project/your-project-slug/data`.</p>
     </div>
 
     <div v-else-if="state.projectStore.isRejected" class="placeholder-view">

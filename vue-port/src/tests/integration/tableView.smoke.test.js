@@ -26,13 +26,13 @@ describe('TableView smoke', () => {
       history: createMemoryHistory(),
       routes: [
         {
-          path: '/:projectSlug/data',
+          path: '/project/:projectSlug?/data',
           component: PageTable
         }
       ]
     });
 
-    router.push('/demo/data');
+    router.push('/project/demo/data');
     await router.isReady();
 
     const projectStore = useProjectStore();

@@ -1,26 +1,16 @@
 export default [
   {
     path: '/',
-    redirect: '/table'
+    redirect: '/project/data'
   },
   {
-    path: '/table',
+    path: '/project/:projectSlug?/data',
     name: 'table',
     component: () => import('@/pages/PageTable.vue')
   },
   {
-    path: '/:projectSlug/data',
-    name: 'legacy-table',
-    component: () => import('@/pages/PageTable.vue')
-  },
-  {
-    path: '/map',
+    path: '/project/:projectSlug?/data/map',
     name: 'map',
-    component: () => import('@/pages/PageMap.vue')
-  },
-  {
-    path: '/:projectSlug/data/map',
-    name: 'legacy-map',
     component: () => import('@/pages/PageMap.vue')
   }
 ];

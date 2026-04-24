@@ -20,7 +20,7 @@ describe('MapView smoke', () => {
       routes
     });
 
-    router.push('/demo/data/map');
+    router.push('/project/demo/data/map');
     await router.isReady();
 
     const projectStore = useProjectStore();
