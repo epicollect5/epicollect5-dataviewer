@@ -1,7 +1,13 @@
 <template>
-  <keep-alive include="PageMap,PageTable">
-    <component :is="activePageComponent" />
-  </keep-alive>
+  <section class="page-data">
+    <div class="page-data__panel" :class="{ 'page-data__panel--active': !isMapPage }" :aria-hidden="isMapPage">
+      <PageTable />
+    </div>
+
+    <div class="page-data__panel" :class="{ 'page-data__panel--active': isMapPage }" :aria-hidden="!isMapPage">
+      <PageMap />
+    </div>
+  </section>
 </template>
 
 <script>
@@ -20,9 +26,7 @@ export default {
     const navigationStore = useNavigationStore();
 
     const computedState = {
-      activePageComponent: computed(() => {
-        return navigationStore.activePage === 'map' ? PageMap : PageTable;
-      })
+      isMapPage: computed(() => navigationStore.activePage === 'map')
     };
 
     return {
@@ -31,3 +35,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/pages/PageData.scss" lang="scss"></style>

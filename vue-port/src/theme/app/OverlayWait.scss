@@ -3,8 +3,21 @@
   inset: 0;
   display: grid;
   place-content: center;
+  justify-items: center;
   gap: 12px;
-  background: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.45);
-  color: #fff;
-  z-index: 9999;
+  background: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.9);
+  z-index: 20000;
+  text-align: center;
+  cursor: progress;
+}
+
+.wait-overlay .loader-spinner {
+  border-color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.18);
+  border-top-color: var(--ion-color-primary);
+}
+
+body.app-busy,
+body.app-busy * {
+  cursor: progress !important;
 }

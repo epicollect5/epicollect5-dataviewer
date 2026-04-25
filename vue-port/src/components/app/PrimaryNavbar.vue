@@ -117,10 +117,13 @@ export default {
         state.projectLogoSrc = '/favicon.png';
       },
       handleAvatarError() {
-        state.avatarSrc = computedState.fallbackAvatarSrc.value;
+        state.avatarSrc = computedScope.fallbackAvatarSrc.value;
       },
       async navigateToPage(page) {
         drawerStore.close();
+        if (page === 'map' && navigationStore.activePage !== 'map' && navigationStore.isFirstMapLoad) {
+          navigationStore.setBusy(true);
+        }
         navigationStore.setActivePage(page);
       },
       async handleFormChange(formRef) {
@@ -132,7 +135,7 @@ export default {
         navigationStore.setCurrentForm(nextForm.ref, nextForm.name);
         drawerStore.close();
 
-        if (computedState.isMapPage.value) {
+        if (computedScope.isMapPage.value) {
           await mapStore.loadLocations({ resetFilters: true });
           return;
         }
@@ -141,7 +144,7 @@ export default {
         void mapStore.loadLocations({ resetFilters: true });
       },
       handleDownload() {
-        if (!computedState.currentProjectSlug.value) {
+        if (!computedScope.currentProjectSlug.value) {
           return;
         }
 
@@ -149,9 +152,9 @@ export default {
           ? projectStore.projectMapping
           : Object.values(projectStore.projectMapping || {});
         const activeMapping = helpers.getDefaultMapping(availableMappings) || availableMappings[0] || {};
-        const params = computedState.isMapPage.value
+        const params = computedScope.isMapPage.value
           ? {
-              form_ref: computedState.currentFormRef.value,
+              form_ref: computedScope.currentFormRef.value,
               format: 'csv'
             }
           : {
@@ -170,11 +173,11 @@ export default {
           }
         });
 
-        window.location.href = `${PARAMETERS.SERVER_URL}${PARAMETERS.API_DOWNLOAD_ENDPOINT}${computedState.currentProjectSlug.value}?${query.toString()}`;
+        window.location.href = `${PARAMETERS.SERVER_URL}${PARAMETERS.API_DOWNLOAD_ENDPOINT}${computedScope.currentProjectSlug.value}?${query.toString()}`;
       }
     };
 
-    const computedState = {
+    const computedScope = {
       isMapPage: computed(() => navigationStore.activePage === 'map'),
       isLocalhost: computed(() => ['localhost', '127.0.0.1'].includes(window.location.hostname)),
       currentProjectSlug: computed(() => {
@@ -187,17 +190,17 @@ export default {
         const user = projectStore.projectUser || {};
         return (user.role !== null && user.role !== undefined) || (user.id !== null && user.id !== undefined);
       }),
-      showDownloadButton: computed(() => computedState.isLocalhost.value || computedState.isLoggedIn.value),
+      showDownloadButton: computed(() => computedScope.isLocalhost.value || computedScope.isLoggedIn.value),
       userName: computed(() => projectStore.projectUser?.name || 'User'),
       loginHref: computed(() => `${PARAMETERS.SERVER_URL}/login`),
-      logoutHref: computed(() => `${PARAMETERS.SERVER_URL}${computedState.isLocalhost.value ? '/login' : '/logout'}`),
+      logoutHref: computed(() => `${PARAMETERS.SERVER_URL}${computedScope.isLocalhost.value ? '/login' : '/logout'}`),
       projectHomeUrl: computed(() => {
-        return computedState.currentProjectSlug.value
-          ? `${PARAMETERS.SERVER_URL}${PARAMETERS.PROJECT_HOME_PATH}${computedState.currentProjectSlug.value}`
+        return computedScope.currentProjectSlug.value
+          ? `${PARAMETERS.SERVER_URL}${PARAMETERS.PROJECT_HOME_PATH}${computedScope.currentProjectSlug.value}`
           : PARAMETERS.SERVER_URL;
       }),
       projectLogoUrl: computed(() => {
-        if (!computedState.currentProjectSlug.value) {
+        if (!computedScope.currentProjectSlug.value) {
           return '/favicon.png';
         }
 
@@ -205,7 +208,7 @@ export default {
           ? Math.floor(new Date(projectStore.projectStats.structure_last_updated).getTime() / 1000)
           : Date.now();
 
-        return `${PARAMETERS.SERVER_URL}${PARAMETERS.API_MEDIA_ENDPOINT}${computedState.currentProjectSlug.value}${PARAMETERS.PROJECT_LOGO_QUERY_STRING}&v=${version}`;
+        return `${PARAMETERS.SERVER_URL}${PARAMETERS.API_MEDIA_ENDPOINT}${computedScope.currentProjectSlug.value}${PARAMETERS.PROJECT_LOGO_QUERY_STRING}&v=${version}`;
       }),
       tableHref: computed(() => {
         if (route.params.projectSlug !== undefined) {
@@ -214,8 +217,8 @@ export default {
             : '/project/data';
         }
 
-        if (computedState.currentProjectSlug.value) {
-          return `/project/${computedState.currentProjectSlug.value}/data`;
+        if (computedScope.currentProjectSlug.value) {
+          return `/project/${computedScope.currentProjectSlug.value}/data`;
         }
 
         return '/project/data';
@@ -224,7 +227,7 @@ export default {
     };
 
     watch(
-      computedState.projectLogoUrl,
+      computedScope.projectLogoUrl,
       (nextLogoUrl) => {
         state.projectLogoSrc = nextLogoUrl || '/favicon.png';
       },
@@ -232,7 +235,7 @@ export default {
     );
 
     watch(
-      () => [projectStore.projectUser?.avatar, computedState.fallbackAvatarSrc.value],
+      () => [projectStore.projectUser?.avatar, computedScope.fallbackAvatarSrc.value],
       ([nextAvatar, nextFallback]) => {
         state.avatarSrc = nextAvatar || nextFallback;
       },
@@ -242,7 +245,7 @@ export default {
     return {
       state,
       ...methods,
-      ...computedState,
+      ...computedScope,
       cloudDownload,
       globe,
       grid,

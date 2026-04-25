@@ -1,11 +1,11 @@
 .map-progress-wrapper {
-  position: absolute;
-  top: 16px;
+  position: fixed;
+  top: 132px;
   left: 50%;
-  z-index: 30;
+  z-index: 20001;
   display: grid;
   gap: 8px;
-  width: min(360px, calc(100% - 32px));
+  width: min(50vw, calc(100% - 32px));
   margin: 0;
   padding: 14px 18px;
   border: 1px solid var(--app-border);
@@ -14,11 +14,21 @@
   backdrop-filter: blur(12px);
   transform: translateX(-50%);
   pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 220ms ease, visibility 220ms ease;
+}
+
+.map-progress-wrapper--visible {
+  opacity: 1;
+  visibility: visible;
 }
 
 .map-progress-wrapper__summary {
   color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2px);
+  font-weight: 700;
+  text-align: center;
 }
 
 .map-progress-bar {
@@ -30,13 +40,13 @@
 
 .map-progress-bar__fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--ion-color-primary), var(--ion-color-secondary));
+  background: var(--ion-color-primary);
   transition: width 180ms ease;
 }
 
 @media (max-width: 768px) {
   .map-progress-wrapper {
-    top: 12px;
+    top: 116px;
     width: calc(100% - 24px);
   }
 }

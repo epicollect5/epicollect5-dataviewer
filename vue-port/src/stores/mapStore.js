@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { fetchEntriesLocations, fetchEntry } from '@/services/api/entriesApi';
-import mapUtils from '@/core/map/mapUtils';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
+import mapUtils from '@/core/map/mapUtils';
 
 const getLocationQuestions = (projectExtra, formRef) => {
   return projectExtra?.forms?.[formRef]?.lists?.location_inputs || [];
@@ -150,16 +150,12 @@ export const useMapStore = defineStore('map', {
 
     recomputeMarkers() {
       const nextVisibleLocations = mapUtils.filterLocationsByDate(this.locations, this.startDate, this.endDate);
-      const markerPayload = mapUtils.buildMarkerItems(nextVisibleLocations, this.clustersEnabled);
 
       this.filteredLocations = nextVisibleLocations;
-      this.progressBarIsVisible = true;
-      this.progressBarMarkersProcessed = markerPayload.processedCount;
-      this.progressBarMarkersTotal = markerPayload.totalCount;
-      this.progressBarPercentage =
-        markerPayload.totalCount > 0 ? Math.round((markerPayload.processedCount / markerPayload.totalCount) * 100) : 0;
-      this.markers = markerPayload.markers;
-      this.progressBarIsVisible = false;
+      this.markers = nextVisibleLocations;
+      this.progressBarMarkersProcessed = 0;
+      this.progressBarMarkersTotal = nextVisibleLocations.length;
+      this.progressBarPercentage = 0;
     },
 
     setClustersEnabled(enabled) {

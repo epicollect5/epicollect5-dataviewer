@@ -1,0 +1,25 @@
+.page-data {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.page-data__panel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.page-data__panel--active {
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
+  z-index: 1;
+}

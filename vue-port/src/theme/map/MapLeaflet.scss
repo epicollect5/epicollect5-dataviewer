@@ -6,6 +6,10 @@
   background: #dfe7ef;
 }
 
+.leaflet-map-shell--hidden {
+  visibility: hidden;
+}
+
 .leaflet-map {
   width: 100%;
   height: 100%;

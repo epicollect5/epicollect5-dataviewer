@@ -618,12 +618,6 @@ class Map extends React.Component {
             this.props.toggleDrawerEntry(true);
         });
 
-        //listen to click on each popup close attaching the event to the layer directly
-        this.markers.on('popupclose', () => {
-            //close drawer entry
-            this.props.toggleDrawerEntry(true);
-        });
-
         this.map.on('zoomstart', () => {
             // console.log('zoomstart =>', this.map.getZoom());
         });

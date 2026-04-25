@@ -1,18 +1,21 @@
 <template>
-  <div v-if="isBusy" class="wait-overlay">
-    <LoaderSpinner />
-    <span>Working…</span>
-  </div>
+  <Teleport to="body">
+    <div v-if="isBusy" class="wait-overlay">
+      <LoaderSpinner />
+      <span>Processing...</span>
+    </div>
+  </Teleport>
 </template>
 
 <script>
-import { computed, reactive } from 'vue';
+import { Teleport, computed, onBeforeUnmount, reactive, watch } from 'vue';
 import { useNavigationStore } from '@/stores/navigationStore';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 
 export default {
   name: 'OverlayWait',
   components: {
+    Teleport,
     LoaderSpinner
   },
   setup() {
@@ -25,6 +28,24 @@ export default {
     const computedState = {
       isBusy: computed(() => navigationStore.isPerformingLongAction)
     };
+
+    watch(
+      computedState.isBusy,
+      (isBusy) => {
+        if (typeof document === 'undefined') {
+          return;
+        }
+
+        document.body.classList.toggle('app-busy', isBusy);
+      },
+      { immediate: true }
+    );
+
+    onBeforeUnmount(() => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('app-busy');
+      }
+    });
 
     return {
       state,

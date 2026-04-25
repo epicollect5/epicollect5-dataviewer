@@ -2,6 +2,9 @@ import { defineStore } from 'pinia';
 import { fetchProject } from '@/services/api/projectApi';
 import { useNavigationStore } from '@/stores/navigationStore';
 
+let pendingProjectRequest = null;
+let pendingProjectSlug = '';
+
 export const useProjectStore = defineStore('project', {
   state: () => ({
     projectSlug: '',
@@ -29,37 +32,51 @@ export const useProjectStore = defineStore('project', {
         return false;
       }
 
+      if (pendingProjectRequest && pendingProjectSlug === projectSlug) {
+        return pendingProjectRequest;
+      }
+
       this.projectSlug = projectSlug;
       this.isFetching = true;
       this.isRejected = false;
       this.errors = [];
 
-      try {
-        const response = await fetchProject(projectSlug);
-        const navigationStore = useNavigationStore();
-        const payload = response.data;
-        const forms = payload.data.project?.forms || [];
-        const firstForm = forms[0] || null;
+      pendingProjectSlug = projectSlug;
+      pendingProjectRequest = (async () => {
+        try {
+          const response = await fetchProject(projectSlug);
+          const navigationStore = useNavigationStore();
+          const payload = response.data;
+          const forms = payload.data.project?.forms || [];
+          const firstForm = forms[0] || null;
 
-        this.projectDefinition = payload.data;
-        this.projectExtra = payload.meta.project_extra;
-        this.projectUser = payload.meta.project_user;
-        this.projectStats = payload.meta.project_stats;
-        this.projectMapping = payload.meta.project_mapping;
-        this.isFulfilled = true;
+          this.projectDefinition = payload.data;
+          this.projectExtra = payload.meta.project_extra;
+          this.projectUser = payload.meta.project_user;
+          this.projectStats = payload.meta.project_stats;
+          this.projectMapping = payload.meta.project_mapping;
+          this.isFulfilled = true;
 
-        if (firstForm) {
-          navigationStore.setCurrentForm(firstForm.ref, firstForm.name);
+          if (firstForm) {
+            navigationStore.setCurrentForm(firstForm.ref, firstForm.name);
+          }
+
+          return true;
+        } catch (error) {
+          this.isRejected = true;
+          this.errors = error.response?.data?.errors || [error.message];
+          return false;
+        } finally {
+          this.isFetching = false;
+
+          if (pendingProjectSlug === projectSlug) {
+            pendingProjectRequest = null;
+            pendingProjectSlug = '';
+          }
         }
+      })();
 
-        return true;
-      } catch (error) {
-        this.isRejected = true;
-        this.errors = error.response?.data?.errors || [error.message];
-        return false;
-      } finally {
-        this.isFetching = false;
-      }
+      return pendingProjectRequest;
     }
   }
 });

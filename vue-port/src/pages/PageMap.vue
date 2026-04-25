@@ -36,10 +36,10 @@
 
         <template v-else>
           <MapProgressBar
-            :is-visible="state.mapStore.progressBarIsVisible || state.mapStore.isFetchingPage"
-            :processed="state.mapStore.progressBarMarkersProcessed"
-            :total="state.mapStore.progressBarMarkersTotal"
-            :percentage="state.mapStore.progressBarPercentage"
+            :is-visible="isMapPage && showMapLoader"
+            :processed="state.renderProgress.processed"
+            :total="state.renderProgress.total"
+            :percentage="state.renderProgress.percentage"
           />
 
           <div v-if="state.mapStore.isRejectedPage" class="placeholder-view">
@@ -53,13 +53,17 @@
           </div>
 
           <LeafletMap
-            v-else
+            v-else-if="shouldRenderMap"
             :ref="setLeafletMap"
-            :markers="state.mapStore.markers"
             :locations="state.mapStore.visibleLocations"
+            :is-hidden="isMapPage && showMapLoader"
             :total-markers="state.mapStore.locations.length"
             :clusters-enabled="state.mapStore.clustersEnabled"
+            :location-cache-key="locationCacheKey"
             @marker-click="handleMarkerClick"
+            @render-start="handleMapRenderStart"
+            @progress="handleRenderProgress"
+            @ready="handleLeafletReady"
           />
         </template>
       </div>
@@ -70,7 +74,7 @@
 <script>
 import { IonIcon } from '@ionic/vue';
 import { menu } from 'ionicons/icons';
-import { computed, onMounted, reactive, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import SecondaryNavbar from '@/components/app/SecondaryNavbar.vue';
 import env from '@/core/config/env';
@@ -101,19 +105,40 @@ export default {
       projectStore,
       navigationStore,
       mapStore,
-      leafletMap: null
+      leafletMap: null,
+      isMapViewReady: false,
+      isRevealingMap: false,
+      renderProgress: {
+        isVisible: false,
+        processed: 0,
+        total: 0,
+        percentage: 0
+      }
     });
 
     const methods = {
+      waitForPaint() {
+        return new Promise((resolve) => {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(resolve);
+          });
+        });
+      },
       setLeafletMap(instance) {
         state.leafletMap = instance;
+      },
+      resetMapViewState() {
+        state.isMapViewReady = false;
+        state.isRevealingMap = false;
+        state.renderProgress.isVisible = false;
+        state.renderProgress.processed = 0;
+        state.renderProgress.total = 0;
+        state.renderProgress.percentage = 0;
       },
       async bootstrap() {
         if (!computedState.resolvedProjectSlug.value) {
           return;
         }
-
-        navigationStore.setActivePage('map');
 
         const didLoadProject =
           projectStore.projectSlug === computedState.resolvedProjectSlug.value
@@ -125,6 +150,8 @@ export default {
         }
       },
       async handleLocationQuestionChange(question) {
+        methods.resetMapViewState();
+        navigationStore.setBusy(true);
         await mapStore.loadLocations({
           selectedLocationQuestion: question,
           resetFilters: true
@@ -166,7 +193,7 @@ export default {
           endDate: mapStore.endDate,
           minDate: mapStore.minDate,
           maxDate: mapStore.maxDate,
-          visibleCount: mapStore.markers.length,
+          visibleCount: mapStore.visibleLocations.length,
           totalCount: mapStore.locations.length,
           onEvent: methods.handleDrawerEvent
         });
@@ -183,6 +210,35 @@ export default {
       },
       closeEntryPopup() {
         state.leafletMap?.closeActivePopup?.();
+      },
+      handleRenderProgress(progress) {
+        state.renderProgress.isVisible = progress.isVisible;
+        state.renderProgress.processed = progress.processed;
+        state.renderProgress.total = progress.total;
+        state.renderProgress.percentage = progress.percentage;
+      },
+      handleMapRenderStart() {
+        state.isMapViewReady = false;
+        state.isRevealingMap = false;
+
+        if (navigationStore.activePage === 'map') {
+          navigationStore.setBusy(true);
+        }
+      },
+      async handleLeafletReady() {
+        if (state.isMapViewReady || state.isRevealingMap) {
+          return;
+        }
+
+        state.isRevealingMap = true;
+        state.leafletMap?.invalidateMapSize?.();
+        state.leafletMap?.applyInitialFit?.();
+        await methods.waitForPaint();
+        state.renderProgress.isVisible = false;
+        state.isMapViewReady = true;
+        state.isRevealingMap = false;
+        navigationStore.setFirstMapLoad(false);
+        navigationStore.setBusy(false);
       }
     };
 
@@ -199,7 +255,27 @@ export default {
       }),
       locationQuestions: computed(() => mapStore.getLocationQuestions()),
       hasLocationQuestions: computed(() => computedState.locationQuestions.value.length > 0),
-      entriesTotal: computed(() => mapStore.locations.length)
+      entriesTotal: computed(() => mapStore.locations.length),
+      isMapPage: computed(() => navigationStore.activePage === 'map'),
+      locationCacheKey: computed(() => {
+        const question = mapStore.selectedLocationQuestion;
+        const questionKey = question ? `${question.branch_ref || ''}:${question.input_ref || ''}` : 'default';
+        return `${projectStore.projectSlug || 'project'}|${navigationStore.currentFormRef || 'form'}|${questionKey}`;
+      }),
+      shouldRenderMap: computed(() => {
+        return computedState.hasLocationQuestions.value && !mapStore.isRejectedPage && mapStore.locations.length > 0;
+      }),
+      showMapLoader: computed(() => {
+        if (!computedState.hasLocationQuestions.value || mapStore.isRejectedPage) {
+          return false;
+        }
+
+        if (!mapStore.isFetchingPage && mapStore.hasLoadedInitialPage && mapStore.locations.length === 0) {
+          return false;
+        }
+
+        return mapStore.isFetchingPage || state.renderProgress.isVisible || !state.isMapViewReady || state.isRevealingMap;
+      })
     };
 
     onMounted(methods.bootstrap);
@@ -208,9 +284,62 @@ export default {
       if (nextSlug && nextSlug !== previousSlug) {
         mapStore.reset();
         drawerStore.close();
+        methods.resetMapViewState();
         await methods.bootstrap();
       }
     });
+
+    watch(
+      () => [mapStore.isFetchingPage, mapStore.locations.length],
+      ([isFetchingPage, locationsLength], [previousFetchingPage, previousLocationsLength] = []) => {
+        const finishedFetch = previousFetchingPage && !isFetchingPage;
+        const changedPayload = locationsLength !== previousLocationsLength;
+
+        if (finishedFetch || changedPayload) {
+          methods.resetMapViewState();
+        }
+      }
+    );
+
+    watch(
+      () => [
+        navigationStore.activePage,
+        computedState.showMapLoader.value,
+        mapStore.isRejectedPage,
+        mapStore.hasLoadedInitialPage,
+        mapStore.locations.length,
+        computedState.hasLocationQuestions.value
+      ],
+      ([activePage, nextShowLoader, isRejectedPage, hasLoadedInitialPage, locationsLength, nextHasLocationQuestions]) => {
+        if (activePage !== 'map') {
+          navigationStore.setBusy(false);
+          return;
+        }
+
+        if (!nextHasLocationQuestions || isRejectedPage || (hasLoadedInitialPage && locationsLength === 0)) {
+          navigationStore.setBusy(false);
+          return;
+        }
+
+        navigationStore.setBusy(nextShowLoader);
+      },
+      {
+        immediate: true
+      }
+    );
+
+    watch(
+      () => navigationStore.activePage,
+      async (activePage, previousPage) => {
+        if (activePage !== 'map' || previousPage === 'map') {
+          return;
+        }
+
+        await nextTick();
+        state.leafletMap?.invalidateMapSize?.();
+        state.leafletMap?.applyInitialFit?.();
+      }
+    );
 
     watch(
       () => [
@@ -218,7 +347,7 @@ export default {
         mapStore.clustersEnabled,
         mapStore.startDate,
         mapStore.endDate,
-        mapStore.markers.length,
+        mapStore.visibleLocations.length,
         mapStore.locations.length,
         navigationStore.currentFormRef
       ],

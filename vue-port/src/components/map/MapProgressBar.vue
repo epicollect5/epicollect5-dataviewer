@@ -1,15 +1,22 @@
 <template>
-  <div v-if="isVisible" class="map-progress-wrapper">
-    <div class="map-progress-wrapper__summary">{{ processed }}/{{ total }}</div>
-    <div class="map-progress-bar">
-      <div class="map-progress-bar__fill" :style="{ width: `${percentage}%` }"></div>
+  <Teleport to="body">
+    <div class="map-progress-wrapper" :class="{ 'map-progress-wrapper--visible': isVisible }">
+      <div class="map-progress-wrapper__summary">{{ processed }}/{{ total }}</div>
+      <div class="map-progress-bar">
+        <div class="map-progress-bar__fill" :style="{ width: `${percentage}%` }"></div>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script>
+import { Teleport } from 'vue';
+
 export default {
   name: 'MapProgressBar',
+  components: {
+    Teleport
+  },
   props: {
     isVisible: {
       type: Boolean,

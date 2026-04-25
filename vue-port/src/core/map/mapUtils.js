@@ -90,21 +90,18 @@ const filterLocationsByDate = (entries, startDate, endDate) => {
   });
 };
 
-const buildPopupContent = (entries) => {
-  const titles = entries
-    .map((entry) => entry?.properties?.title)
-    .filter(Boolean)
-    .slice(0, 5);
+const buildPopupContent = ({ count, titles }) => {
+  const safeTitles = titles.filter(Boolean).slice(0, 5);
 
-  if (entries.length <= 1) {
-    return titles[0] || 'Untitled entry';
+  if (count <= 1) {
+    return safeTitles[0] || 'Untitled entry';
   }
 
-  const moreCount = entries.length - titles.length;
-  const lines = [`<strong>${entries.length} entries</strong>`];
+  const moreCount = count - safeTitles.length;
+  const lines = [`<strong>${count} entries</strong>`];
 
-  if (titles.length > 0) {
-    lines.push(titles.join('<br />'));
+  if (safeTitles.length > 0) {
+    lines.push(safeTitles.join('<br />'));
   }
 
   if (moreCount > 0) {
@@ -131,9 +128,15 @@ const buildMarkerItems = (entries, clustered = true) => {
 
     const key = clustered ? `${latitude}:${longitude}` : `${entry?.properties?.uuid || index}:${latitude}:${longitude}`;
     const bucket = buckets.get(key);
+    const title = entry?.properties?.title || 'Untitled entry';
 
     if (bucket) {
-      bucket.entries.push(entry);
+      bucket.count += 1;
+
+      if (bucket.titles.length < 5) {
+        bucket.titles.push(title);
+      }
+
       return;
     }
 
@@ -141,7 +144,10 @@ const buildMarkerItems = (entries, clustered = true) => {
       id: entry?.properties?.uuid || `marker-${index}`,
       latitude,
       longitude,
-      entries: [entry]
+      count: 1,
+      title,
+      entryUuid: entry?.properties?.uuid || null,
+      titles: [title]
     });
   });
 
@@ -149,18 +155,32 @@ const buildMarkerItems = (entries, clustered = true) => {
     id: `${bucket.id}-${index}`,
     latitude: bucket.latitude,
     longitude: bucket.longitude,
-    count: bucket.entries.length,
-    title: bucket.entries[0]?.properties?.title || 'Untitled entry',
-    entryUuid: bucket.entries[0]?.properties?.uuid || null,
-    popupHtml: buildPopupContent(bucket.entries),
-    entries: bucket.entries
+    count: bucket.count,
+    title: bucket.title,
+    entryUuid: bucket.entryUuid,
+    popupHtml: buildPopupContent(bucket)
   }));
+
+  const totalEntries = typeof entries?.length === 'number' ? entries.length : 0;
 
   return {
     markers,
     processedCount,
-    totalCount: entries.length
+    totalCount: totalEntries
   };
+};
+
+const getMaxRadius = (entriesOrTotal) => {
+  const total = Array.isArray(entriesOrTotal) ? entriesOrTotal.length : Number(entriesOrTotal) || 0;
+
+  if (total <= 0) {
+    return 30;
+  }
+
+  const orderOfMagnitude = total.toString().length;
+  const multiplier = Number(total.toString().charAt(0)) || 1;
+
+  return 11 * multiplier * orderOfMagnitude;
 };
 
 export default {
@@ -168,5 +188,6 @@ export default {
   getDatesRange,
   getDateBounds,
   filterLocationsByDate,
-  buildMarkerItems
+  buildMarkerItems,
+  getMaxRadius
 };

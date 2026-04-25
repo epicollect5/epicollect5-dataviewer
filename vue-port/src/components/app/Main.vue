@@ -38,8 +38,6 @@ import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import ModalWrapper from '@/components/app/ModalWrapper.vue';
 import ToastWrapper from '@/components/app/ToastWrapper.vue';
 import OverlayWait from '@/components/app/OverlayWait.vue';
-import { useMapStore } from '@/stores/mapStore';
-import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
 
@@ -60,14 +58,10 @@ export default {
     const route = useRoute();
     const projectStore = useProjectStore();
     const tableStore = useTableStore();
-    const mapStore = useMapStore();
-    const navigationStore = useNavigationStore();
 
     const resolvedProjectSlug = computed(() => {
       return route.params.projectSlug || route.query.project || env.projectSlug || '';
     });
-
-    const isMapRoute = computed(() => navigationStore.activePage === 'map');
 
     return {
       isProjectBootLoading: computed(() => {
@@ -85,14 +79,6 @@ export default {
 
         if (projectStore.isFetching && !projectStore.isFulfilled) {
           return true;
-        }
-
-        if (isMapRoute.value) {
-          if (mapStore.lastLoadedProjectSlug !== resolvedProjectSlug.value) {
-            return true;
-          }
-
-          return !mapStore.hasLoadedInitialPage && !mapStore.isRejectedPage;
         }
 
         if (tableStore.lastLoadedProjectSlug !== resolvedProjectSlug.value) {

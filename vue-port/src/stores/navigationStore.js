@@ -30,6 +30,9 @@ export const useNavigationStore = defineStore('navigation', {
     setActivePage(page) {
       this.activePage = page;
     },
+    setFirstMapLoad(status) {
+      this.isFirstMapLoad = status;
+    },
     setBusy(status) {
       this.isPerformingLongAction = status;
     },
