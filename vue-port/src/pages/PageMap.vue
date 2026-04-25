@@ -187,8 +187,9 @@ export default {
         drawerStore.open('map-filters', {
           side: 'left',
           locationQuestions: computedState.locationQuestions.value,
+          distributionQuestions: computedState.distributionQuestions.value,
+          selectedDistributionQuestion: null,
           selectedLocationQuestion: mapStore.selectedLocationQuestion,
-          clustersEnabled: mapStore.clustersEnabled,
           startDate: mapStore.startDate,
           endDate: mapStore.endDate,
           minDate: mapStore.minDate,
@@ -257,6 +258,21 @@ export default {
       hasLocationQuestions: computed(() => computedState.locationQuestions.value.length > 0),
       entriesTotal: computed(() => mapStore.locations.length),
       isMapPage: computed(() => navigationStore.activePage === 'map'),
+      distributionQuestions: computed(() => {
+        const currentForm = projectStore.projectExtra?.forms?.[navigationStore.currentFormRef];
+        const multipleChoiceInputs = currentForm?.lists?.multiple_choice_inputs;
+        const selectedBranchRef = mapStore.selectedLocationQuestion?.branch_ref || '';
+        let order = multipleChoiceInputs?.form?.order || [];
+
+        if (selectedBranchRef) {
+          order = multipleChoiceInputs?.branch?.[selectedBranchRef]?.order || [];
+        }
+
+        return order.map((inputRef) => ({
+          inputRef,
+          question: projectStore.projectExtra?.inputs?.[inputRef]?.data?.question || inputRef
+        }));
+      }),
       locationCacheKey: computed(() => {
         const question = mapStore.selectedLocationQuestion;
         const questionKey = question ? `${question.branch_ref || ''}:${question.input_ref || ''}` : 'default';
