@@ -58,22 +58,18 @@
               </button>
             </template>
             <template v-else-if="section.kind === 'audio'">
-              <button
-                type="button"
-                class="drawer-entry__media-button"
+              <PlayButton
+                label="Play audio"
+                :full-width="true"
                 @click="openMedia('audio', section.question, section.value.entry_original)"
-              >
-                Play audio
-              </button>
+              />
             </template>
             <template v-else-if="section.kind === 'video'">
-              <button
-                type="button"
-                class="drawer-entry__media-button"
+              <PlayButton
+                label="Play video"
+                :full-width="true"
                 @click="openMedia('video', section.question, section.value.entry_original)"
-              >
-                Play video
-              </button>
+              />
             </template>
             <template v-else>
               {{ section.value }}
@@ -91,6 +87,7 @@ import { computed, reactive } from 'vue';
 import PARAMETERS from '@/core/config/parameters';
 import tableModel from '@/core/entries/tableModel';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
+import PlayButton from '@/components/global/PlayButton.vue';
 import { useMapStore } from '@/stores/mapStore';
 import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
@@ -101,7 +98,8 @@ export default {
   components: {
     IonItem,
     IonList,
-    LoaderSpinner
+    LoaderSpinner,
+    PlayButton
   },
   setup() {
     const projectStore = useProjectStore();
@@ -142,7 +140,7 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       entryData: computed(() => {
         if (!mapStore.selectedEntry || !navigationStore.currentFormRef) {
           return null;
@@ -183,16 +181,16 @@ export default {
           headers
         };
       }),
-      entryTitle: computed(() => computedState.entryData.value?.title || 'Entry'),
-      entryCreatedAt: computed(() => computedState.entryData.value?.createdAt || ''),
+      entryTitle: computed(() => computedScope.entryData.value?.title || 'Entry'),
+      entryCreatedAt: computed(() => computedScope.entryData.value?.createdAt || ''),
       entrySections: computed(() => {
-        if (!computedState.entryData.value) {
+        if (!computedScope.entryData.value) {
           return [];
         }
 
-        return computedState.entryData.value.answers
+        return computedScope.entryData.value.answers
           .map((answer, index) => {
-            const header = computedState.entryData.value.headers[index];
+            const header = computedScope.entryData.value.headers[index];
 
             if (!header) {
               return null;
@@ -239,7 +237,7 @@ export default {
     return {
       state,
       ...methods,
-      ...computedState
+      ...computedScope
     };
   }
 };

@@ -12,8 +12,22 @@
 
   <ion-content :scroll-y="false" class="media-player-modal__content">
     <div class="media-player-modal">
-      <audio v-if="isAudio" :src="src" controls autoplay class="media-player-modal__player"></audio>
-      <video v-else :src="src" controls autoplay class="media-player-modal__player"></video>
+      <audio
+        v-if="isAudio"
+        :src="src"
+        controls
+        autoplay
+        :ref="setMediaElement"
+        class="media-player-modal__player media-player-modal__player--audio"
+      ></audio>
+      <video
+        v-else
+        :src="src"
+        controls
+        autoplay
+        :ref="setMediaElement"
+        class="media-player-modal__player media-player-modal__player--video"
+      ></video>
     </div>
   </ion-content>
 </template>
@@ -29,7 +43,7 @@ import {
   IonToolbar
 } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, reactive, watch } from 'vue';
 import { useModalStore } from '@/stores/modalStore';
 
 export default {
@@ -45,9 +59,24 @@ export default {
   },
   setup(props, { expose }) {
     const modalStore = useModalStore();
+    const state = reactive({
+      mediaElement: null
+    });
 
     const methods = {
+      setMediaElement(element) {
+        state.mediaElement = element || null;
+      },
+      pauseMedia() {
+        if (!state.mediaElement) {
+          return;
+        }
+
+        state.mediaElement.pause();
+        state.mediaElement.currentTime = 0;
+      },
       closeModal() {
+        methods.pauseMedia();
         modalStore.close();
       }
     };
@@ -57,19 +86,46 @@ export default {
       title: computed(() => computedState.payload.value.title || 'Media'),
       src: computed(() => computedState.payload.value.src || ''),
       isAudio: computed(() => computedState.payload.value.mediaType === 'audio'),
-      modalStyle: computed(() => ({
-        '--width': 'min(92vw, 960px)',
-        '--height': 'min(70vh, 680px)',
-        '--max-width': '92vw',
-        '--max-height': '70vh'
-      }))
+      modalStyle: computed(() => {
+        if (computedState.isAudio.value) {
+          return {
+            '--width': 'min(42vw, 520px)',
+            '--height': '190px',
+            '--min-width': '280px',
+            '--max-width': '92vw',
+            '--max-height': '220px'
+          };
+        }
+
+        return {
+          '--width': 'min(36vw, 560px)',
+          '--height': 'min(64vh, 460px)',
+          '--min-width': '320px',
+          '--max-width': '92vw',
+          '--max-height': '76vh'
+        };
+      })
     };
+
+    watch(
+      () => modalStore.activeModal,
+      (activeModal) => {
+        if (activeModal !== 'media-viewer') {
+          methods.pauseMedia();
+        }
+      }
+    );
+
+    onBeforeUnmount(() => {
+      methods.pauseMedia();
+    });
 
     expose({
       modalStyle: computedState.modalStyle
     });
 
     return {
+      state,
       ...methods,
       ...computedState,
       close

@@ -175,6 +175,7 @@ export default {
   setup(props, { emit }) {
     const state = reactive({
       debounceTimer: null,
+      suppressTimelineEvents: false,
       timelineValue: {
         lower: 0,
         upper: 0
@@ -205,7 +206,11 @@ export default {
         };
       },
       syncTimelineValue() {
+        state.suppressTimelineEvents = true;
         state.timelineValue = methods.getTimelineValueFromProps();
+        window.requestAnimationFrame(() => {
+          state.suppressTimelineEvents = false;
+        });
       },
       emitLocationChange(value) {
         const nextQuestion = props.locationQuestions.find((question) => methods.getLocationKey(question) === value);
@@ -240,11 +245,19 @@ export default {
         }, TIMELINE_DEBOUNCE_MS);
       },
       handleTimelineInput(event) {
+        if (state.suppressTimelineEvents) {
+          return;
+        }
+
         const nextValue = normalizeRangeValue(event.detail.value);
         state.timelineValue = nextValue;
         methods.scheduleTimelineEmit(nextValue);
       },
       handleTimelineChange(event) {
+        if (state.suppressTimelineEvents) {
+          return;
+        }
+
         const nextValue = normalizeRangeValue(event.detail.value);
         state.timelineValue = nextValue;
         window.clearTimeout(state.debounceTimer);

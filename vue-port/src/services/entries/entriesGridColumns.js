@@ -1,5 +1,5 @@
 import PARAMETERS from '@/core/config/parameters';
-import { create, eye, trash } from 'ionicons/icons';
+import { create, eye, play, trash } from 'ionicons/icons';
 import { useModalStore } from '@/stores/modalStore';
 
 const ACTION_ICONS = {
@@ -123,10 +123,20 @@ const createMediaCell = (value, entryTitle = 'Untitled entry') => {
 
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'entries-grid__media-button';
+  button.className = 'play-button play-button--block';
+
+  const icon = document.createElement('ion-icon');
+  icon.className = 'play-button__icon';
+  icon.setAttribute('icon', play);
+
+  const label = document.createElement('span');
+  label.className = 'play-button__label';
+  label.textContent = value.entry_original?.includes('format=audio') ? 'Play audio' : 'Play video';
+
+  button.appendChild(icon);
+  button.appendChild(label);
 
   if (value.entry_original?.includes('format=audio')) {
-    button.textContent = 'Play audio';
     button.addEventListener('click', () => {
       modalStore.open('media-viewer', {
         mediaType: 'audio',
@@ -138,7 +148,6 @@ const createMediaCell = (value, entryTitle = 'Untitled entry') => {
     return button;
   }
 
-  button.textContent = 'Play video';
   button.addEventListener('click', () => {
     modalStore.open('media-viewer', {
       mediaType: 'video',

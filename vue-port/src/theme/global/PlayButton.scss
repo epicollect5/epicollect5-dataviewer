@@ -1,0 +1,32 @@
+.play-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 96px;
+  min-width: 96px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ion-color-secondary);
+  color: #333333;
+  cursor: pointer;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.play-button__icon {
+  font-size: 16px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.play-button__label {
+  line-height: 1;
+}
+
+.play-button--block {
+  display: flex;
+  width: 80%;
+}
