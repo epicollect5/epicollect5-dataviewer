@@ -21,6 +21,7 @@ const HEATMAP_OPTIONS = {
   blur: 10
 };
 const INITIAL_FIT_DELAY_MS = 1000;
+const STATIC_RAW_CACHE = new Map();
 const STATIC_LAYER_CACHE = new Map();
 
 const CLUSTER_CONTROL_ICON =
@@ -40,6 +41,14 @@ export default {
       default: false
     },
     locationCacheKey: {
+      type: String,
+      default: ''
+    },
+    startDate: {
+      type: String,
+      default: ''
+    },
+    endDate: {
       type: String,
       default: ''
     },
@@ -187,7 +196,7 @@ export default {
         const markers = [];
         const heatPoints = [];
         const colors = methods.getMarkerColors();
-        const rawLocations = toRaw(props.locations);
+        const rawLocations = methods.getRenderableLocations();
         const totalLocations = rawLocations.length;
 
         for (let index = 0; index < totalLocations; index += 1) {
@@ -213,8 +222,7 @@ export default {
       },
       createMarkersLayer() {
         const colors = methods.getMarkerColors();
-        const currentCache = methods.getCurrentLayerCache();
-        const rawLocations = currentCache?.rawLocations || toRaw(props.locations);
+        const rawLocations = methods.getRenderableLocations();
         const markers = [];
 
         for (let index = 0; index < rawLocations.length; index += 1) {
@@ -230,8 +238,64 @@ export default {
       getCurrentLayerCacheKey() {
         return props.locationCacheKey || '__default__';
       },
+      getCurrentFilterCacheKey() {
+        if (!props.startDate && !props.endDate) {
+          return '__all__';
+        }
+
+        return `${props.startDate || ''}:${props.endDate || ''}`;
+      },
+      ensureLayerCacheEntry() {
+        const cacheKey = methods.getCurrentLayerCacheKey();
+
+        if (!STATIC_LAYER_CACHE.has(cacheKey)) {
+          STATIC_LAYER_CACHE.set(cacheKey, {
+            default: null,
+            byDateRange: new Map()
+          });
+        }
+
+        return STATIC_LAYER_CACHE.get(cacheKey);
+      },
       getCurrentLayerCache() {
-        return STATIC_LAYER_CACHE.get(methods.getCurrentLayerCacheKey()) || null;
+        const cacheEntry = methods.ensureLayerCacheEntry();
+        const filterKey = methods.getCurrentFilterCacheKey();
+
+        if (filterKey === '__all__') {
+          return cacheEntry.default;
+        }
+
+        return cacheEntry.byDateRange.get(filterKey) || null;
+      },
+      setCurrentLayerCache(bundle) {
+        const cacheEntry = methods.ensureLayerCacheEntry();
+        const filterKey = methods.getCurrentFilterCacheKey();
+
+        if (filterKey === '__all__') {
+          cacheEntry.default = bundle;
+          return;
+        }
+
+        cacheEntry.byDateRange.set(filterKey, bundle);
+      },
+      getRawLocations() {
+        return STATIC_RAW_CACHE.get(methods.getCurrentLayerCacheKey()) || null;
+      },
+      setRawLocations(rawLocations) {
+        STATIC_RAW_CACHE.set(methods.getCurrentLayerCacheKey(), rawLocations);
+      },
+      getRenderableLocations() {
+        const rawLocations = methods.getRawLocations();
+
+        if (!rawLocations) {
+          return toRaw(props.locations);
+        }
+
+        if (!props.startDate && !props.endDate) {
+          return rawLocations;
+        }
+
+        return mapUtils.filterLocationsByDate(rawLocations, props.startDate, props.endDate);
       },
       createClusterIcon(cluster) {
         const childCount = cluster.getChildCount();
@@ -716,8 +780,7 @@ export default {
         mapContext.heatPoints = [];
 
         const shouldBuildMarkersOverlay = methods.canShowMarkersOverlay();
-        const cacheKey = methods.getCurrentLayerCacheKey();
-        const cachedLayers = STATIC_LAYER_CACHE.get(cacheKey);
+        const cachedLayers = methods.getCurrentLayerCache();
 
         if (cachedLayers) {
           mapContext.clustersLayer = cachedLayers.clustersLayer;
@@ -733,6 +796,10 @@ export default {
           return;
         }
 
+        if (!props.startDate && !props.endDate) {
+          methods.setRawLocations(toRaw(props.locations));
+        }
+
         methods.buildMapArtifacts();
 
         if (renderToken !== state.activeRenderToken) {
@@ -740,13 +807,12 @@ export default {
         }
 
         mapContext.clustersLayer = methods.createClusterLayer(mapContext.cachedMarkers, renderToken);
-        STATIC_LAYER_CACHE.set(cacheKey, {
+        methods.setCurrentLayerCache({
           clustersLayer: mapContext.clustersLayer,
           heatmapLayer: null,
           markersLayer: null,
           cachedMarkers: mapContext.cachedMarkers,
-          heatPoints: mapContext.heatPoints,
-          rawLocations: toRaw(props.locations)
+          heatPoints: mapContext.heatPoints
         });
         methods.bindLayerEvents();
 

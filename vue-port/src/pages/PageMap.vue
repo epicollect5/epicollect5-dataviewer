@@ -57,6 +57,8 @@
             :ref="setLeafletMap"
             :locations="state.mapStore.visibleLocations"
             :is-hidden="isMapPage && showMapLoader"
+            :start-date="state.mapStore.startDate"
+            :end-date="state.mapStore.endDate"
             :total-markers="state.mapStore.locations.length"
             :clusters-enabled="state.mapStore.clustersEnabled"
             :location-cache-key="locationCacheKey"
