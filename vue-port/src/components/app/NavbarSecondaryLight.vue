@@ -6,7 +6,7 @@
 
 <script>
 export default {
-  name: 'SecondaryNavbarLight'
+  name: 'NavbarSecondaryLight'
 };
 </script>
-<style src="@/theme/app/SecondaryNavbarLight.scss" lang="scss"></style>
+<style src="@/theme/app/NavbarSecondaryLight.scss" lang="scss"></style>

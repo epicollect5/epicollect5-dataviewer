@@ -18,6 +18,22 @@
         </label>
 
         <nav class="primary-navbar__nav" aria-label="Primary navigation">
+          <template v-if="isLoggedIn">
+            <span class="primary-navbar__user">
+              <img class="primary-navbar__avatar" :src="state.avatarSrc" alt="avatar" @error="handleAvatarError" />
+              <span>Hi,<strong> {{ userName }}</strong></span>
+            </span>
+            <a class="primary-navbar__nav-link" :href="logoutHref">
+              <ion-icon :icon="logOut" />
+              <span>Logout</span>
+            </a>
+          </template>
+
+          <a v-else class="primary-navbar__nav-link" :href="loginHref">
+            <ion-icon :icon="logIn" />
+            <span>Login</span>
+          </a>
+
           <button
             v-if="showDownloadButton"
             type="button"
@@ -52,22 +68,6 @@
             <ion-icon :icon="power" />
             <span>Exit</span>
           </a>
-
-          <template v-if="isLoggedIn">
-            <span class="primary-navbar__user">
-              <img class="primary-navbar__avatar" :src="state.avatarSrc" alt="avatar" @error="handleAvatarError" />
-              <span>Hi,<strong> {{ userName }}</strong></span>
-            </span>
-            <a class="primary-navbar__nav-link" :href="logoutHref">
-              <ion-icon :icon="logOut" />
-              <span>Logout</span>
-            </a>
-          </template>
-
-          <a v-else class="primary-navbar__nav-link" :href="loginHref">
-            <ion-icon :icon="logIn" />
-            <span>Login</span>
-          </a>
         </nav>
       </div>
     </ion-toolbar>
@@ -88,7 +88,7 @@ import { useTableStore } from '@/stores/tableStore';
 import helpers from '@/utils/helpers';
 
 export default {
-  name: 'PrimaryNavbar',
+  name: 'NavbarPrimary',
   components: {
     IonHeader,
     IonIcon,
@@ -256,4 +256,4 @@ export default {
   }
 };
 </script>
-<style src="@/theme/app/PrimaryNavbar.scss" lang="scss"></style>
+<style src="@/theme/app/NavbarPrimary.scss" lang="scss"></style>

@@ -11,7 +11,7 @@
     </div>
 
     <template v-else>
-      <SecondaryNavbar v-if="hasLocationQuestions">
+      <NavbarSecondary v-if="hasLocationQuestions">
         <template #start>
           <button
             class="page-map__drawer-button"
@@ -26,7 +26,7 @@
         <template #end>
           <span class="page-map__entries-total">Total: {{ entriesTotal }}</span>
         </template>
-      </SecondaryNavbar>
+      </NavbarSecondary>
 
       <div class="page-map__body">
         <div v-if="!hasLocationQuestions" class="placeholder-view">
@@ -78,7 +78,7 @@ import { IonIcon } from '@ionic/vue';
 import { menu } from 'ionicons/icons';
 import { computed, nextTick, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import SecondaryNavbar from '@/components/app/SecondaryNavbar.vue';
+import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
 import env from '@/core/config/env';
 import { useDrawerStore } from '@/stores/drawerStore';
 import LeafletMap from '@/components/map/MapLeaflet.vue';
@@ -91,7 +91,7 @@ export default {
   name: 'PageMap',
   components: {
     IonIcon,
-    SecondaryNavbar,
+    NavbarSecondary,
     LeafletMap,
     MapProgressBar
   },

@@ -1,5 +1,5 @@
 <template>
-  <SecondaryNavbarLight>
+  <NavbarSecondaryLight>
     <section class="table-toolbar">
       <div class="table-toolbar__primary">
         <ion-searchbar
@@ -72,25 +72,27 @@
         </div>
       </div>
     </section>
-  </SecondaryNavbarLight>
+  </NavbarSecondaryLight>
 </template>
 
 <script>
 import { IonDatetime, IonDatetimeButton, IonIcon, IonModal, IonSearchbar } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, reactive } from 'vue';
-import SecondaryNavbarLight from '@/components/app/SecondaryNavbarLight.vue';
+import NavbarSecondaryLight from '@/components/app/NavbarSecondaryLight.vue';
 import PARAMETERS from '@/core/config/parameters';
+import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
 
 export default {
   name: 'ToolbarTable',
   components: {
+    NavbarSecondary,
     IonDatetime,
     IonDatetimeButton,
     IonIcon,
     IonModal,
     IonSearchbar,
-    SecondaryNavbarLight
+    NavbarSecondaryLight
   },
   props: {
     isLoading: {

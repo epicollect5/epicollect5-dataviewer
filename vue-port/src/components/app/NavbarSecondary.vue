@@ -12,7 +12,7 @@
 
 <script>
 export default {
-  name: 'SecondaryNavbar'
+  name: 'NavbarSecondary'
 };
 </script>
-<style src="@/theme/app/SecondaryNavbar.scss" lang="scss"></style>
+<style src="@/theme/app/NavbarSecondary.scss" lang="scss"></style>

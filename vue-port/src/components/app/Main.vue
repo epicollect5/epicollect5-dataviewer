@@ -2,7 +2,7 @@
   <ion-app>
     <DrawerWrapper />
     <ion-page id="app-shell-content" class="app-shell-page" :class="{ 'app-shell-page--ready': !isProjectBootLoading }">
-      <PrimaryNavbar v-if="!isProjectBootLoading" />
+      <NavbarPrimary v-if="!isProjectBootLoading" />
       <ion-content fullscreen>
         <router-view v-slot="{ Component }">
           <keep-alive include="PageData">
@@ -32,7 +32,7 @@ import {
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import env from '@/core/config/env';
-import PrimaryNavbar from '@/components/app/PrimaryNavbar.vue';
+import NavbarPrimary from '@/components/app/NavbarPrimary.vue';
 import DrawerWrapper from '@/components/app/DrawerWrapper.vue';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import ModalWrapper from '@/components/app/ModalWrapper.vue';
@@ -47,7 +47,7 @@ export default {
     IonApp,
     IonContent,
     IonPage,
-    PrimaryNavbar,
+    NavbarPrimary,
     DrawerWrapper,
     LoaderSpinner,
     ModalWrapper,

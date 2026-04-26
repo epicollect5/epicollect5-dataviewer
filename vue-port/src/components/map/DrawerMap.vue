@@ -43,6 +43,8 @@
               :dual-knobs="true"
               :disabled="isTimelineDisabled"
               :value="timelineValue"
+              @ionKnobMoveStart="handleTimelineKnobMoveStart($event)"
+              @ionKnobMoveEnd="handleTimelineKnobMoveEnd()"
               @ionInput="handleTimelineInput($event)"
               @ionChange="handleTimelineChange($event)"
             />
@@ -175,6 +177,7 @@ export default {
   setup(props, { emit }) {
     const state = reactive({
       debounceTimer: null,
+      activeTimelineKnobPosition: undefined,
       suppressTimelineEvents: false,
       timelineValue: {
         lower: 0,
@@ -207,10 +210,58 @@ export default {
       },
       syncTimelineValue() {
         state.suppressTimelineEvents = true;
+        state.activeTimelineKnobPosition = undefined;
         state.timelineValue = methods.getTimelineValueFromProps();
         window.requestAnimationFrame(() => {
           state.suppressTimelineEvents = false;
         });
+      },
+      getTimelineKnobName(event) {
+        return event?.target?.pressedKnob || event?.target?.focusedKnob || event?.target?.activatedKnob;
+      },
+      getTimelineKnobPosition(event) {
+        const knobName = methods.getTimelineKnobName(event);
+        const ratioA = Number(event?.target?.ratioA);
+        const ratioB = Number(event?.target?.ratioB);
+
+        if (!knobName || !Number.isFinite(ratioA) || !Number.isFinite(ratioB)) {
+          return undefined;
+        }
+
+        if (ratioA === ratioB) {
+          return knobName === 'A' ? 'lower' : 'upper';
+        }
+
+        if (knobName === 'A') {
+          return ratioA < ratioB ? 'lower' : 'upper';
+        }
+
+        return ratioB < ratioA ? 'lower' : 'upper';
+      },
+      getClampedTimelineValue(nextValue) {
+        const previousValue = state.timelineValue;
+        const maxIndex = computedState.maxTimelineIndex.value;
+        const lower = Math.max(0, Math.min(nextValue.lower, maxIndex));
+        const upper = Math.max(0, Math.min(nextValue.upper, maxIndex));
+
+        if (state.activeTimelineKnobPosition === 'lower') {
+          return {
+            lower: Math.min(lower, previousValue.upper),
+            upper: previousValue.upper
+          };
+        }
+
+        if (state.activeTimelineKnobPosition === 'upper') {
+          return {
+            lower: previousValue.lower,
+            upper: Math.max(upper, previousValue.lower)
+          };
+        }
+
+        return {
+          lower: Math.min(lower, upper),
+          upper: Math.max(lower, upper)
+        };
       },
       emitLocationChange(value) {
         const nextQuestion = props.locationQuestions.find((question) => methods.getLocationKey(question) === value);
@@ -244,12 +295,18 @@ export default {
           methods.emitTimelineDates(nextValue);
         }, TIMELINE_DEBOUNCE_MS);
       },
+      handleTimelineKnobMoveStart(event) {
+        state.activeTimelineKnobPosition = methods.getTimelineKnobPosition(event);
+      },
+      handleTimelineKnobMoveEnd() {
+        state.activeTimelineKnobPosition = undefined;
+      },
       handleTimelineInput(event) {
         if (state.suppressTimelineEvents) {
           return;
         }
 
-        const nextValue = normalizeRangeValue(event.detail.value);
+        const nextValue = methods.getClampedTimelineValue(normalizeRangeValue(event.detail.value));
         state.timelineValue = nextValue;
         methods.scheduleTimelineEmit(nextValue);
       },
@@ -258,7 +315,7 @@ export default {
           return;
         }
 
-        const nextValue = normalizeRangeValue(event.detail.value);
+        const nextValue = methods.getClampedTimelineValue(normalizeRangeValue(event.detail.value));
         state.timelineValue = nextValue;
         window.clearTimeout(state.debounceTimer);
         methods.emitTimelineDates(nextValue);

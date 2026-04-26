@@ -11,7 +11,7 @@
     </div>
 
     <template v-else>
-      <SecondaryNavbar>
+      <NavbarSecondary>
         <template #end>
           <div v-if="state.tableStore.pagination" class="table-toolbar__pagination table-toolbar__pagination--secondary-navbar">
             <span>Total {{ state.tableStore.pagination.total }} · Page {{ state.tableStore.pagination.current_page }}/{{ state.tableStore.pagination.last_page }}</span>
@@ -37,7 +37,7 @@
             </button>
           </div>
         </template>
-      </SecondaryNavbar>
+      </NavbarSecondary>
 
       <section class="table-view__layout">
         <TableToolbar
@@ -84,7 +84,7 @@ import { IonIcon } from '@ionic/vue';
 import { chevronBackCircle, chevronForwardCircle } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import SecondaryNavbar from '@/components/app/SecondaryNavbar.vue';
+import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
 import env from '@/core/config/env';
 import PARAMETERS from '@/core/config/parameters';
 import EntriesGrid from '@/components/table/GridEntries.vue';
@@ -104,7 +104,7 @@ export default {
   components: {
     IonIcon,
     EntriesGrid,
-    SecondaryNavbar,
+    NavbarSecondary,
     TableEmptyState,
     TableToolbar
   },
