@@ -82,7 +82,7 @@ import { IonDatetime, IonDatetimeButton, IonIcon, IonModal, IonSearchbar } from 
 import { close } from 'ionicons/icons';
 import { computed, onMounted, reactive } from 'vue';
 import NavbarSecondaryLight from '@/components/app/NavbarSecondaryLight.vue';
-import Dropdown from '@/components/forms/Dropdown.vue';
+import Dropdown from '@/components/global/Dropdown.vue';
 import PARAMETERS from '@/core/config/parameters';
 import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
 

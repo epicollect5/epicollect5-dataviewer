@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import Dropdown from '@/components/forms/Dropdown.vue';
+import Dropdown from '@/components/global/Dropdown.vue';
 
 export default {
   name: 'FormSwitcher',

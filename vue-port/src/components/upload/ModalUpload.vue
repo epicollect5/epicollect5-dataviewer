@@ -98,7 +98,7 @@ import {
 } from '@ionic/vue';
 import Papa from 'papaparse';
 import { computed, reactive, watch } from 'vue';
-import Dropdown from '@/components/forms/Dropdown.vue';
+import Dropdown from '@/components/global/Dropdown.vue';
 import UploadGrid from '@/components/upload/GridUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';

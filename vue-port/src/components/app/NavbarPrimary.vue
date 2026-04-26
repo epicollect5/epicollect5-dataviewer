@@ -91,7 +91,7 @@ import { cloudDownload, globe, grid, logIn, logOut, menu, power } from 'ionicons
 import { computed, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PARAMETERS from '@/core/config/parameters';
-import Dropdown from '@/components/forms/Dropdown.vue';
+import Dropdown from '@/components/global/Dropdown.vue';
 import { useDrawerStore } from '@/stores/drawerStore';
 import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';

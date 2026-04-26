@@ -89,7 +89,7 @@ import {
   IonRange
 } from '@ionic/vue';
 import { computed, onBeforeUnmount, reactive, watch } from 'vue';
-import Dropdown from '@/components/forms/Dropdown.vue';
+import Dropdown from '@/components/global/Dropdown.vue';
 import mapUtils from '@/core/map/mapUtils';
 
 const TIMELINE_DEBOUNCE_MS = 1000;
