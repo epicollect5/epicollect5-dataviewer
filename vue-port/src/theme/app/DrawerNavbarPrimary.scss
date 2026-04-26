@@ -1,0 +1,50 @@
+.drawer-navbar-primary {
+  padding: 12px 0 20px;
+}
+
+.drawer-navbar-primary__user {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 20px 16px;
+  color: #333333;
+  font-size: 0.95rem;
+}
+
+.drawer-navbar-primary__avatar {
+  width: 28px;
+  height: 28px;
+  display: block;
+  object-fit: cover;
+  border-radius: 999px;
+}
+
+.drawer-navbar-primary__nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-navbar-primary__link {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  border: 0;
+  border-bottom: 1px solid var(--app-border);
+  background: transparent;
+  color: var(--ion-color-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+}
+
+.drawer-navbar-primary__link--active {
+  background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.08);
+}
+
+.drawer-navbar-primary__link ion-icon {
+  font-size: 24px;
+}

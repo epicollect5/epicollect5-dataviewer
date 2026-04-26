@@ -17,6 +17,15 @@
           </select>
         </label>
 
+        <button
+          type="button"
+          class="primary-navbar__menu-toggle"
+          aria-label="Open primary navigation"
+          @click="openPrimaryDrawer"
+        >
+          <ion-icon :icon="menu" />
+        </button>
+
         <nav class="primary-navbar__nav" aria-label="Primary navigation">
           <template v-if="isLoggedIn">
             <span class="primary-navbar__user">
@@ -76,7 +85,7 @@
 
 <script>
 import { IonHeader, IonIcon, IonToolbar } from '@ionic/vue';
-import { cloudDownload, globe, grid, logIn, logOut, power } from 'ionicons/icons';
+import { cloudDownload, globe, grid, logIn, logOut, menu, power } from 'ionicons/icons';
 import { computed, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PARAMETERS from '@/core/config/parameters';
@@ -118,6 +127,37 @@ export default {
       },
       handleAvatarError() {
         state.avatarSrc = computedScope.fallbackAvatarSrc.value;
+      },
+      handlePrimaryDrawerEvent(eventName, value) {
+        if (eventName === 'avatar-error') {
+          methods.handleAvatarError();
+          return;
+        }
+
+        if (eventName === 'download') {
+          methods.handleDownload();
+          drawerStore.close();
+          return;
+        }
+
+        if (eventName === 'navigate-page') {
+          methods.navigateToPage(value);
+          drawerStore.close();
+        }
+      },
+      openPrimaryDrawer() {
+        drawerStore.open('navbar-primary', {
+          side: 'right',
+          avatarSrc: state.avatarSrc,
+          isLoggedIn: computedScope.isLoggedIn.value,
+          isMapPage: computedScope.isMapPage.value,
+          loginHref: computedScope.loginHref.value,
+          logoutHref: computedScope.logoutHref.value,
+          projectHomeUrl: computedScope.projectHomeUrl.value,
+          showDownloadButton: computedScope.showDownloadButton.value,
+          userName: computedScope.userName.value,
+          onEvent: methods.handlePrimaryDrawerEvent
+        });
       },
       async navigateToPage(page) {
         drawerStore.close();
@@ -251,6 +291,7 @@ export default {
       grid,
       logIn,
       logOut,
+      menu,
       power
     };
   }

@@ -29,6 +29,13 @@
         @update-dates="forward('update-dates', $event)"
         @reset-dates="forward('reset-dates')"
       />
+      <DrawerNavbarPrimary
+        v-else-if="activeDrawer === 'navbar-primary'"
+        v-bind="drawerPayload"
+        @avatar-error="forward('avatar-error')"
+        @download="forward('download')"
+        @navigate-page="forward('navigate-page', $event)"
+      />
     </ion-content>
   </ion-menu>
 </template>
@@ -37,6 +44,7 @@
 import { IonButton, IonContent, IonHeader, IonIcon, IonMenu, IonToolbar, menuController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
+import DrawerNavbarPrimary from '@/components/app/DrawerNavbarPrimary.vue';
 import DrawerEntry from '@/components/entry/DrawerEntry.vue';
 import DrawerMap from '@/components/map/DrawerMap.vue';
 import { useDrawerStore } from '@/stores/drawerStore';
@@ -50,6 +58,7 @@ export default {
     IonIcon,
     IonMenu,
     IonToolbar,
+    DrawerNavbarPrimary,
     DrawerEntry,
     DrawerMap
   },
@@ -121,6 +130,10 @@ export default {
 
         if (drawerStore.activeDrawer === 'map-filters') {
           return 'Map Filters';
+        }
+
+        if (drawerStore.activeDrawer === 'navbar-primary') {
+          return 'Menu';
         }
 
         return 'Drawer';
