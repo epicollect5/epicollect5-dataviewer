@@ -14,6 +14,7 @@ This file defines the folder and naming rules for the Vue rewrite in `vue-port/`
 - `src/components/`
 - 
 - All Vue UI components must use Ionic Vue components where appropriate.
+- `mode`for Ionic components is always `md` (Material Design)
 - Prefer existing Ionic components over custom implementations.
 - If a suitable Ionic component does not exist, implement a custom component.
 - Do not guess or substitute with unrelated Ionic components.

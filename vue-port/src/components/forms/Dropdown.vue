@@ -34,6 +34,7 @@
             v-for="option in normalizedOptions"
             :key="`dropdown-option-${getOptionValue(option)}`"
             button
+            mode="md"
             detail="false"
             class="dropdown-popover__item"
             :class="{ 'dropdown-popover__item--selected': isSelectedOption(option) }"
