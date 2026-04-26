@@ -54,14 +54,14 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       columnDefs: computed(() => createUploadColumnDefs(props.headers))
     };
 
     return {
       state,
       ...methods,
-      ...computedState
+      ...computedScope
     };
   }
 };

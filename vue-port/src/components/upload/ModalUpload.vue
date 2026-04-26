@@ -13,11 +13,11 @@
       <div class="upload-modal__controls">
         <label class="upload-modal__field">
           <span>Mapping</span>
-          <select :value="state.uploadStore.activeMappingIndex" @change="handleMappingChange($event.target.value)">
-            <option v-for="(mapping, index) in state.projectStore.projectMapping" :key="mapping.name" :value="index">
-              {{ mapping.name }}
-            </option>
-          </select>
+          <Dropdown
+            :model-value="state.uploadStore.activeMappingIndex"
+            :options="mappingOptions"
+            @change="handleMappingChange"
+          />
         </label>
 
         <label class="upload-modal__field upload-modal__field--search">
@@ -98,6 +98,7 @@ import {
 } from '@ionic/vue';
 import Papa from 'papaparse';
 import { computed, reactive, watch } from 'vue';
+import Dropdown from '@/components/forms/Dropdown.vue';
 import UploadGrid from '@/components/upload/GridUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
@@ -114,6 +115,7 @@ export default {
     IonButton,
     IonButtons,
     IonContent,
+    Dropdown,
     IonHeader,
     IonTitle,
     IonToolbar,
@@ -162,7 +164,7 @@ export default {
         }
       },
       goToNextPage() {
-        if (state.currentPage < computedState.totalPages.value) {
+        if (state.currentPage < computedScope.totalPages.value) {
           state.currentPage += 1;
         }
       },
@@ -214,11 +216,11 @@ export default {
         }
       },
       downloadFailedRows() {
-        if (computedState.failedRowsForDownload.value.length === 0) {
+        if (computedScope.failedRowsForDownload.value.length === 0) {
           return;
         }
 
-        const data = Papa.unparse(computedState.failedRowsForDownload.value);
+        const data = Papa.unparse(computedScope.failedRowsForDownload.value);
         const blob = new Blob([data], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -230,13 +232,19 @@ export default {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        toastStore.show(`Downloaded ${computedState.failedRowsForDownload.value.length} failed row(s).`, {
+        toastStore.show(`Downloaded ${computedScope.failedRowsForDownload.value.length} failed row(s).`, {
           color: 'medium'
         });
       }
     };
 
-    const computedState = {
+    const computedScope = {
+      mappingOptions: computed(() => {
+        return projectStore.projectMapping.map((mapping, index) => ({
+          label: mapping.name,
+          value: index
+        }));
+      }),
       totalPages: computed(() => {
         return Math.max(1, Math.ceil(uploadStore.pairedRows.length / pageSize));
       }),
@@ -272,7 +280,7 @@ export default {
     return {
       state,
       ...methods,
-      ...computedState
+      ...computedScope
     };
   }
 };

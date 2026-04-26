@@ -112,7 +112,7 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       activeDrawer: computed(() => drawerStore.activeDrawer),
       payload: computed(() => drawerStore.payload),
       drawerPayload: computed(() => {
@@ -158,7 +158,7 @@ export default {
     return {
       state,
       ...methods,
-      ...computedState,
+      ...computedScope,
       close
     };
   }

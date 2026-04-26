@@ -55,9 +55,11 @@
 
         <div class="table-toolbar__controls">
           <label class="table-toolbar__field table-toolbar__field--sort">
-            <select :value="props.selectedOrderBy" @change="handleOrderChange($event.target.value)">
-              <option v-for="option in state.orderOptions" :key="option" :value="option">{{ option }}</option>
-            </select>
+            <Dropdown
+              :model-value="props.selectedOrderBy"
+              :options="state.orderOptions"
+              @change="handleOrderChange"
+            />
           </label>
 
           <button
@@ -80,6 +82,7 @@ import { IonDatetime, IonDatetimeButton, IonIcon, IonModal, IonSearchbar } from 
 import { close } from 'ionicons/icons';
 import { computed, onMounted, reactive } from 'vue';
 import NavbarSecondaryLight from '@/components/app/NavbarSecondaryLight.vue';
+import Dropdown from '@/components/forms/Dropdown.vue';
 import PARAMETERS from '@/core/config/parameters';
 import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
 
@@ -87,6 +90,7 @@ export default {
   name: 'ToolbarTable',
   components: {
     NavbarSecondary,
+    Dropdown,
     IonDatetime,
     IonDatetimeButton,
     IonIcon,
@@ -139,7 +143,7 @@ export default {
       datetimeButtonsReady: false
     });
 
-    const computedState = {
+    const computedScope = {
       hasDateBounds: computed(() => Boolean(props.minDate && props.maxDate)),
       resolvedStartDate: computed(() => {
         return (props.startDate ? props.startDate.slice(0, 10) : '') || props.minDate || '';
@@ -161,8 +165,8 @@ export default {
       },
       emitDateChange(field, value) {
         const nextPayload = {
-          startDate: field === 'startDate' ? value : computedState.resolvedStartDate.value,
-          endDate: field === 'endDate' ? value : computedState.resolvedEndDate.value
+          startDate: field === 'startDate' ? value : computedScope.resolvedStartDate.value,
+          endDate: field === 'endDate' ? value : computedScope.resolvedEndDate.value
         };
 
         emit(field === 'startDate' ? 'update:start-date' : 'update:end-date', nextPayload);
@@ -189,7 +193,7 @@ export default {
       state,
       close,
       ...methods,
-      ...computedState
+      ...computedScope
     };
   }
 };

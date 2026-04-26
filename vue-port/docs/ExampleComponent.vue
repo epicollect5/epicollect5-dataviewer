@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { reactive, toRefs } from 'vue';
+import { reactive } from 'vue';
 import {
   IonButton,
   IonContent,
@@ -84,16 +84,17 @@ export default {
       }
     };
 
-    const computed = {
+    const computedScope = {
       totalEntries() {
         return state.entries.length;
-      }
+      },
+      modalTitle: computed(() => modalStore.activeModal || 'Modal')
     };
 
     return {
       state,
       ...methods,
-      ...computed
+      ...computedScope
     };
   }
 };

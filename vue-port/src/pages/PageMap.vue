@@ -138,14 +138,14 @@ export default {
         state.renderProgress.percentage = 0;
       },
       async bootstrap() {
-        if (!computedState.resolvedProjectSlug.value) {
+        if (!computedScope.resolvedProjectSlug.value) {
           return;
         }
 
         const didLoadProject =
-          projectStore.projectSlug === computedState.resolvedProjectSlug.value
+          projectStore.projectSlug === computedScope.resolvedProjectSlug.value
             ? true
-            : await projectStore.loadProject(computedState.resolvedProjectSlug.value);
+            : await projectStore.loadProject(computedScope.resolvedProjectSlug.value);
 
         if (didLoadProject && navigationStore.currentFormRef) {
           await mapStore.loadLocations({ resetFilters: true });
@@ -188,8 +188,8 @@ export default {
       openFiltersDrawer() {
         drawerStore.open('map-filters', {
           side: 'left',
-          locationQuestions: computedState.locationQuestions.value,
-          distributionQuestions: computedState.distributionQuestions.value,
+          locationQuestions: computedScope.locationQuestions.value,
+          distributionQuestions: computedScope.distributionQuestions.value,
           selectedDistributionQuestion: null,
           selectedLocationQuestion: mapStore.selectedLocationQuestion,
           startDate: mapStore.startDate,
@@ -245,11 +245,11 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       resolvedProjectSlug: computed(() => {
         return route.params.projectSlug || route.query.project || env.projectSlug || '';
       }),
-      missingProjectSlug: computed(() => !computedState.resolvedProjectSlug.value),
+      missingProjectSlug: computed(() => !computedScope.resolvedProjectSlug.value),
       projectErrors: computed(() => {
         return Array.isArray(projectStore.errors) ? projectStore.errors.join(', ') : projectStore.errors;
       }),
@@ -257,7 +257,7 @@ export default {
         return Array.isArray(mapStore.errors) ? mapStore.errors.join(', ') : mapStore.errors;
       }),
       locationQuestions: computed(() => mapStore.getLocationQuestions()),
-      hasLocationQuestions: computed(() => computedState.locationQuestions.value.length > 0),
+      hasLocationQuestions: computed(() => computedScope.locationQuestions.value.length > 0),
       entriesTotal: computed(() => mapStore.locations.length),
       isMapPage: computed(() => navigationStore.activePage === 'map'),
       distributionQuestions: computed(() => {
@@ -281,10 +281,10 @@ export default {
         return `${projectStore.projectSlug || 'project'}|${navigationStore.currentFormRef || 'form'}|${questionKey}`;
       }),
       shouldRenderMap: computed(() => {
-        return computedState.hasLocationQuestions.value && !mapStore.isRejectedPage && mapStore.locations.length > 0;
+        return computedScope.hasLocationQuestions.value && !mapStore.isRejectedPage && mapStore.locations.length > 0;
       }),
       showMapLoader: computed(() => {
-        if (!computedState.hasLocationQuestions.value || mapStore.isRejectedPage) {
+        if (!computedScope.hasLocationQuestions.value || mapStore.isRejectedPage) {
           return false;
         }
 
@@ -298,7 +298,7 @@ export default {
 
     onMounted(methods.bootstrap);
 
-    watch(computedState.resolvedProjectSlug, async (nextSlug, previousSlug) => {
+    watch(computedScope.resolvedProjectSlug, async (nextSlug, previousSlug) => {
       if (nextSlug && nextSlug !== previousSlug) {
         mapStore.reset();
         drawerStore.close();
@@ -322,11 +322,11 @@ export default {
     watch(
       () => [
         navigationStore.activePage,
-        computedState.showMapLoader.value,
+        computedScope.showMapLoader.value,
         mapStore.isRejectedPage,
         mapStore.hasLoadedInitialPage,
         mapStore.locations.length,
-        computedState.hasLocationQuestions.value
+        computedScope.hasLocationQuestions.value
       ],
       ([activePage, nextShowLoader, isRejectedPage, hasLoadedInitialPage, locationsLength, nextHasLocationQuestions]) => {
         if (activePage !== 'map') {
@@ -388,7 +388,7 @@ export default {
     return {
       state,
       ...methods,
-      ...computedState,
+      ...computedScope,
       menu
     };
   }

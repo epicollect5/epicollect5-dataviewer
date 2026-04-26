@@ -86,8 +86,8 @@ export default {
         state.isDeleting = true;
 
         try {
-          await tableStore.deleteCurrentEntry(computedState.payload.value);
-          toastStore.show(`Deleted "${computedState.entryTitle.value}".`, {
+          await tableStore.deleteCurrentEntry(computedScope.payload.value);
+          toastStore.show(`Deleted "${computedScope.entryTitle.value}".`, {
             color: 'success'
           });
           modalStore.close();
@@ -102,15 +102,15 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       payload: computed(() => modalStore.payload || {}),
-      entryTitle: computed(() => computedState.payload.value.entryTitle || 'Untitled entry')
+      entryTitle: computed(() => computedScope.payload.value.entryTitle || 'Untitled entry')
     };
 
     return {
       state,
       ...methods,
-      ...computedState,
+      ...computedScope,
       close
     };
   }

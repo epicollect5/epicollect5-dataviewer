@@ -25,12 +25,12 @@ export default {
       navigationStore
     });
 
-    const computedState = {
+    const computedScope = {
       isBusy: computed(() => navigationStore.isPerformingLongAction)
     };
 
     watch(
-      computedState.isBusy,
+      computedScope.isBusy,
       (isBusy) => {
         if (typeof document === 'undefined') {
           return;
@@ -49,7 +49,7 @@ export default {
 
     return {
       state,
-      ...computedState
+      ...computedScope
     };
   }
 };

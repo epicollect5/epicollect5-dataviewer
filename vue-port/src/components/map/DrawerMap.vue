@@ -7,11 +7,11 @@
         </ion-card-header>
         <ion-card-content class="drawer-map__card-content">
           <label class="drawer-map__field">
-            <select :value="selectedLocationKey" @change="emitLocationChange($event.target.value)">
-              <option v-for="question in props.locationQuestions" :key="getLocationKey(question)" :value="getLocationKey(question)">
-                {{ question.question }}
-              </option>
-            </select>
+            <Dropdown
+              :model-value="selectedLocationKey"
+              :options="locationOptions"
+              @change="emitLocationChange"
+            />
           </label>
         </ion-card-content>
       </ion-card>
@@ -63,12 +63,12 @@
         </ion-card-header>
         <ion-card-content class="drawer-map__card-content">
           <label class="drawer-map__field">
-            <select :value="selectedDistributionKey" disabled>
-              <option value="">{{ distributionPlaceholder }}</option>
-              <option v-for="question in props.distributionQuestions" :key="question.inputRef" :value="question.inputRef">
-                {{ question.question }}
-              </option>
-            </select>
+            <Dropdown
+              :model-value="selectedDistributionKey"
+              :options="distributionOptions"
+              :placeholder="distributionPlaceholder"
+              :disabled="true"
+            />
           </label>
         </ion-card-content>
       </ion-card>
@@ -89,6 +89,7 @@ import {
   IonRange
 } from '@ionic/vue';
 import { computed, onBeforeUnmount, reactive, watch } from 'vue';
+import Dropdown from '@/components/forms/Dropdown.vue';
 import mapUtils from '@/core/map/mapUtils';
 
 const TIMELINE_DEBOUNCE_MS = 1000;
@@ -124,6 +125,14 @@ const formatTimelineLabel = (value) => {
 
 export default {
   name: 'DrawerMap',
+  components: {
+    Dropdown,
+    IonCard,
+    IonCardContent,
+    IonCardHeader,
+    IonCardTitle,
+    IonRange
+  },
   props: {
     locationQuestions: {
       type: Array,
@@ -167,13 +176,6 @@ export default {
     }
   },
   emits: ['change-location', 'update-dates', 'reset-dates'],
-  components: {
-    IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardTitle,
-    IonRange
-  },
   setup(props, { emit }) {
     const state = reactive({
       debounceTimer: null,
@@ -190,7 +192,7 @@ export default {
         return [question?.input_ref || '', question?.branch_ref || ''].join('::');
       },
       getTimelineValueFromProps() {
-        const datesRange = computedState.datesRange.value;
+        const datesRange = computedScope.datesRange.value;
 
         if (datesRange.length === 0) {
           return {
@@ -240,7 +242,7 @@ export default {
       },
       getClampedTimelineValue(nextValue) {
         const previousValue = state.timelineValue;
-        const maxIndex = computedState.maxTimelineIndex.value;
+        const maxIndex = computedScope.maxTimelineIndex.value;
         const lower = Math.max(0, Math.min(nextValue.lower, maxIndex));
         const upper = Math.max(0, Math.min(nextValue.upper, maxIndex));
 
@@ -271,7 +273,7 @@ export default {
         }
       },
       emitTimelineDates(nextValue) {
-        const datesRange = computedState.datesRange.value;
+        const datesRange = computedScope.datesRange.value;
 
         if (datesRange.length === 0) {
           emit('update-dates', {
@@ -326,7 +328,19 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
+      locationOptions: computed(() => {
+        return props.locationQuestions.map((question) => ({
+          label: question.question,
+          value: methods.getLocationKey(question)
+        }));
+      }),
+      distributionOptions: computed(() => {
+        return props.distributionQuestions.map((question) => ({
+          label: question.question,
+          value: question.inputRef
+        }));
+      }),
       selectedLocationKey: computed(() => methods.getLocationKey(props.selectedLocationQuestion)),
       selectedDistributionKey: computed(() => props.selectedDistributionQuestion?.inputRef || ''),
       distributionPlaceholder: computed(() => {
@@ -337,22 +351,22 @@ export default {
         return props.selectedDistributionQuestion?.question || 'Select question';
       }),
       datesRange: computed(() => mapUtils.getDatesRange(props.minDate, props.maxDate)),
-      maxTimelineIndex: computed(() => Math.max(0, computedState.datesRange.value.length - 1)),
-      isTimelineDisabled: computed(() => computedState.datesRange.value.length <= 1),
+      maxTimelineIndex: computed(() => Math.max(0, computedScope.datesRange.value.length - 1)),
+      isTimelineDisabled: computed(() => computedScope.datesRange.value.length <= 1),
       isTimelineResetDisabled: computed(() => {
-        if (computedState.datesRange.value.length === 0) {
+        if (computedScope.datesRange.value.length === 0) {
           return true;
         }
 
         return !props.startDate && !props.endDate;
       }),
       timelineStartLabel: computed(() => {
-        const datesRange = computedState.datesRange.value;
+        const datesRange = computedScope.datesRange.value;
         const lower = state.timelineValue.lower;
         return formatTimelineLabel(datesRange[lower]);
       }),
       timelineEndLabel: computed(() => {
-        const datesRange = computedState.datesRange.value;
+        const datesRange = computedScope.datesRange.value;
         const upper = state.timelineValue.upper;
         return formatTimelineLabel(datesRange[upper]);
       }),
@@ -377,7 +391,7 @@ export default {
       props,
       state,
       ...methods,
-      ...computedState
+      ...computedScope
     };
   }
 };

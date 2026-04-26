@@ -114,14 +114,14 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       payload: computed(() => modalStore.payload || {}),
-      entryTitle: computed(() => computedState.payload.value.entryTitle || 'Entry'),
-      headers: computed(() => computedState.payload.value.viewHeaders || []),
-      answers: computed(() => computedState.payload.value.viewAnswers || []),
+      entryTitle: computed(() => computedScope.payload.value.entryTitle || 'Entry'),
+      headers: computed(() => computedScope.payload.value.viewHeaders || []),
+      answers: computed(() => computedScope.payload.value.viewAnswers || []),
       rows: computed(() => {
-        return computedState.answers.value.map((answer, index) => {
-          const question = computedState.headers.value[index]?.question || `Question ${index + 1}`;
+        return computedScope.answers.value.map((answer, index) => {
+          const question = computedScope.headers.value[index]?.question || `Question ${index + 1}`;
 
           if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE && answer.answer) {
             return { key: `${question}-${index}`, question, kind: 'photo', value: answer.answer };
@@ -142,7 +142,7 @@ export default {
 
     return {
       ...methods,
-      ...computedState,
+      ...computedScope,
       close
     };
   }

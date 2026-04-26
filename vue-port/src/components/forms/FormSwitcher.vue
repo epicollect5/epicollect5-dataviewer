@@ -1,17 +1,24 @@
 <template>
   <label class="form-switcher">
     <span class="form-switcher__label">Form</span>
-    <select :value="props.selectedFormRef" @change="handleChange($event.target.value)">
-      <option v-for="form in props.forms" :key="form.ref" :value="form.ref">
-        {{ form.name }}
-      </option>
-    </select>
+    <Dropdown
+      :model-value="props.selectedFormRef"
+      :options="props.forms"
+      option-label-key="name"
+      option-value-key="ref"
+      @change="handleChange"
+    />
   </label>
 </template>
 
 <script>
+import Dropdown from '@/components/forms/Dropdown.vue';
+
 export default {
   name: 'FormSwitcher',
+  components: {
+    Dropdown
+  },
   props: {
     forms: {
       type: Array,

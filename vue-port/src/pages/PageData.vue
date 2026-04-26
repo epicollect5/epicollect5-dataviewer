@@ -25,12 +25,12 @@ export default {
   setup() {
     const navigationStore = useNavigationStore();
 
-    const computedState = {
+    const computedScope = {
       isMapPage: computed(() => navigationStore.activePage === 'map')
     };
 
     return {
-      ...computedState
+      ...computedScope
     };
   }
 };

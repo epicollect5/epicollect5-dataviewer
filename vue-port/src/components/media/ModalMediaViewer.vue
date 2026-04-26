@@ -81,13 +81,13 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       payload: computed(() => modalStore.payload || {}),
-      title: computed(() => computedState.payload.value.title || 'Media'),
-      src: computed(() => computedState.payload.value.src || ''),
-      isAudio: computed(() => computedState.payload.value.mediaType === 'audio'),
+      title: computed(() => computedScope.payload.value.title || 'Media'),
+      src: computed(() => computedScope.payload.value.src || ''),
+      isAudio: computed(() => computedScope.payload.value.mediaType === 'audio'),
       modalStyle: computed(() => {
-        if (computedState.isAudio.value) {
+        if (computedScope.isAudio.value) {
           return {
             '--width': 'min(42vw, 520px)',
             '--height': '190px',
@@ -121,13 +121,13 @@ export default {
     });
 
     expose({
-      modalStyle: computedState.modalStyle
+      modalStyle: computedScope.modalStyle
     });
 
     return {
       state,
       ...methods,
-      ...computedState,
+      ...computedScope,
       close
     };
   }

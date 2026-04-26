@@ -10,11 +10,13 @@
         </div>
 
         <label v-if="forms.length > 0" class="primary-navbar__forms">
-          <select :value="currentFormRef || ''" @change="handleFormChange($event.target.value)">
-            <option v-for="form in forms" :key="form.ref" :value="form.ref">
-              {{ form.name }}
-            </option>
-          </select>
+          <Dropdown
+            :model-value="currentFormRef || ''"
+            :options="forms"
+            option-label-key="name"
+            option-value-key="ref"
+            @change="handleFormChange"
+          />
         </label>
 
         <button
@@ -89,6 +91,7 @@ import { cloudDownload, globe, grid, logIn, logOut, menu, power } from 'ionicons
 import { computed, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import PARAMETERS from '@/core/config/parameters';
+import Dropdown from '@/components/forms/Dropdown.vue';
 import { useDrawerStore } from '@/stores/drawerStore';
 import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
@@ -99,6 +102,7 @@ import helpers from '@/utils/helpers';
 export default {
   name: 'NavbarPrimary',
   components: {
+    Dropdown,
     IonHeader,
     IonIcon,
     IonToolbar

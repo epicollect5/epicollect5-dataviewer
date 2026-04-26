@@ -59,14 +59,14 @@ export default {
       }
     });
 
-    const computedState = {
+    const computedScope = {
       columnDefs: computed(() => createEntriesColumnDefs(props.headers)),
       rowData: computed(() => mapTableRowsToGrid(props.rows))
     };
 
     return {
       state,
-      ...computedState
+      ...computedScope
     };
   }
 };

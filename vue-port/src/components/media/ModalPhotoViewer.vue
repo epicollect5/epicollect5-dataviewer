@@ -105,7 +105,7 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       isVisible: computed(() => modalStore.photoViewerPayload !== null),
       images: computed(() => {
         const payload = modalStore.photoViewerPayload || {};
@@ -122,7 +122,7 @@ export default {
     };
 
     watch(
-      () => computedState.isVisible.value,
+      () => computedScope.isVisible.value,
       (isVisible) => {
         if (!isVisible) {
           methods.stopOverlayLoader();
@@ -142,7 +142,7 @@ export default {
 
     return {
       state,
-      ...computedState,
+      ...computedScope,
       ...methods
     };
   }

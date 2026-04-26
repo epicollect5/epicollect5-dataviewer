@@ -39,13 +39,13 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       buttonLabel: computed(() => props.label || 'Play')
     };
 
     return {
       ...methods,
-      ...computedState,
+      ...computedScope,
       play
     };
   }

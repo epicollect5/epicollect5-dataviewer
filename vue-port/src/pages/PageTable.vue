@@ -130,16 +130,16 @@ export default {
 
     const methods = {
       async bootstrap() {
-        if (!computedState.resolvedProjectSlug.value) {
+        if (!computedScope.resolvedProjectSlug.value) {
           return;
         }
 
         navigationStore.setActivePage('table');
 
         const didLoadProject =
-          projectStore.projectSlug === computedState.resolvedProjectSlug.value
+          projectStore.projectSlug === computedScope.resolvedProjectSlug.value
             ? true
-            : await projectStore.loadProject(computedState.resolvedProjectSlug.value);
+            : await projectStore.loadProject(computedScope.resolvedProjectSlug.value);
 
         if (didLoadProject && navigationStore.currentFormRef) {
           await tableStore.loadEntries();
@@ -201,11 +201,11 @@ export default {
       }
     };
 
-    const computedState = {
+    const computedScope = {
       resolvedProjectSlug: computed(() => {
         return route.params.projectSlug || route.query.project || env.projectSlug || '';
       }),
-      missingProjectSlug: computed(() => !computedState.resolvedProjectSlug.value),
+      missingProjectSlug: computed(() => !computedScope.resolvedProjectSlug.value),
       projectErrors: computed(() => {
         return Array.isArray(projectStore.errors) ? projectStore.errors.join(', ') : projectStore.errors;
       }),
@@ -223,7 +223,7 @@ export default {
 
     onMounted(methods.bootstrap);
 
-    watch(computedState.resolvedProjectSlug, async (nextSlug, previousSlug) => {
+    watch(computedScope.resolvedProjectSlug, async (nextSlug, previousSlug) => {
       if (nextSlug && nextSlug !== previousSlug) {
         filtersStore.reset();
         await methods.bootstrap();
@@ -235,7 +235,7 @@ export default {
       chevronBackCircle,
       chevronForwardCircle,
       ...methods,
-      ...computedState
+      ...computedScope
     };
   }
 };

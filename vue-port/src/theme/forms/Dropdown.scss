@@ -1,0 +1,69 @@
+.dropdown {
+  width: 100%;
+}
+
+.dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown__trigger--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dropdown__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown__label--placeholder {
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.55);
+}
+
+.dropdown__icon {
+  flex: 0 0 auto;
+  font-size: 1rem;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.65);
+}
+
+ion-popover.dropdown-popover {
+  --width: min(320px, calc(100vw - 24px));
+  --box-shadow: 0 14px 40px rgba(15, 23, 42, 0.14);
+}
+
+.dropdown-popover__content {
+  --background: #fff;
+}
+
+.dropdown-popover__content ion-list {
+  padding: 6px;
+}
+
+.dropdown-popover__item {
+  --background: transparent;
+  --border-radius: 10px;
+  --color: var(--app-text);
+  --inner-padding-end: 12px;
+  --inner-padding-start: 12px;
+  min-height: 42px;
+}
+
+.dropdown-popover__item--selected {
+  --background: rgba(var(--ion-color-primary-rgb, 56, 128, 255), 0.1);
+  --color: var(--ion-color-primary);
+  font-weight: 600;
+}

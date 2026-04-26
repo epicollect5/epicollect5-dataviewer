@@ -64,13 +64,8 @@
   width: 100px;
 }
 
-.table-toolbar select {
+.table-toolbar .dropdown__trigger {
   min-height: 42px;
-  padding: 0 12px;
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--app-text);
 }
 
 .table-toolbar__controls {
