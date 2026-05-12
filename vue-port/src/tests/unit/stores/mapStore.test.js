@@ -1,4 +1,5 @@
 import { setActivePinia, createPinia } from 'pinia';
+import client from '@/services/api/client';
 import { clearEntriesLocationsCache } from '@/services/entries/entriesPageCache';
 import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
@@ -18,6 +19,7 @@ describe('mapStore', () => {
     setActivePinia(createPinia());
     clearEntriesLocationsCache();
     fetchEntriesLocations.mockReset();
+    vi.restoreAllMocks();
   });
 
   afterEach(() => {
@@ -157,6 +159,38 @@ describe('mapStore', () => {
       }
     };
     navigationStore.setCurrentForm('form_1', 'Form One');
+    const pageOneUrl = 'https://five.epicollect.net/api/internal/entries-locations/demo-project?form_ref=form_1&input_ref=location_1&page=1';
+    const pageTwoUrl = 'https://five.epicollect.net/api/internal/entries-locations/demo-project?form_ref=form_1&input_ref=location_1&page=2';
+    const clientGetSpy = vi.spyOn(client, 'get').mockResolvedValue({
+      data: {
+        data: {
+          geojson: {
+            features: [
+              {
+                geometry: {
+                  coordinates: [13.5, 42.9]
+                },
+                properties: {
+                  uuid: 'entry-2',
+                  title: 'Second map page entry'
+                }
+              }
+            ]
+          }
+        },
+        meta: {
+          total: 2,
+          current_page: 2,
+          last_page: 2
+        },
+        links: {
+          self: pageTwoUrl,
+          prev: pageOneUrl,
+          next: null
+        }
+      }
+    });
+
     fetchEntriesLocations.mockResolvedValue({
       data: {
         data: {
@@ -175,24 +209,24 @@ describe('mapStore', () => {
           }
         },
         meta: {
-          total: 1
+          total: 2,
+          current_page: 1,
+          last_page: 2
         },
-        links: {}
+        links: {
+          self: pageOneUrl,
+          prev: null,
+          next: pageTwoUrl
+        }
       }
     });
 
     await store.loadLocations({ resetFilters: true });
-    store.reset();
-
-    const cachedLoad = store.loadLocations({ resetFilters: true });
-
-    await Promise.resolve();
-
-    expect(store.isFetchingPage).toBe(true);
-
-    await cachedLoad;
+    await store.loadLocations({ pageUrl: pageTwoUrl });
+    await store.loadLocations({ pageUrl: pageOneUrl });
 
     expect(fetchEntriesLocations).toHaveBeenCalledTimes(1);
+    expect(clientGetSpy).toHaveBeenCalledTimes(1);
     expect(store.isFetchingPage).toBe(false);
     expect(store.locations).toHaveLength(1);
     expect(store.locations[0].properties.title).toBe('Cached map entry');

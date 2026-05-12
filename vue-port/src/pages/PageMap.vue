@@ -24,7 +24,29 @@
         </template>
 
         <template #end>
-          <span class="page-map__entries-total">Total: {{ entriesTotal }}</span>
+          <div v-if="state.mapStore.pagination" class="secondary-navbar-pagination">
+            <span>Total {{ entriesTotal }} | Page {{ currentPage }}/{{ lastPage }}</span>
+            <button
+              type="button"
+              class="secondary-navbar-pagination__button"
+              :disabled="!state.mapStore.links?.prev || state.mapStore.isFetchingPage"
+              aria-label="Previous page"
+              title="Previous page"
+              @click="handlePreviousPage"
+            >
+              <ion-icon :icon="chevronBackCircle" class="secondary-navbar-pagination__icon" />
+            </button>
+            <button
+              type="button"
+              class="secondary-navbar-pagination__button"
+              :disabled="!state.mapStore.links?.next || state.mapStore.isFetchingPage"
+              aria-label="Next page"
+              title="Next page"
+              @click="handleNextPage"
+            >
+              <ion-icon :icon="chevronForwardCircle" class="secondary-navbar-pagination__icon" />
+            </button>
+          </div>
         </template>
       </NavbarSecondary>
 
@@ -75,7 +97,7 @@
 
 <script>
 import { IonIcon } from '@ionic/vue';
-import { menu } from 'ionicons/icons';
+import { chevronBackCircle, chevronForwardCircle, menu } from 'ionicons/icons';
 import { computed, nextTick, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
@@ -168,6 +190,20 @@ export default {
       handleDateReset() {
         mapStore.resetDateFilter();
       },
+      async loadPage(url) {
+        if (!url) {
+          return;
+        }
+
+        methods.resetMapViewState();
+        await mapStore.loadLocations({ pageUrl: url });
+      },
+      handlePreviousPage() {
+        return methods.loadPage(mapStore.links?.prev);
+      },
+      handleNextPage() {
+        return methods.loadPage(mapStore.links?.next);
+      },
       async handleDrawerEvent(eventName, value) {
         if (eventName === 'change-location') {
           await methods.handleLocationQuestionChange(value);
@@ -258,7 +294,9 @@ export default {
       }),
       locationQuestions: computed(() => mapStore.getLocationQuestions()),
       hasLocationQuestions: computed(() => computedScope.locationQuestions.value.length > 0),
-      entriesTotal: computed(() => mapStore.locations.length),
+      entriesTotal: computed(() => mapStore.pagination?.total ?? mapStore.locations.length),
+      currentPage: computed(() => mapStore.pagination?.current_page ?? 1),
+      lastPage: computed(() => mapStore.pagination?.last_page ?? 1),
       isMapPage: computed(() => navigationStore.activePage === 'map'),
       distributionQuestions: computed(() => {
         const currentForm = projectStore.projectExtra?.forms?.[navigationStore.currentFormRef];
@@ -389,6 +427,8 @@ export default {
       state,
       ...methods,
       ...computedScope,
+      chevronBackCircle,
+      chevronForwardCircle,
       menu
     };
   }

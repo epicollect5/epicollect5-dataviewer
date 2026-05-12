@@ -71,6 +71,15 @@ describe('PageMap smoke', () => {
       }
     ];
     mapStore.markers = [{ entryUuid: 'entry-1', latitude: 41.9, longitude: 12.5 }];
+    mapStore.pagination = {
+      total: 50001,
+      current_page: 1,
+      last_page: 3
+    };
+    mapStore.links = {
+      prev: null,
+      next: 'https://five.epicollect.net/api/internal/entries-locations/demo?form_ref=form_1&page=2'
+    };
     mapStore.loadLocations = vi.fn().mockResolvedValue();
     mapStore.loadEntry = vi.fn().mockResolvedValue();
 
@@ -89,6 +98,13 @@ describe('PageMap smoke', () => {
 
     expect(navigationStore.activePage).toBe('map');
     expect(mapStore.loadLocations).toHaveBeenCalledWith({ resetFilters: true });
+    expect(wrapper.text()).toContain('Total 50001 | Page 1/3');
+
+    await wrapper.get('button[aria-label="Next page"]').trigger('click');
+
+    expect(mapStore.loadLocations).toHaveBeenCalledWith({
+      pageUrl: 'https://five.epicollect.net/api/internal/entries-locations/demo?form_ref=form_1&page=2'
+    });
 
     const filtersButton = wrapper.find('button[aria-label="Open filters drawer"]');
     await filtersButton.trigger('click');

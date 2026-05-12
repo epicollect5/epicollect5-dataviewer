@@ -49,15 +49,3 @@
 .page-map__drawer-button ion-icon {
   font-size: 1.45rem;
 }
-
-.page-map__entries-total {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--ion-color-primary-contrast);
-}
-
-@media (max-width: 768px) {
-  .page-map__entries-total {
-    font-size: 0.875rem;
-  }
-}

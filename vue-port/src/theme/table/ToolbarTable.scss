@@ -119,14 +119,6 @@
   color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
 }
 
-.table-toolbar__pagination--secondary-navbar {
-  color: var(--ion-color-primary-contrast);
-}
-
-.table-toolbar__pagination--secondary-navbar .entries-grid__action-button {
-  background: rgba(255, 255, 255, 0.96);
-}
-
 .table-toolbar__pagination button {
   min-height: 40px;
   padding: 0 14px;

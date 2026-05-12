@@ -7,6 +7,7 @@ import { fetchEntries } from '@/services/api/entriesApi';
 import {
   getCachedEntriesPage,
   getEntriesRequestUrl,
+  getPayloadSelfUrl,
   getProjectCacheRef,
   setCachedEntriesPage
 } from '@/services/entries/entriesPageCache';
@@ -147,7 +148,15 @@ export const useTableStore = defineStore('table', {
             : await fetchEntries(projectStore.projectSlug, requestParams);
 
           responseData = response.data;
-          await setCachedEntriesPage({ projectRef, requestUrl, payload: responseData });
+
+          const selfUrl = getPayloadSelfUrl(responseData);
+          const cacheUrl = selfUrl || requestUrl;
+
+          await setCachedEntriesPage({ projectRef, requestUrl: cacheUrl, payload: responseData });
+
+          if (cacheUrl !== requestUrl) {
+            await setCachedEntriesPage({ projectRef, requestUrl, payload: responseData });
+          }
         }
 
         const formRef = navigationStore.currentFormRef;

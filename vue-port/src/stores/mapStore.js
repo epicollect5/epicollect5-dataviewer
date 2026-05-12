@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
+import client from '@/services/api/client';
 import { fetchEntriesLocations, fetchEntry } from '@/services/api/entriesApi';
 import {
   getCachedEntriesLocations,
   getEntriesLocationsRequestUrl,
+  getPayloadSelfUrl,
   getProjectCacheRef,
   setCachedEntriesLocations
 } from '@/services/entries/entriesPageCache';
@@ -42,6 +44,7 @@ export const useMapStore = defineStore('map', {
     lastLoadedLocationQuestionKey: '',
     selectedLocationQuestion: null,
     selectedEntry: null,
+    requestParams: {},
     pagination: null,
     links: null,
     minDate: '',
@@ -76,6 +79,7 @@ export const useMapStore = defineStore('map', {
       this.lastLoadedLocationQuestionKey = '';
       this.selectedLocationQuestion = null;
       this.selectedEntry = null;
+      this.requestParams = {};
       this.pagination = null;
       this.links = null;
       this.minDate = '';
@@ -212,9 +216,11 @@ export const useMapStore = defineStore('map', {
         this.selectedLocationQuestion ||
         this.getDefaultLocationQuestion();
       const locationQuestionKey = getLocationQuestionKey(selectedLocationQuestion);
-      const requestContextKey = `${projectStore.projectSlug}|${navigationStore.currentFormRef}|${locationQuestionKey}`;
+      const pageUrl = options.pageUrl || '';
+      const requestContextKey = `${projectStore.projectSlug}|${navigationStore.currentFormRef}|${locationQuestionKey}|${pageUrl}`;
 
       if (
+        !pageUrl &&
         this.hasLoadedInitialPage &&
         this.lastLoadedProjectSlug === projectStore.projectSlug &&
         this.lastLoadedFormRef === navigationStore.currentFormRef &&
@@ -252,8 +258,11 @@ export const useMapStore = defineStore('map', {
       pendingLocationsRequestKey = requestContextKey;
       pendingLocationsRequest = (async () => {
         try {
-          const requestParams = this.buildLocationsParams({ selectedLocationQuestion });
+          const requestParams = pageUrl
+            ? this.requestParams
+            : this.buildLocationsParams({ selectedLocationQuestion });
           const requestUrl = getEntriesLocationsRequestUrl({
+            pageUrl,
             projectSlug: projectStore.projectSlug,
             params: requestParams
           });
@@ -264,15 +273,26 @@ export const useMapStore = defineStore('map', {
           if (payload) {
             await delay(MAP_CACHE_HIT_DELAY_MS);
           } else {
-            const response = await fetchEntriesLocations(projectStore.projectSlug, requestParams);
+            const response = pageUrl
+              ? await client.get(pageUrl)
+              : await fetchEntriesLocations(projectStore.projectSlug, requestParams);
 
             payload = response.data;
-            await setCachedEntriesLocations({ projectRef, requestUrl, payload });
+
+            const canonicalPageUrl = getPayloadSelfUrl(payload);
+            const cacheUrl = canonicalPageUrl || requestUrl;
+
+            await setCachedEntriesLocations({ projectRef, requestUrl: cacheUrl, payload });
+
+            if (cacheUrl !== requestUrl) {
+              await setCachedEntriesLocations({ projectRef, requestUrl, payload });
+            }
           }
 
+          this.requestParams = requestParams;
           this.locations = payload.data?.geojson?.features || [];
           this.pagination = payload.meta;
-          this.links = payload.links;
+          this.links = payload.links || payload.link || null;
           this.selectedEntry = null;
           this.lastLoadedProjectSlug = projectStore.projectSlug;
           this.lastLoadedFormRef = navigationStore.currentFormRef;

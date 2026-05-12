@@ -13,27 +13,27 @@
     <template v-else>
       <NavbarSecondary>
         <template #end>
-          <div v-if="state.tableStore.pagination" class="table-toolbar__pagination table-toolbar__pagination--secondary-navbar">
-            <span>Total {{ state.tableStore.pagination.total }} · Page {{ state.tableStore.pagination.current_page }}/{{ state.tableStore.pagination.last_page }}</span>
+          <div v-if="state.tableStore.pagination" class="secondary-navbar-pagination">
+            <span>Total {{ state.tableStore.pagination.total }} | Page {{ state.tableStore.pagination.current_page }}/{{ state.tableStore.pagination.last_page }}</span>
             <button
               type="button"
-              class="entries-grid__action-button entries-grid__action-button--view"
+              class="secondary-navbar-pagination__button"
               :disabled="!state.tableStore.links?.prev || state.tableStore.isFetchingPage"
               aria-label="Previous page"
               title="Previous page"
               @click="handlePreviousPage"
             >
-              <ion-icon :icon="chevronBackCircle" class="entries-grid__action-icon" />
+              <ion-icon :icon="chevronBackCircle" class="secondary-navbar-pagination__icon" />
             </button>
             <button
               type="button"
-              class="entries-grid__action-button entries-grid__action-button--view"
+              class="secondary-navbar-pagination__button"
               :disabled="!state.tableStore.links?.next || state.tableStore.isFetchingPage"
               aria-label="Next page"
               title="Next page"
               @click="handleNextPage"
             >
-              <ion-icon :icon="chevronForwardCircle" class="entries-grid__action-icon" />
+              <ion-icon :icon="chevronForwardCircle" class="secondary-navbar-pagination__icon" />
             </button>
           </div>
         </template>

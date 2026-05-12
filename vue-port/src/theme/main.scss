@@ -35,3 +35,44 @@ ion-toolbar {
 ion-button {
   --border-radius: 10px;
 }
+
+.secondary-navbar-pagination {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ion-color-primary-contrast);
+}
+
+.secondary-navbar-pagination__button {
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #000000;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: #ffffff;
+  color: #333333;
+  cursor: pointer;
+}
+
+.secondary-navbar-pagination__button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondary-navbar-pagination__icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .secondary-navbar-pagination {
+    font-size: 0.875rem;
+  }
+}

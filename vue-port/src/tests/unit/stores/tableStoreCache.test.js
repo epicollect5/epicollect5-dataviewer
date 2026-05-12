@@ -1,4 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia';
+import client from '@/services/api/client';
 import { clearEntriesPageCache } from '@/services/entries/entriesPageCache';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -30,6 +31,7 @@ describe('stores/tableStore page cache', () => {
     setActivePinia(createPinia());
     clearEntriesPageCache();
     fetchEntries.mockReset();
+    vi.restoreAllMocks();
   });
 
   afterEach(() => {
@@ -49,29 +51,46 @@ describe('stores/tableStore page cache', () => {
     };
     navigationStore.setCurrentForm('form_1', 'Form 1');
 
+    const pageOneUrl = 'https://five.epicollect.net/api/export/entries/demo?form_ref=form_1&page=1';
+    const pageTwoUrl = 'https://five.epicollect.net/api/export/entries/demo?form_ref=form_1&page=2';
+    const clientGetSpy = vi.spyOn(client, 'get').mockResolvedValue({
+      data: {
+        data: [],
+        meta: {
+          total: 1,
+          current_page: 2,
+          last_page: 2
+        },
+        links: {
+          self: pageTwoUrl,
+          prev: pageOneUrl,
+          next: null
+        }
+      }
+    });
+
     fetchEntries.mockResolvedValue({
       data: {
         data: [],
         meta: {
-          total: 1
+          total: 1,
+          current_page: 1,
+          last_page: 2
         },
         links: {
-          next: 'https://five.epicollect.net/api/export/entries/demo?form_ref=form_1&page=2'
+          self: pageOneUrl,
+          prev: null,
+          next: pageTwoUrl
         }
       }
     });
 
     await tableStore.loadEntries({ params: { page: 1 } });
-    const cachedLoad = tableStore.loadEntries({ params: { page: 1 } });
-
-    await Promise.resolve();
-
-    expect(tableStore.isFetchingPage).toBe(true);
-    expect(fetchEntries).toHaveBeenCalledTimes(1);
-
-    await cachedLoad;
+    await tableStore.loadEntries({ pageUrl: pageTwoUrl });
+    await tableStore.loadEntries({ pageUrl: pageOneUrl });
 
     expect(fetchEntries).toHaveBeenCalledTimes(1);
+    expect(clientGetSpy).toHaveBeenCalledTimes(1);
     expect(tableStore.isFetchingPage).toBe(false);
     expect(tableStore.rowCount).toBe(1);
     expect(tableStore.gridRows[0]).toEqual(expect.objectContaining({

@@ -1,3 +1,4 @@
+import lscache from 'lscache';
 import {
   clearEntriesApiCache,
   clearEntriesLocationsCache,
@@ -9,19 +10,22 @@ import {
   getEntriesLocationsCacheKey,
   getEntriesLocationsRequestUrl,
   getEntriesPageCacheKey,
+  getPayloadSelfUrl,
   getProjectCacheRef,
   hashUrl,
+  normalizeUrlForCache,
   setCachedEntriesLocations,
   setCachedEntriesPage
 } from '@/services/entries/entriesPageCache';
 
 describe('services/entries/entriesPageCache', () => {
   beforeEach(() => {
-    clearEntriesPageCache();
+    clearEntriesApiCache();
   });
 
   afterEach(() => {
-    clearEntriesPageCache();
+    vi.restoreAllMocks();
+    clearEntriesApiCache();
   });
 
   it('keys pages by project ref and SHA-256 request url', async () => {
@@ -43,6 +47,30 @@ describe('services/entries/entriesPageCache', () => {
 
     expect(compressed).toBeInstanceOf(Uint8Array);
     expect(await decompress(compressed)).toBe(text);
+  });
+
+  it('normalizes request URLs before hashing cache keys', async () => {
+    const leftUrl = 'http://localhost/api/internal/entries-locations/demo?page=2&form_ref=form_1&input_ref=location_1';
+    const rightUrl = 'http://localhost/api/internal/entries-locations/demo?input_ref=location_1&page=2&form_ref=form_1';
+
+    expect(normalizeUrlForCache(leftUrl)).toBe(normalizeUrlForCache(rightUrl));
+    expect(await getEntriesLocationsCacheKey({ projectRef: 'project_1', requestUrl: leftUrl })).toBe(
+      await getEntriesLocationsCacheKey({ projectRef: 'project_1', requestUrl: rightUrl })
+    );
+  });
+
+  it('reads canonical self URLs from Laravel link payloads', () => {
+    expect(getPayloadSelfUrl({
+      links: {
+        self: 'https://example.com/links-self'
+      }
+    })).toBe('https://example.com/links-self');
+
+    expect(getPayloadSelfUrl({
+      link: {
+        self: 'https://example.com/link-self'
+      }
+    })).toBe('https://example.com/link-self');
   });
 
   it('keeps cached pages separated by project ref', async () => {
@@ -99,6 +127,23 @@ describe('services/entries/entriesPageCache', () => {
     clearEntriesLocationsCache();
 
     expect(await getCachedEntriesLocations({ projectRef: 'project_1', requestUrl })).toBeNull();
+  });
+
+  it('returns locations from memory when localStorage misses after storing', async () => {
+    const requestUrl = 'http://localhost/~mmenegazzo/epicollect5-server/public/api/internal/entries-locations/ec5-demo-project?form_ref=form_1&input_ref=location_1&per_page=25000&page=2';
+    const payload = {
+      data: {
+        geojson: {
+          features: [{ properties: { uuid: 'entry-2' } }]
+        }
+      }
+    };
+
+    vi.spyOn(lscache, 'get').mockReturnValue(null);
+
+    await setCachedEntriesLocations({ projectRef: 'project_1', requestUrl, payload });
+
+    expect(await getCachedEntriesLocations({ projectRef: 'project_1', requestUrl })).toEqual(payload);
   });
 
   it('clears all entries API caches on demand', async () => {
