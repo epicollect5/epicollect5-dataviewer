@@ -1,11 +1,24 @@
 import PARAMETERS from '@/core/config/parameters';
-import { create, eye, play, trash } from 'ionicons/icons';
+import { add, create, eye, play, trash } from 'ionicons/icons';
 import { useModalStore } from '@/stores/modalStore';
 
 const ACTION_ICONS = {
   view: eye,
   delete: trash,
   edit: create
+};
+
+const handleChildCountClick = (params) => {
+  console.log('Child count clicked', {
+    entryUuid: params.data?.id || null,
+    childCount: params.value ?? 0
+  });
+};
+
+const handleAddChildEntryClick = (params) => {
+  console.log('Add child entry clicked', {
+    entryUuid: params.data?.id || null
+  });
 };
 
 const buildViewPayload = (headers, cells) => ({
@@ -185,6 +198,38 @@ const createFixedTextCell = (value) => {
   return content;
 };
 
+const createChildrenCell = (params) => {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'entries-grid__children-cell-content';
+
+  const countButton = document.createElement('button');
+  countButton.className = 'entries-grid__children-count-button';
+  countButton.type = 'button';
+  countButton.textContent = params.value ?? 0;
+  countButton.setAttribute('aria-label', `Open child entries (${params.value ?? 0})`);
+  countButton.addEventListener('click', () => {
+    handleChildCountClick(params);
+  });
+
+  const addButton = document.createElement('button');
+  addButton.className = 'entries-grid__action-button entries-grid__action-button--add';
+  addButton.type = 'button';
+  addButton.setAttribute('aria-label', 'Add child entry');
+  addButton.addEventListener('click', () => {
+    handleAddChildEntryClick(params);
+  });
+
+  const icon = document.createElement('ion-icon');
+  icon.className = 'entries-grid__action-icon';
+  icon.icon = add;
+  addButton.appendChild(icon);
+
+  wrapper.appendChild(countButton);
+  wrapper.appendChild(addButton);
+
+  return wrapper;
+};
+
 const getDynamicCellClass = (value, isLastDynamicColumn = false) => {
   const classes = [];
 
@@ -217,8 +262,8 @@ export const createEntriesColumnDefs = (headers = [], options = {}) => {
       width: 110,
       minWidth: 110,
       headerClass: 'entries-grid__fixed-header',
-      cellClass: 'entries-grid__fixed-text-cell',
-      cellRenderer: (params) => createFixedTextCell(params.value)
+      cellClass: 'entries-grid__children-cell',
+      cellRenderer: createChildrenCell
     });
   }
 

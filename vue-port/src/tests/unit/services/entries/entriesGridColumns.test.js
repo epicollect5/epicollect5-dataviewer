@@ -31,7 +31,7 @@ describe('services/entries/entriesGridColumns', () => {
       lockPosition: 'left',
       suppressMovable: true,
       headerClass: 'entries-grid__fixed-header',
-      cellClass: 'entries-grid__fixed-text-cell'
+      cellClass: 'entries-grid__children-cell'
     }));
     expect(columnDefs[4]).toEqual(expect.objectContaining({
       lockPosition: 'left',
@@ -55,6 +55,40 @@ describe('services/entries/entriesGridColumns', () => {
       'createdAt',
       'answer_0'
     ]);
+  });
+
+  it('renders child count as an interactive count with an add button', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const columnDefs = createEntriesColumnDefs([], {
+      childFormName: 'Household members',
+      hasChildForm: true
+    });
+    const childCell = columnDefs[3].cellRenderer({
+      value: 4,
+      data: {
+        id: 'entry-1'
+      }
+    });
+    const countButton = childCell.querySelector('.entries-grid__children-count-button');
+    const addButton = childCell.querySelector('.entries-grid__action-button--add');
+
+    expect(childCell.className).toBe('entries-grid__children-cell-content');
+    expect(countButton.textContent).toBe('4');
+    expect(countButton.getAttribute('aria-label')).toBe('Open child entries (4)');
+    expect(addButton.getAttribute('aria-label')).toBe('Add child entry');
+
+    countButton.click();
+    addButton.click();
+
+    expect(consoleSpy).toHaveBeenCalledWith('Child count clicked', {
+      entryUuid: 'entry-1',
+      childCount: 4
+    });
+    expect(consoleSpy).toHaveBeenCalledWith('Add child entry clicked', {
+      entryUuid: 'entry-1'
+    });
+
+    consoleSpy.mockRestore();
   });
 
   it('renders fixed text cells with ellipsis-ready wrappers', () => {
