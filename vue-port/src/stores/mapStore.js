@@ -1,8 +1,16 @@
 import { defineStore } from 'pinia';
 import { fetchEntriesLocations, fetchEntry } from '@/services/api/entriesApi';
+import {
+  getCachedEntriesLocations,
+  getEntriesLocationsRequestUrl,
+  getProjectCacheRef,
+  setCachedEntriesLocations
+} from '@/services/entries/entriesPageCache';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import mapUtils from '@/core/map/mapUtils';
+
+export const MAP_CACHE_HIT_DELAY_MS = 1000;
 
 const getLocationQuestions = (projectExtra, formRef) => {
   return projectExtra?.forms?.[formRef]?.lists?.location_inputs || [];
@@ -18,6 +26,10 @@ const getLocationQuestionKey = (question) => {
 
 let pendingLocationsRequest = null;
 let pendingLocationsRequestKey = '';
+
+const delay = (duration) => new Promise((resolve) => {
+  window.setTimeout(resolve, duration);
+});
 
 export const useMapStore = defineStore('map', {
   state: () => ({
@@ -240,8 +252,23 @@ export const useMapStore = defineStore('map', {
       pendingLocationsRequestKey = requestContextKey;
       pendingLocationsRequest = (async () => {
         try {
-          const response = await fetchEntriesLocations(projectStore.projectSlug, this.buildLocationsParams({ selectedLocationQuestion }));
-          const payload = response.data;
+          const requestParams = this.buildLocationsParams({ selectedLocationQuestion });
+          const requestUrl = getEntriesLocationsRequestUrl({
+            projectSlug: projectStore.projectSlug,
+            params: requestParams
+          });
+          const projectRef = getProjectCacheRef(projectStore);
+          const cachedPayload = await getCachedEntriesLocations({ projectRef, requestUrl });
+          let payload = cachedPayload;
+
+          if (payload) {
+            await delay(MAP_CACHE_HIT_DELAY_MS);
+          } else {
+            const response = await fetchEntriesLocations(projectStore.projectSlug, requestParams);
+
+            payload = response.data;
+            await setCachedEntriesLocations({ projectRef, requestUrl, payload });
+          }
 
           this.locations = payload.data?.geojson?.features || [];
           this.pagination = payload.meta;

@@ -1,4 +1,5 @@
 import { setActivePinia, createPinia } from 'pinia';
+import { clearEntriesLocationsCache } from '@/services/entries/entriesPageCache';
 import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -15,7 +16,12 @@ vi.mock('@/services/api/entriesApi', () => ({
 describe('mapStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    clearEntriesLocationsCache();
     fetchEntriesLocations.mockReset();
+  });
+
+  afterEach(() => {
+    clearEntriesLocationsCache();
   });
 
   it('rebuilds visible markers when the cluster toggle changes', () => {
@@ -128,5 +134,67 @@ describe('mapStore', () => {
     await Promise.all([firstRequest, secondRequest]);
 
     expect(fetchEntriesLocations).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses cached locations for the same project and request url', async () => {
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const store = useMapStore();
+
+    projectStore.projectSlug = 'demo-project';
+    projectStore.projectExtra = {
+      forms: {
+        form_1: {
+          lists: {
+            location_inputs: [
+              {
+                input_ref: 'location_1',
+                branch_ref: ''
+              }
+            ]
+          }
+        }
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    fetchEntriesLocations.mockResolvedValue({
+      data: {
+        data: {
+          geojson: {
+            features: [
+              {
+                geometry: {
+                  coordinates: [12.5, 41.9]
+                },
+                properties: {
+                  uuid: 'entry-1',
+                  title: 'Cached map entry'
+                }
+              }
+            ]
+          }
+        },
+        meta: {
+          total: 1
+        },
+        links: {}
+      }
+    });
+
+    await store.loadLocations({ resetFilters: true });
+    store.reset();
+
+    const cachedLoad = store.loadLocations({ resetFilters: true });
+
+    await Promise.resolve();
+
+    expect(store.isFetchingPage).toBe(true);
+
+    await cachedLoad;
+
+    expect(fetchEntriesLocations).toHaveBeenCalledTimes(1);
+    expect(store.isFetchingPage).toBe(false);
+    expect(store.locations).toHaveLength(1);
+    expect(store.locations[0].properties.title).toBe('Cached map entry');
   });
 });

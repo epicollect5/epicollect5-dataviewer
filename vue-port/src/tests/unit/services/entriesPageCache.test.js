@@ -1,11 +1,17 @@
 import {
+  clearEntriesApiCache,
+  clearEntriesLocationsCache,
   clearEntriesPageCache,
   compress,
   decompress,
+  getCachedEntriesLocations,
   getCachedEntriesPage,
+  getEntriesLocationsCacheKey,
+  getEntriesLocationsRequestUrl,
   getEntriesPageCacheKey,
   getProjectCacheRef,
   hashUrl,
+  setCachedEntriesLocations,
   setCachedEntriesPage
 } from '@/services/entries/entriesPageCache';
 
@@ -64,6 +70,54 @@ describe('services/entries/entriesPageCache', () => {
     clearEntriesPageCache();
 
     expect(await getCachedEntriesPage({ projectRef: 'project_1', requestUrl })).toBeNull();
+  });
+
+  it('keeps cached locations separated from cached table pages', async () => {
+    const requestUrl = getEntriesLocationsRequestUrl({
+      projectSlug: 'demo',
+      params: {
+        form_ref: 'form_1',
+        input_ref: 'location_1'
+      }
+    });
+    const payload = {
+      data: {
+        geojson: {
+          features: [{ properties: { uuid: 'entry-1' } }]
+        }
+      }
+    };
+
+    await setCachedEntriesLocations({ projectRef: 'project_1', requestUrl, payload });
+
+    expect(await getCachedEntriesLocations({ projectRef: 'project_1', requestUrl })).toEqual(payload);
+    expect(await getCachedEntriesPage({ projectRef: 'project_1', requestUrl })).toBeNull();
+    expect(await getEntriesLocationsCacheKey({ projectRef: 'project_1', requestUrl })).toBe(
+      await getEntriesPageCacheKey({ projectRef: 'project_1', requestUrl })
+    );
+
+    clearEntriesLocationsCache();
+
+    expect(await getCachedEntriesLocations({ projectRef: 'project_1', requestUrl })).toBeNull();
+  });
+
+  it('clears all entries API caches on demand', async () => {
+    const tableUrl = 'https://five.epicollect.net/api/export/entries/demo?form_ref=form_1&page=2';
+    const locationsUrl = getEntriesLocationsRequestUrl({
+      projectSlug: 'demo',
+      params: {
+        form_ref: 'form_1',
+        input_ref: 'location_1'
+      }
+    });
+
+    await setCachedEntriesPage({ projectRef: 'project_1', requestUrl: tableUrl, payload: { data: [] } });
+    await setCachedEntriesLocations({ projectRef: 'project_1', requestUrl: locationsUrl, payload: { data: {} } });
+
+    clearEntriesApiCache();
+
+    expect(await getCachedEntriesPage({ projectRef: 'project_1', requestUrl: tableUrl })).toBeNull();
+    expect(await getCachedEntriesLocations({ projectRef: 'project_1', requestUrl: locationsUrl })).toBeNull();
   });
 
   it('uses the loaded project ref before falling back to slug', () => {
