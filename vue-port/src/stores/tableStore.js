@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
+import { markRaw } from 'vue';
 import client from '@/services/api/client';
+import { mapTableRowsToGrid } from '@/core/entries/ag-grid/columnDefs';
 import { deleteEntry as deleteEntryRequest } from '@/services/api/deleteApi';
 import { fetchEntries } from '@/services/api/entriesApi';
 import tableModel from '@/core/entries/tableModel';
@@ -7,28 +9,58 @@ import { useFiltersStore } from '@/stores/filtersStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 
+const tableRowsContext = {
+  gridRows: markRaw([])
+};
+
+const clearTableRows = () => {
+  tableRowsContext.gridRows = markRaw([]);
+};
+
+const setTableRows = (rows = []) => {
+  const rawRows = markRaw(rows);
+  const flatRows = rawRows.map((cells, index) => ({
+    id: cells[0]?.entryUuid || `row-${index}`,
+    rowIndex: index,
+    cells
+  }));
+
+  tableRowsContext.gridRows = markRaw(mapTableRowsToGrid(flatRows));
+
+  return tableRowsContext.gridRows.length;
+};
+
+const getCachedRows = (rowsVersion, rows) => {
+  if (rowsVersion < 0) {
+    return markRaw([]);
+  }
+
+  return rows;
+};
+
 export const useTableStore = defineStore('table', {
-  state: () => ({
-    headers: [],
-    rows: [],
-    requestParams: {},
-    pagination: null,
-    links: null,
-    hasLoadedInitialPage: false,
-    lastLoadedProjectSlug: '',
-    isFetchingPage: false,
-    isRejectedPage: false,
-    isBranchTable: false,
-    isFetchingChildren: false,
-    errors: []
-  }),
+  state: () => {
+    clearTableRows();
+
+    return {
+      headers: [],
+      rowCount: 0,
+      rowsVersion: 0,
+      requestParams: {},
+      pagination: null,
+      links: null,
+      hasLoadedInitialPage: false,
+      lastLoadedProjectSlug: '',
+      isFetchingPage: false,
+      isRejectedPage: false,
+      isBranchTable: false,
+      isFetchingChildren: false,
+      errors: []
+    };
+  },
   getters: {
-    flatRows(state) {
-      return state.rows.map((cells, index) => ({
-        id: cells[0]?.entryUuid || `row-${index}`,
-        rowIndex: index,
-        cells
-      }));
+    gridRows(state) {
+      return getCachedRows(state.rowsVersion, tableRowsContext.gridRows);
     }
   },
   actions: {
@@ -82,7 +114,8 @@ export const useTableStore = defineStore('table', {
 
         this.requestParams = options.pageUrl ? this.requestParams : this.buildEntriesParams(options.params);
         this.headers = tableModel.getHeaders(projectStore.projectExtra, formRef);
-        this.rows = tableModel.getRows(projectStore.projectSlug, projectStore.projectExtra, formRef, responseData);
+        this.rowCount = setTableRows(tableModel.getRows(projectStore.projectSlug, projectStore.projectExtra, formRef, responseData));
+        this.rowsVersion += 1;
         this.pagination = responseData.meta;
         this.links = responseData.links;
       } catch (error) {

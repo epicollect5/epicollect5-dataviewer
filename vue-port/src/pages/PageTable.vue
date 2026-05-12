@@ -61,12 +61,12 @@
             <p>{{ tableErrors }}</p>
           </div>
 
-          <TableEmptyState v-else-if="!state.tableStore.isFetchingPage && state.tableStore.flatRows.length === 0" />
+          <TableEmptyState v-else-if="!state.tableStore.isFetchingPage && state.tableStore.rowCount === 0" />
 
           <EntriesGrid
             v-else
             :headers="state.tableStore.headers"
-            :rows="state.tableStore.flatRows"
+            :rows="state.tableStore.gridRows"
             :is-loading="state.tableStore.isFetchingPage"
           />
         </div>

@@ -25,7 +25,6 @@ import { computed, reactive } from 'vue';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import { AgGridVue } from 'ag-grid-vue3';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
-import { mapTableRowsToGrid } from '@/core/entries/ag-grid/columnDefs';
 import { createEntriesColumnDefs } from '@/services/entries/entriesGridColumns';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -61,7 +60,7 @@ export default {
 
     const computedScope = {
       columnDefs: computed(() => createEntriesColumnDefs(props.headers)),
-      rowData: computed(() => mapTableRowsToGrid(props.rows))
+      rowData: computed(() => props.rows)
     };
 
     return {
