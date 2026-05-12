@@ -27,17 +27,24 @@ const buildDeletePayload = (cells) => {
   };
 };
 
-const createActionColumn = (headerName, field, headers = [], width = 92) => ({
-  headerName,
-  field,
+const FIXED_COLUMN_BASE = {
   pinned: 'left',
   lockPinned: true,
+  lockPosition: 'left',
   sortable: false,
   filter: false,
   resizable: false,
-  suppressMovable: true,
+  suppressMovable: true
+};
+
+const createActionColumn = (headerName, field, headers = [], width = 92) => ({
+  headerName,
+  field,
+  ...FIXED_COLUMN_BASE,
   width,
   minWidth: width,
+  maxWidth: width,
+  headerClass: 'entries-grid__fixed-header entries-grid__fixed-header--action',
   cellClass: 'entries-grid__action-cell',
   cellRenderer: (params) => {
     const button = document.createElement('button');
@@ -169,6 +176,15 @@ const createTextCell = (value, isLastDynamicColumn = false) => {
   return content;
 };
 
+const createFixedTextCell = (value) => {
+  const content = document.createElement('div');
+  content.className = 'entries-grid__fixed-text-value';
+  content.textContent = value ?? '';
+  content.title = value ?? '';
+
+  return content;
+};
+
 const getDynamicCellClass = (value, isLastDynamicColumn = false) => {
   const classes = [];
 
@@ -185,36 +201,49 @@ const getDynamicCellClass = (value, isLastDynamicColumn = false) => {
   return classes.join(' ');
 };
 
-export const createEntriesColumnDefs = (headers = []) => {
+export const createEntriesColumnDefs = (headers = [], options = {}) => {
+  const childFormName = options.childFormName || 'Children';
   const fixedColumns = [
     createActionColumn('View', 'view', headers),
     createActionColumn('Delete', 'delete', headers),
-    createActionColumn('Edit', 'edit', headers),
-    {
-      headerName: 'Children',
+    createActionColumn('Edit', 'edit', headers)
+  ];
+
+  if (options.hasChildForm) {
+    fixedColumns.push({
+      headerName: childFormName,
       field: 'children',
-      pinned: 'left',
-      lockPinned: true,
+      ...FIXED_COLUMN_BASE,
       width: 110,
-      minWidth: 110
-    },
+      minWidth: 110,
+      headerClass: 'entries-grid__fixed-header',
+      cellClass: 'entries-grid__fixed-text-cell',
+      cellRenderer: (params) => createFixedTextCell(params.value)
+    });
+  }
+
+  fixedColumns.push(
     {
       headerName: 'Title',
       field: 'title',
-      pinned: 'left',
-      lockPinned: true,
+      ...FIXED_COLUMN_BASE,
       width: 220,
-      minWidth: 180
+      minWidth: 180,
+      headerClass: 'entries-grid__fixed-header',
+      cellClass: 'entries-grid__fixed-text-cell',
+      cellRenderer: (params) => createFixedTextCell(params.value)
     },
     {
       headerName: 'Created At',
       field: 'createdAt',
-      pinned: 'left',
-      lockPinned: true,
+      ...FIXED_COLUMN_BASE,
       width: 160,
-      minWidth: 140
+      minWidth: 140,
+      headerClass: 'entries-grid__fixed-header',
+      cellClass: 'entries-grid__fixed-text-cell',
+      cellRenderer: (params) => createFixedTextCell(params.value)
     }
-  ];
+  );
 
   const dynamicColumns = headers.map((header, index) => {
     const isLastDynamicColumn = index === headers.length - 1;

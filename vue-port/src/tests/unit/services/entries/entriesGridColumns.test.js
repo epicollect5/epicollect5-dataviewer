@@ -13,7 +13,10 @@ describe('services/entries/entriesGridColumns', () => {
       { inputRef: 'q2', question: 'Question 2' }
     ];
 
-    const columnDefs = createEntriesColumnDefs(headers);
+    const columnDefs = createEntriesColumnDefs(headers, {
+      childFormName: 'Household members',
+      hasChildForm: true
+    });
 
     expect(columnDefs.slice(0, 6).map((column) => column.field)).toEqual([
       'view',
@@ -23,8 +26,46 @@ describe('services/entries/entriesGridColumns', () => {
       'title',
       'createdAt'
     ]);
+    expect(columnDefs[3]).toEqual(expect.objectContaining({
+      headerName: 'Household members',
+      lockPosition: 'left',
+      suppressMovable: true,
+      headerClass: 'entries-grid__fixed-header',
+      cellClass: 'entries-grid__fixed-text-cell'
+    }));
+    expect(columnDefs[4]).toEqual(expect.objectContaining({
+      lockPosition: 'left',
+      suppressMovable: true,
+      cellClass: 'entries-grid__fixed-text-cell'
+    }));
     expect(columnDefs[6].headerName).toBe('Question 1');
     expect(columnDefs[7].headerName).toBe('Question 2');
+  });
+
+  it('omits the child count column when the current form has no child form', () => {
+    const columnDefs = createEntriesColumnDefs([
+      { inputRef: 'q1', question: 'Question 1' }
+    ]);
+
+    expect(columnDefs.map((column) => column.field)).toEqual([
+      'view',
+      'delete',
+      'edit',
+      'title',
+      'createdAt',
+      'answer_0'
+    ]);
+  });
+
+  it('renders fixed text cells with ellipsis-ready wrappers', () => {
+    const columnDefs = createEntriesColumnDefs([]);
+    const titleCell = columnDefs[3].cellRenderer({
+      value: 'A very long title that should stay constrained inside the fixed title column'
+    });
+
+    expect(titleCell.className).toBe('entries-grid__fixed-text-value');
+    expect(titleCell.textContent).toBe('A very long title that should stay constrained inside the fixed title column');
+    expect(titleCell.title).toBe('A very long title that should stay constrained inside the fixed title column');
   });
 
   it('passes both original and preview photo urls to the dedicated photo viewer modal', () => {
@@ -32,7 +73,7 @@ describe('services/entries/entriesGridColumns', () => {
     const columnDefs = createEntriesColumnDefs([
       { inputRef: 'photo_1', question: 'Photo 1' }
     ]);
-    const photoColumn = columnDefs[6];
+    const photoColumn = columnDefs[5];
     const cellElement = photoColumn.cellRenderer({
       data: {
         title: 'Entry title'

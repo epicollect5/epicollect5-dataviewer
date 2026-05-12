@@ -40,6 +40,14 @@ export default {
       type: Array,
       default: () => []
     },
+    childFormName: {
+      type: String,
+      default: 'Children'
+    },
+    hasChildForm: {
+      type: Boolean,
+      default: false
+    },
     rows: {
       type: Array,
       default: () => []
@@ -59,7 +67,10 @@ export default {
     });
 
     const computedScope = {
-      columnDefs: computed(() => createEntriesColumnDefs(props.headers)),
+      columnDefs: computed(() => createEntriesColumnDefs(props.headers, {
+        childFormName: props.childFormName,
+        hasChildForm: props.hasChildForm
+      })),
       rowData: computed(() => props.rows)
     };
 

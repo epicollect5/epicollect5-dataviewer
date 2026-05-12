@@ -4,10 +4,18 @@ import client from '@/services/api/client';
 import { mapTableRowsToGrid } from '@/core/entries/ag-grid/columnDefs';
 import { deleteEntry as deleteEntryRequest } from '@/services/api/deleteApi';
 import { fetchEntries } from '@/services/api/entriesApi';
+import {
+  getCachedEntriesPage,
+  getEntriesRequestUrl,
+  getProjectCacheRef,
+  setCachedEntriesPage
+} from '@/services/entries/entriesPageCache';
 import tableModel from '@/core/entries/tableModel';
 import { useFiltersStore } from '@/stores/filtersStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
+
+export const TABLE_CACHE_HIT_DELAY_MS = 1000;
 
 const tableRowsContext = {
   gridRows: markRaw([])
@@ -38,12 +46,28 @@ const getCachedRows = (rowsVersion, rows) => {
   return rows;
 };
 
+const getImmediateChildForm = (forms = [], currentFormRef = '') => {
+  const currentFormIndex = forms.findIndex((form) => form.ref === currentFormRef);
+
+  if (currentFormIndex < 0 || currentFormIndex >= forms.length - 1) {
+    return null;
+  }
+
+  return forms[currentFormIndex + 1] || null;
+};
+
+const delay = (duration) => new Promise((resolve) => {
+  window.setTimeout(resolve, duration);
+});
+
 export const useTableStore = defineStore('table', {
   state: () => {
     clearTableRows();
 
     return {
       headers: [],
+      childFormName: 'Children',
+      hasChildForm: false,
       rowCount: 0,
       rowsVersion: 0,
       requestParams: {},
@@ -105,15 +129,35 @@ export const useTableStore = defineStore('table', {
       this.errors = [];
 
       try {
-        const response = options.pageUrl
-          ? await client.get(options.pageUrl)
-          : await fetchEntries(projectStore.projectSlug, this.buildEntriesParams(options.params));
+        const requestParams = options.pageUrl ? this.requestParams : this.buildEntriesParams(options.params);
+        const requestUrl = getEntriesRequestUrl({
+          pageUrl: options.pageUrl,
+          projectSlug: projectStore.projectSlug,
+          params: requestParams
+        });
+        const projectRef = getProjectCacheRef(projectStore);
+        const cachedResponseData = await getCachedEntriesPage({ projectRef, requestUrl });
+        let responseData = cachedResponseData;
 
-        const responseData = response.data;
+        if (responseData) {
+          await delay(TABLE_CACHE_HIT_DELAY_MS);
+        } else {
+          const response = options.pageUrl
+            ? await client.get(options.pageUrl)
+            : await fetchEntries(projectStore.projectSlug, requestParams);
+
+          responseData = response.data;
+          await setCachedEntriesPage({ projectRef, requestUrl, payload: responseData });
+        }
+
         const formRef = navigationStore.currentFormRef;
 
-        this.requestParams = options.pageUrl ? this.requestParams : this.buildEntriesParams(options.params);
+        this.requestParams = requestParams;
         this.headers = tableModel.getHeaders(projectStore.projectExtra, formRef);
+        const childForm = getImmediateChildForm(projectStore.forms, formRef);
+
+        this.hasChildForm = Boolean(childForm);
+        this.childFormName = childForm?.name || 'Children';
         this.rowCount = setTableRows(tableModel.getRows(projectStore.projectSlug, projectStore.projectExtra, formRef, responseData));
         this.rowsVersion += 1;
         this.pagination = responseData.meta;

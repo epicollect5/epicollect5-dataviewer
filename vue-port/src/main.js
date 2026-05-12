@@ -4,6 +4,7 @@ import { IonicVue } from '@ionic/vue';
 
 import App from './App.vue';
 import router from './router';
+import { clearEntriesPageCache } from '@/services/entries/entriesPageCache';
 
 import '@ionic/vue/css/core.css';
 import '@ionic/vue/css/normalize.css';
@@ -19,6 +20,8 @@ import 'ag-grid-community/styles/ag-theme-quartz.css';
 import 'leaflet/dist/leaflet.css';
 import './theme/variables.css';
 import './theme/main.scss';
+
+clearEntriesPageCache();
 
 const app = createApp(App);
 const pinia = createPinia();

@@ -66,6 +66,8 @@
           <EntriesGrid
             v-else
             :headers="state.tableStore.headers"
+            :has-child-form="state.tableStore.hasChildForm"
+            :child-form-name="state.tableStore.childFormName"
             :rows="state.tableStore.gridRows"
             :is-loading="state.tableStore.isFetchingPage"
           />
