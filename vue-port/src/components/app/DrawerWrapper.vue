@@ -25,6 +25,8 @@
         v-else-if="activeDrawer === 'map-filters'"
         v-bind="drawerPayload"
         @change-location="forward('change-location', $event)"
+        @change-distribution="forward('change-distribution', $event)"
+        @reset-distribution="forward('reset-distribution')"
         @toggle-clusters="forward('toggle-clusters', $event)"
         @update-dates="forward('update-dates', $event)"
         @reset-dates="forward('reset-dates')"

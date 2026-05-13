@@ -56,7 +56,7 @@
         <ion-card-header class="drawer-map__card-header" color="light">
           <div class="drawer-map__card-heading">
             <ion-card-title>Distribution</ion-card-title>
-            <button class="drawer-map__reset-button" type="button" disabled>
+            <button class="drawer-map__reset-button" type="button" :disabled="isDistributionResetDisabled" @click="resetDistribution">
               Reset
             </button>
           </div>
@@ -67,9 +67,40 @@
               :model-value="selectedDistributionKey"
               :options="distributionOptions"
               :placeholder="distributionPlaceholder"
-              :disabled="true"
+              :disabled="isDistributionDisabled"
+              @change="emitDistributionChange"
             />
           </label>
+          <div v-if="hasDistributionChart" class="drawer-map__distribution-chart">
+            <span class="drawer-map__distribution-total">Filtered total: {{ props.distributionChart.total }}</span>
+            <div
+              class="drawer-map__distribution-donut"
+              :style="distributionDonutStyle"
+              aria-hidden="true"
+            ></div>
+            <ion-grid class="drawer-map__distribution-legend" role="table" aria-label="Distribution totals">
+              <ion-row
+                v-for="row in props.distributionChart.rows"
+                :key="`distribution-row-${row.answerRef}`"
+                class="drawer-map__distribution-row"
+                role="row"
+              >
+                <ion-col class="drawer-map__distribution-swatch-col" role="cell">
+                  <span
+                    class="drawer-map__distribution-swatch"
+                    :style="getDistributionSwatchStyle(row)"
+                    aria-hidden="true"
+                  ></span>
+                </ion-col>
+                <ion-col class="drawer-map__distribution-value-col" role="cell">
+                  <span class="drawer-map__distribution-value" :title="row.answer">{{ row.answer }}</span>
+                </ion-col>
+                <ion-col class="drawer-map__distribution-count-col" role="cell">
+                  <span class="drawer-map__distribution-count" :title="`${row.total}`">{{ row.total }}</span>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </div>
         </ion-card-content>
       </ion-card>
     </div>
@@ -86,11 +117,15 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
-  IonRange
+  IonCol,
+  IonGrid,
+  IonRange,
+  IonRow
 } from '@ionic/vue';
 import { computed, onBeforeUnmount, reactive, watch } from 'vue';
 import Dropdown from '@/components/global/Dropdown.vue';
 import mapUtils from '@/core/map/mapUtils';
+import { getDistributionDonutBackground, getDistributionSwatchStyle } from '@/services/map/distributionChart';
 
 const TIMELINE_DEBOUNCE_MS = 1000;
 
@@ -131,7 +166,10 @@ export default {
     IonCardContent,
     IonCardHeader,
     IonCardTitle,
-    IonRange
+    IonCol,
+    IonGrid,
+    IonRange,
+    IonRow
   },
   props: {
     locationQuestions: {
@@ -173,9 +211,13 @@ export default {
     totalCount: {
       type: Number,
       default: 0
+    },
+    distributionChart: {
+      type: Object,
+      default: null
     }
   },
-  emits: ['change-location', 'update-dates', 'reset-dates'],
+  emits: ['change-location', 'change-distribution', 'reset-distribution', 'update-dates', 'reset-dates'],
   setup(props, { emit }) {
     const state = reactive({
       debounceTimer: null,
@@ -272,6 +314,13 @@ export default {
           emit('change-location', nextQuestion);
         }
       },
+      emitDistributionChange(value) {
+        const nextQuestion = props.distributionQuestions.find((question) => question.inputRef === value);
+
+        if (nextQuestion) {
+          emit('change-distribution', nextQuestion);
+        }
+      },
       emitTimelineDates(nextValue) {
         const datesRange = computedScope.datesRange.value;
 
@@ -325,6 +374,9 @@ export default {
       resetDates() {
         window.clearTimeout(state.debounceTimer);
         emit('reset-dates');
+      },
+      resetDistribution() {
+        emit('reset-distribution');
       }
     };
 
@@ -350,6 +402,15 @@ export default {
 
         return props.selectedDistributionQuestion?.question || 'Select question';
       }),
+      isDistributionDisabled: computed(() => props.distributionQuestions.length === 0),
+      isDistributionResetDisabled: computed(() => !props.selectedDistributionQuestion),
+      hasDistributionChart: computed(() => Boolean(props.distributionChart)),
+      distributionDonutStyle: computed(() => ({
+        background: getDistributionDonutBackground({
+          rows: props.distributionChart?.rows || [],
+          total: props.distributionChart?.total || 0
+        })
+      })),
       datesRange: computed(() => mapUtils.getDatesRange(props.minDate, props.maxDate)),
       maxTimelineIndex: computed(() => Math.max(0, computedScope.datesRange.value.length - 1)),
       isTimelineDisabled: computed(() => computedScope.datesRange.value.length <= 1),
@@ -390,6 +451,7 @@ export default {
     return {
       props,
       state,
+      getDistributionSwatchStyle,
       ...methods,
       ...computedScope
     };

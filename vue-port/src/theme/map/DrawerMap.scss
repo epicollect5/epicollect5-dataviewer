@@ -34,8 +34,6 @@
 }
 
 .drawer-map__card-content {
-  display: grid;
-  gap: 14px;
   padding: 16px;
 }
 
@@ -45,8 +43,6 @@
 }
 
 .drawer-map__field {
-  display: grid;
-  gap: 8px;
   width: 100%;
   color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
   font-size: 0.85rem;
@@ -82,6 +78,95 @@
   --pin-background: var(--ion-color-primary);
   --pin-color: var(--ion-color-primary-contrast);
   padding-inline: 4px;
+}
+
+.drawer-map__distribution-chart {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+.drawer-map__distribution-total {
+  margin-top: 16px;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.8);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.drawer-map__distribution-donut {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.24);
+}
+
+.drawer-map__distribution-legend {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+
+.drawer-map__distribution-row {
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  margin-bottom: 8px;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.82);
+  font-size: 0.9rem;
+}
+
+.drawer-map__distribution-row:last-child {
+  margin-bottom: 0;
+}
+
+.drawer-map__distribution-swatch-col,
+.drawer-map__distribution-value-col,
+.drawer-map__distribution-count-col {
+  min-width: 0;
+  padding: 0;
+}
+
+.drawer-map__distribution-swatch-col {
+  flex: 0 0 34px;
+  width: 34px;
+  max-width: 34px;
+}
+
+.drawer-map__distribution-value-col {
+  flex: 1 1 0;
+  padding-right: 10px;
+}
+
+.drawer-map__distribution-count-col {
+  flex: 0 0 72px;
+  width: 72px;
+  max-width: 72px;
+  text-align: right;
+}
+
+.drawer-map__distribution-swatch {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.drawer-map__distribution-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawer-map__distribution-count {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  text-align: right;
 }
 
 .drawer-map__reset-button {

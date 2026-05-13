@@ -84,6 +84,7 @@
             :total-markers="state.mapStore.locations.length"
             :clusters-enabled="state.mapStore.clustersEnabled"
             :location-cache-key="locationCacheKey"
+            :pie-chart-legend="pieChartLegend"
             @marker-click="handleMarkerClick"
             @render-start="handleMapRenderStart"
             @progress="handleRenderProgress"
@@ -105,9 +106,23 @@ import env from '@/core/config/env';
 import { useDrawerStore } from '@/stores/drawerStore';
 import LeafletMap from '@/components/map/MapLeaflet.vue';
 import MapProgressBar from '@/components/map/MapProgressBar.vue';
+import { buildDistributionChart } from '@/services/map/distributionChart';
+import { buildPieChartLegend } from '@/services/map/pieCharts';
 import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
+
+const getMultipleChoiceInputRefs = (inputHashMap) => {
+  if (!inputHashMap) {
+    return [];
+  }
+
+  if (Array.isArray(inputHashMap.order)) {
+    return inputHashMap.order;
+  }
+
+  return Object.keys(inputHashMap).filter((inputRef) => inputRef !== 'order');
+};
 
 export default {
   name: 'PageMap',
@@ -180,6 +195,20 @@ export default {
           selectedLocationQuestion: question,
           resetFilters: true
         });
+        mapStore.resetDistributionQuestion();
+      },
+      handleDistributionQuestionChange(question) {
+        mapStore.setDistributionQuestion(question);
+      },
+      handleDistributionReset() {
+        mapStore.resetDistributionQuestion();
+      },
+      getDistributionChart() {
+        return buildDistributionChart({
+          entries: mapStore.visibleLocations,
+          legend: computedScope.pieChartLegend.value,
+          selectedDistributionQuestion: mapStore.selectedDistributionQuestion
+        });
       },
       handleClusterToggle(enabled) {
         mapStore.setClustersEnabled(enabled);
@@ -209,6 +238,14 @@ export default {
           await methods.handleLocationQuestionChange(value);
         }
 
+        if (eventName === 'change-distribution') {
+          methods.handleDistributionQuestionChange(value);
+        }
+
+        if (eventName === 'reset-distribution') {
+          methods.handleDistributionReset();
+        }
+
         if (eventName === 'toggle-clusters') {
           methods.handleClusterToggle(value);
         }
@@ -226,7 +263,8 @@ export default {
           side: 'left',
           locationQuestions: computedScope.locationQuestions.value,
           distributionQuestions: computedScope.distributionQuestions.value,
-          selectedDistributionQuestion: null,
+          selectedDistributionQuestion: mapStore.selectedDistributionQuestion,
+          distributionChart: methods.getDistributionChart(),
           selectedLocationQuestion: mapStore.selectedLocationQuestion,
           startDate: mapStore.startDate,
           endDate: mapStore.endDate,
@@ -302,21 +340,31 @@ export default {
         const currentForm = projectStore.projectExtra?.forms?.[navigationStore.currentFormRef];
         const multipleChoiceInputs = currentForm?.lists?.multiple_choice_inputs;
         const selectedBranchRef = mapStore.selectedLocationQuestion?.branch_ref || '';
-        let order = multipleChoiceInputs?.form?.order || [];
+        let inputHashMap = multipleChoiceInputs?.form || {};
 
         if (selectedBranchRef) {
-          order = multipleChoiceInputs?.branch?.[selectedBranchRef]?.order || [];
+          inputHashMap = multipleChoiceInputs?.branch?.[selectedBranchRef] || {};
         }
 
-        return order.map((inputRef) => ({
-          inputRef,
-          question: projectStore.projectExtra?.inputs?.[inputRef]?.data?.question || inputRef
-        }));
+        return getMultipleChoiceInputRefs(inputHashMap)
+          .map((inputRef) => ({
+            inputRef,
+            question: projectStore.projectExtra?.inputs?.[inputRef]?.data?.question || inputRef,
+            possibleAnswersHashMap: inputHashMap?.[inputRef]?.possible_answers || {}
+          }))
+          .filter((question) => Object.keys(question.possibleAnswersHashMap).length > 0);
+      }),
+      pieChartLegend: computed(() => {
+        const answers = mapStore.selectedDistributionQuestion?.possibleAnswersHashMap || {};
+
+        return buildPieChartLegend(answers);
       }),
       locationCacheKey: computed(() => {
         const question = mapStore.selectedLocationQuestion;
         const questionKey = question ? `${question.branch_ref || ''}:${question.input_ref || ''}` : 'default';
-        return `${projectStore.projectSlug || 'project'}|${navigationStore.currentFormRef || 'form'}|${questionKey}`;
+        const distributionKey = mapStore.selectedDistributionQuestion?.inputRef || 'none';
+
+        return `${projectStore.projectSlug || 'project'}|${navigationStore.currentFormRef || 'form'}|${questionKey}|${distributionKey}`;
       }),
       shouldRenderMap: computed(() => {
         return computedScope.hasLocationQuestions.value && !mapStore.isRejectedPage && mapStore.locations.length > 0;
@@ -403,6 +451,7 @@ export default {
         mapStore.clustersEnabled,
         mapStore.startDate,
         mapStore.endDate,
+        mapStore.selectedDistributionQuestion,
         mapStore.visibleLocations.length,
         mapStore.locations.length,
         navigationStore.currentFormRef

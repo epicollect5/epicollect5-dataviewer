@@ -26,7 +26,7 @@ describe('mapStore', () => {
     clearEntriesLocationsCache();
   });
 
-  it('rebuilds visible markers when the cluster toggle changes', () => {
+  it('recomputes visible locations when the cluster toggle changes', () => {
     const store = useMapStore();
 
     store.locations = [
@@ -51,7 +51,7 @@ describe('mapStore', () => {
     ];
 
     store.recomputeMarkers();
-    expect(store.markers).toHaveLength(1);
+    expect(store.markers).toHaveLength(2);
 
     store.setClustersEnabled(false);
     expect(store.markers).toHaveLength(2);
@@ -224,11 +224,12 @@ describe('mapStore', () => {
     await store.loadLocations({ resetFilters: true });
     await store.loadLocations({ pageUrl: pageTwoUrl });
     await store.loadLocations({ pageUrl: pageOneUrl });
+    await store.loadLocations({ pageUrl: pageTwoUrl });
 
     expect(fetchEntriesLocations).toHaveBeenCalledTimes(1);
-    expect(clientGetSpy).toHaveBeenCalledTimes(1);
+    expect(clientGetSpy).toHaveBeenCalledTimes(2);
     expect(store.isFetchingPage).toBe(false);
     expect(store.locations).toHaveLength(1);
-    expect(store.locations[0].properties.title).toBe('Cached map entry');
+    expect(store.locations[0].properties.title).toBe('Second map page entry');
   });
 });

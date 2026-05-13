@@ -46,7 +46,26 @@ describe('PageMap smoke', () => {
       forms: {
         form_1: {
           lists: {
-            location_inputs: [{ input_ref: 'location_1', branch_ref: '', question: 'Location' }]
+            location_inputs: [{ input_ref: 'location_1', branch_ref: '', question: 'Location' }],
+            multiple_choice_inputs: {
+              form: {
+                order: ['choice_1'],
+                choice_1: {
+                  possible_answers: {
+                    answer_1: 'Yes',
+                    answer_2: 'No'
+                  }
+                }
+              },
+              branch: {}
+            }
+          }
+        }
+      },
+      inputs: {
+        choice_1: {
+          data: {
+            question: 'Choice'
           }
         }
       }
@@ -59,6 +78,14 @@ describe('PageMap smoke', () => {
       branch_ref: '',
       question: 'Location'
     };
+    mapStore.selectedDistributionQuestion = {
+      inputRef: 'choice_1',
+      question: 'Choice',
+      possibleAnswersHashMap: {
+        answer_1: 'Yes',
+        answer_2: 'No'
+      }
+    };
     mapStore.locations = [
       {
         geometry: {
@@ -66,7 +93,10 @@ describe('PageMap smoke', () => {
         },
         properties: {
           uuid: 'entry-1',
-          title: 'Entry 1'
+          title: 'Entry 1',
+          possible_answers: {
+            answer_1: 1
+          }
         }
       }
     ];
@@ -114,6 +144,33 @@ describe('PageMap smoke', () => {
     expect(drawerStore.payload.visibleCount).toBe(1);
     expect(drawerStore.payload.totalCount).toBe(1);
     expect(drawerStore.payload.locationQuestions).toHaveLength(1);
+    expect(drawerStore.payload.distributionQuestions).toEqual([
+      {
+        inputRef: 'choice_1',
+        question: 'Choice',
+        possibleAnswersHashMap: {
+          answer_1: 'Yes',
+          answer_2: 'No'
+        }
+      }
+    ]);
+    expect(drawerStore.payload.distributionChart).toEqual({
+      total: 1,
+      rows: [
+        {
+          answerRef: 'answer_1',
+          answer: 'Yes',
+          color: expect.stringMatching(/^#[0-9A-F]{6}$/),
+          total: 1
+        },
+        {
+          answerRef: 'answer_2',
+          answer: 'No',
+          color: expect.stringMatching(/^#[0-9A-F]{6}$/),
+          total: 0
+        }
+      ]
+    });
 
     await wrapper.find('.marker-trigger').trigger('click');
 

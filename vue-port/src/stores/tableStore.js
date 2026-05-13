@@ -130,6 +130,7 @@ export const useTableStore = defineStore('table', {
       this.errors = [];
 
       try {
+        const shouldUseCache = Boolean(options.pageUrl);
         const requestParams = options.pageUrl ? this.requestParams : this.buildEntriesParams(options.params);
         const requestUrl = getEntriesRequestUrl({
           pageUrl: options.pageUrl,
@@ -137,7 +138,7 @@ export const useTableStore = defineStore('table', {
           params: requestParams
         });
         const projectRef = getProjectCacheRef(projectStore);
-        const cachedResponseData = await getCachedEntriesPage({ projectRef, requestUrl });
+        const cachedResponseData = shouldUseCache ? await getCachedEntriesPage({ projectRef, requestUrl }) : null;
         let responseData = cachedResponseData;
 
         if (responseData) {
@@ -152,10 +153,16 @@ export const useTableStore = defineStore('table', {
           const selfUrl = getPayloadSelfUrl(responseData);
           const cacheUrl = selfUrl || requestUrl;
 
-          await setCachedEntriesPage({ projectRef, requestUrl: cacheUrl, payload: responseData });
+          if (shouldUseCache) {
+            const cacheWrites = [
+              setCachedEntriesPage({ projectRef, requestUrl: cacheUrl, payload: responseData })
+            ];
 
-          if (cacheUrl !== requestUrl) {
-            await setCachedEntriesPage({ projectRef, requestUrl, payload: responseData });
+            if (cacheUrl !== requestUrl) {
+              cacheWrites.push(setCachedEntriesPage({ projectRef, requestUrl, payload: responseData }));
+            }
+
+            void Promise.all(cacheWrites).catch(() => {});
           }
         }
 

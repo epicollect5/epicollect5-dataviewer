@@ -253,6 +253,32 @@ const setPersistentCachePayload = (bucketWriter, bucket, cacheKey, cachedPayload
   bucketStorageTracker.set(bucket, { before: sizeBefore, after: sizeAfter, delta: deltaBytes });
 };
 
+const logPackedPayloadSize = (bucket, cacheKey, payload, cachedPayload) => {
+  if (process.env.NODE_ENV !== 'development') {
+    return;
+  }
+
+  try {
+    const uncompressedStr = JSON.stringify(payload);
+    console.group(`[Cache] Uncompressed payload - ${bucket}`);
+    console.log('Cache Key:', cacheKey);
+    console.log('Uncompressed JSON length:', uncompressedStr.length, 'chars', `${(uncompressedStr.length / 1024).toFixed(2)} KB`);
+    console.groupEnd();
+  } catch {
+    // ignore stringify errors
+  }
+
+  const compressed = cachedPayload.data || '';
+  console.group(`[Cache] Compressed payload - ${bucket}`);
+  console.log('Cache Key:', cacheKey);
+  console.log('Compressed UTF16 length:', compressed.length, 'chars');
+  console.log(
+    'Estimated localStorage bytes:',
+    `${compressed.length * 2} bytes`,
+    `${((compressed.length * 2) / 1024).toFixed(2)} KB`
+  );
+  console.groupEnd();
+};
 
 export const getEntriesPageCacheKey = async ({ projectRef, requestUrl }) => {
   return `${projectRef}:${await hashUrl(requestUrl)}`;
@@ -350,26 +376,7 @@ export const setCachedEntriesPage = async ({ projectRef, requestUrl, payload }) 
   const cachedPayload = await packPayload(payload);
 
   setMemoryCachePayload(TABLE_ENTRIES_CACHE_BUCKET, cacheKey, payload);
-  try {
-    const uncompressedStr = JSON.stringify(payload);
-    console.group(`[Cache] Uncompressed payload - ${TABLE_ENTRIES_CACHE_BUCKET}`);
-    console.log('Cache Key:', cacheKey);
-    console.log('Uncompressed JSON length:', uncompressedStr.length, 'chars', `${(uncompressedStr.length / 1024).toFixed(2)} KB`);
-    console.groupEnd();
-  } catch (e) {
-    // ignore stringify errors
-  }
-
-  const compressed = cachedPayload.data || '';
-  console.group(`[Cache] Compressed payload - ${TABLE_ENTRIES_CACHE_BUCKET}`);
-  console.log('Cache Key:', cacheKey);
-  console.log('Compressed UTF16 length:', compressed.length, 'chars');
-  console.log(
-    'Estimated localStorage bytes:',
-    `${compressed.length * 2} bytes`,
-    `${((compressed.length * 2) / 1024).toFixed(2)} KB`
-  );
-  console.groupEnd();
+  logPackedPayloadSize(TABLE_ENTRIES_CACHE_BUCKET, cacheKey, payload, cachedPayload);
 
   setPersistentCachePayload(withTableEntriesBucket, TABLE_ENTRIES_CACHE_BUCKET, cacheKey, cachedPayload);
   logCacheOperationDelta('SET ENTRIES PAGE', TABLE_ENTRIES_CACHE_BUCKET, cacheKey);
@@ -380,26 +387,7 @@ export const setCachedEntriesLocations = async ({ projectRef, requestUrl, payloa
   const cachedPayload = await packPayload(payload);
 
   setMemoryCachePayload(MAP_LOCATIONS_CACHE_BUCKET, cacheKey, payload);
-  try {
-    const uncompressedStr = JSON.stringify(payload);
-    console.group(`[Cache] Uncompressed payload - ${MAP_LOCATIONS_CACHE_BUCKET}`);
-    console.log('Cache Key:', cacheKey);
-    console.log('Uncompressed JSON length:', uncompressedStr.length, 'chars', `${(uncompressedStr.length / 1024).toFixed(2)} KB`);
-    console.groupEnd();
-  } catch (e) {
-    // ignore stringify errors
-  }
-
-  const compressed = cachedPayload.data || '';
-  console.group(`[Cache] Compressed payload - ${MAP_LOCATIONS_CACHE_BUCKET}`);
-  console.log('Cache Key:', cacheKey);
-  console.log('Compressed UTF16 length:', compressed.length, 'chars');
-  console.log(
-    'Estimated localStorage bytes:',
-    `${compressed.length * 2} bytes`,
-    `${((compressed.length * 2) / 1024).toFixed(2)} KB`
-  );
-  console.groupEnd();
+  logPackedPayloadSize(MAP_LOCATIONS_CACHE_BUCKET, cacheKey, payload, cachedPayload);
 
   setPersistentCachePayload(withMapLocationsBucket, MAP_LOCATIONS_CACHE_BUCKET, cacheKey, cachedPayload);
   logCacheOperationDelta('SET ENTRIES LOCATIONS', MAP_LOCATIONS_CACHE_BUCKET, cacheKey);
@@ -449,4 +437,3 @@ const logBucketDetails = (bucket) => {
   console.log('Bucket total:', `${total} bytes`, `${(total / 1024).toFixed(2)} KB`);
   console.groupEnd();
 };
-

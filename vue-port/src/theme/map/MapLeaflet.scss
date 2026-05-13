@@ -67,6 +67,29 @@
   line-height: 40px;
 }
 
+.leaflet-map-shell .marker-cluster-pie {
+  background: transparent;
+  border: 0;
+}
+
+.leaflet-map-shell .marker-cluster-pie__chart {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.leaflet-map-shell .marker-cluster-pie__inner {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #222222;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
 .leaflet-map-shell .leaflet-bar a,
 .leaflet-map-shell .leaflet-bar a:hover {
   width: 30px;

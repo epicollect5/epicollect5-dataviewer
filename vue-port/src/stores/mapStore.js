@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { markRaw } from 'vue';
 import client from '@/services/api/client';
 import { fetchEntriesLocations, fetchEntry } from '@/services/api/entriesApi';
 import {
@@ -29,20 +30,23 @@ const getLocationQuestionKey = (question) => {
 let pendingLocationsRequest = null;
 let pendingLocationsRequestKey = '';
 
+const rawArray = (items = []) => markRaw(items);
+
 const delay = (duration) => new Promise((resolve) => {
   window.setTimeout(resolve, duration);
 });
 
 export const useMapStore = defineStore('map', {
   state: () => ({
-    locations: [],
-    filteredLocations: [],
-    markers: [],
+    locations: rawArray(),
+    filteredLocations: rawArray(),
+    markers: rawArray(),
     hasLoadedInitialPage: false,
     lastLoadedProjectSlug: '',
     lastLoadedFormRef: '',
     lastLoadedLocationQuestionKey: '',
     selectedLocationQuestion: null,
+    selectedDistributionQuestion: null,
     selectedEntry: null,
     requestParams: {},
     pagination: null,
@@ -70,14 +74,15 @@ export const useMapStore = defineStore('map', {
     reset() {
       pendingLocationsRequest = null;
       pendingLocationsRequestKey = '';
-      this.locations = [];
-      this.filteredLocations = [];
-      this.markers = [];
+      this.locations = rawArray();
+      this.filteredLocations = rawArray();
+      this.markers = rawArray();
       this.hasLoadedInitialPage = false;
       this.lastLoadedProjectSlug = '';
       this.lastLoadedFormRef = '';
       this.lastLoadedLocationQuestionKey = '';
       this.selectedLocationQuestion = null;
+      this.selectedDistributionQuestion = null;
       this.selectedEntry = null;
       this.requestParams = {};
       this.pagination = null;
@@ -125,14 +130,15 @@ export const useMapStore = defineStore('map', {
       const projectStore = useProjectStore();
       const navigationStore = useNavigationStore();
 
-      this.locations = [];
-      this.filteredLocations = [];
-      this.markers = [];
+      this.locations = rawArray();
+      this.filteredLocations = rawArray();
+      this.markers = rawArray();
       this.hasLoadedInitialPage = true;
       this.lastLoadedProjectSlug = projectStore.projectSlug;
       this.lastLoadedFormRef = navigationStore.currentFormRef || '';
       this.lastLoadedLocationQuestionKey = '';
       this.selectedLocationQuestion = null;
+      this.selectedDistributionQuestion = null;
       this.pagination = null;
       this.links = null;
       this.syncDateBounds();
@@ -167,8 +173,10 @@ export const useMapStore = defineStore('map', {
     recomputeMarkers() {
       const nextVisibleLocations = mapUtils.filterLocationsByDate(this.locations, this.startDate, this.endDate);
 
-      this.filteredLocations = nextVisibleLocations;
-      this.markers = nextVisibleLocations;
+      const rawVisibleLocations = rawArray(nextVisibleLocations);
+
+      this.filteredLocations = rawVisibleLocations;
+      this.markers = rawVisibleLocations;
       this.progressBarMarkersProcessed = 0;
       this.progressBarMarkersTotal = nextVisibleLocations.length;
       this.progressBarPercentage = 0;
@@ -176,6 +184,16 @@ export const useMapStore = defineStore('map', {
 
     setClustersEnabled(enabled) {
       this.clustersEnabled = enabled;
+      this.recomputeMarkers();
+    },
+
+    setDistributionQuestion(question) {
+      this.selectedDistributionQuestion = question || null;
+      this.recomputeMarkers();
+    },
+
+    resetDistributionQuestion() {
+      this.selectedDistributionQuestion = null;
       this.recomputeMarkers();
     },
 
@@ -258,6 +276,7 @@ export const useMapStore = defineStore('map', {
       pendingLocationsRequestKey = requestContextKey;
       pendingLocationsRequest = (async () => {
         try {
+          const shouldUseCache = Boolean(pageUrl);
           const requestParams = pageUrl
             ? this.requestParams
             : this.buildLocationsParams({ selectedLocationQuestion });
@@ -267,7 +286,7 @@ export const useMapStore = defineStore('map', {
             params: requestParams
           });
           const projectRef = getProjectCacheRef(projectStore);
-          const cachedPayload = await getCachedEntriesLocations({ projectRef, requestUrl });
+          const cachedPayload = shouldUseCache ? await getCachedEntriesLocations({ projectRef, requestUrl }) : null;
           let payload = cachedPayload;
 
           if (payload) {
@@ -282,15 +301,21 @@ export const useMapStore = defineStore('map', {
             const canonicalPageUrl = getPayloadSelfUrl(payload);
             const cacheUrl = canonicalPageUrl || requestUrl;
 
-            await setCachedEntriesLocations({ projectRef, requestUrl: cacheUrl, payload });
+            if (shouldUseCache) {
+              const cacheWrites = [
+                setCachedEntriesLocations({ projectRef, requestUrl: cacheUrl, payload })
+              ];
 
-            if (cacheUrl !== requestUrl) {
-              await setCachedEntriesLocations({ projectRef, requestUrl, payload });
+              if (cacheUrl !== requestUrl) {
+                cacheWrites.push(setCachedEntriesLocations({ projectRef, requestUrl, payload }));
+              }
+
+              void Promise.all(cacheWrites).catch(() => {});
             }
           }
 
           this.requestParams = requestParams;
-          this.locations = payload.data?.geojson?.features || [];
+          this.locations = rawArray(payload.data?.geojson?.features || []);
           this.pagination = payload.meta;
           this.links = payload.links || payload.link || null;
           this.selectedEntry = null;
@@ -301,9 +326,9 @@ export const useMapStore = defineStore('map', {
         } catch (error) {
           this.isRejectedPage = true;
           this.errors = error.response?.data?.errors || [error.message];
-          this.locations = [];
-          this.filteredLocations = [];
-          this.markers = [];
+          this.locations = rawArray();
+          this.filteredLocations = rawArray();
+          this.markers = rawArray();
         } finally {
           this.isFetchingPage = false;
           this.hasLoadedInitialPage = true;

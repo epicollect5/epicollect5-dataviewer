@@ -88,9 +88,10 @@ describe('stores/tableStore page cache', () => {
     await tableStore.loadEntries({ params: { page: 1 } });
     await tableStore.loadEntries({ pageUrl: pageTwoUrl });
     await tableStore.loadEntries({ pageUrl: pageOneUrl });
+    await tableStore.loadEntries({ pageUrl: pageTwoUrl });
 
     expect(fetchEntries).toHaveBeenCalledTimes(1);
-    expect(clientGetSpy).toHaveBeenCalledTimes(1);
+    expect(clientGetSpy).toHaveBeenCalledTimes(2);
     expect(tableStore.isFetchingPage).toBe(false);
     expect(tableStore.rowCount).toBe(1);
     expect(tableStore.gridRows[0]).toEqual(expect.objectContaining({

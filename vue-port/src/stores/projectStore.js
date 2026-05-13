@@ -1,9 +1,37 @@
 import { defineStore } from 'pinia';
+import { markRaw } from 'vue';
 import { fetchProject } from '@/services/api/projectApi';
 import { useNavigationStore } from '@/stores/navigationStore';
 
 let pendingProjectRequest = null;
 let pendingProjectSlug = '';
+
+const getProjectExtra = (payload) => {
+  return payload.data?.project_extra || payload.data?.project?.project_extra || payload.meta?.project_extra || {};
+};
+
+const getProjectDefinition = (payload) => {
+  const definition = {
+    ...(payload.data || {})
+  };
+
+  delete definition.project_extra;
+
+  if (definition.project?.project_extra) {
+    const project = {
+      ...definition.project
+    };
+
+    delete project.project_extra;
+
+    return {
+      ...definition,
+      project
+    };
+  }
+
+  return definition;
+};
 
 export const useProjectStore = defineStore('project', {
   state: () => ({
@@ -50,11 +78,11 @@ export const useProjectStore = defineStore('project', {
           const forms = payload.data.project?.forms || [];
           const firstForm = forms[0] || null;
 
-          this.projectDefinition = payload.data;
-          this.projectExtra = payload.meta.project_extra;
-          this.projectUser = payload.meta.project_user;
-          this.projectStats = payload.meta.project_stats;
-          this.projectMapping = payload.meta.project_mapping;
+          this.projectDefinition = markRaw(getProjectDefinition(payload));
+          this.projectExtra = markRaw(getProjectExtra(payload));
+          this.projectUser = markRaw(payload.meta?.project_user || {});
+          this.projectStats = markRaw(payload.meta?.project_stats || {});
+          this.projectMapping = markRaw(payload.meta?.project_mapping || []);
           this.isFulfilled = true;
 
           if (firstForm) {

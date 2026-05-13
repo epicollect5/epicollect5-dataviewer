@@ -14,6 +14,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { markRaw, onBeforeUnmount, onMounted, reactive, toRaw, watch } from 'vue';
 import PARAMETERS from '@/core/config/parameters';
 import mapUtils from '@/core/map/mapUtils';
+import { getClusterPieIconHtml, getClusterPieIconModel } from '@/services/map/pieCharts';
 
 const HEATMAP_OPTIONS = {
   radius: 10,
@@ -59,6 +60,10 @@ export default {
     clustersEnabled: {
       type: Boolean,
       default: true
+    },
+    pieChartLegend: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ['marker-click', 'progress', 'ready', 'render-start'],
@@ -82,7 +87,8 @@ export default {
       heatPoints: [],
       cachedMarkers: [],
       pendingRenderFrame: null,
-      fitBoundsTimeout: null
+      fitBoundsTimeout: null,
+      conicGradientSupported: null
     };
 
     const state = reactive({
@@ -189,7 +195,8 @@ export default {
           fillOpacity: 1,
           entryUuid: entry?.properties?.uuid || null,
           title: entry?.properties?.title || 'Untitled entry',
-          popupHtml: entry?.properties?.title || 'Untitled entry'
+          popupHtml: entry?.properties?.title || 'Untitled entry',
+          possibleAnswers: entry?.properties?.possible_answers || {}
         });
       },
       buildMapArtifacts() {
@@ -296,6 +303,33 @@ export default {
         }
 
         return mapUtils.filterLocationsByDate(rawLocations, props.startDate, props.endDate);
+      },
+      supportsConicGradient() {
+        if (mapContext.conicGradientSupported !== null) {
+          return mapContext.conicGradientSupported;
+        }
+
+        mapContext.conicGradientSupported =
+          typeof window !== 'undefined' &&
+          typeof window.CSS?.supports === 'function' &&
+          window.CSS.supports('background', 'conic-gradient(red, blue)');
+
+        return mapContext.conicGradientSupported;
+      },
+      canRenderPieClusters() {
+        return props.pieChartLegend.length > 0 && methods.supportsConicGradient();
+      },
+      createPieClusterIcon(cluster) {
+        const model = getClusterPieIconModel({
+          markers: cluster.getAllChildMarkers(),
+          legend: props.pieChartLegend
+        });
+
+        return new L.DivIcon({
+          html: getClusterPieIconHtml(model),
+          className: 'marker-cluster-pie',
+          iconSize: new L.Point(model.size, model.size)
+        });
       },
       createClusterIcon(cluster) {
         const childCount = cluster.getChildCount();
@@ -419,14 +453,15 @@ export default {
       },
       createClusterLayer(markers, renderToken) {
         const totalMarkers = markers.length;
+        const shouldRenderPieClusters = methods.canRenderPieClusters();
         state.clusterRenderStartedAt = Date.now();
         const clusterLayer = markRaw(L.markerClusterGroup({
           chunkedLoading: true,
           chunkInterval: 200,
           chunkDelay: 50,
           maxClusterRadius: mapUtils.getMaxRadius(props.locations),
-          singleMarkerMode: false,
-          iconCreateFunction: methods.createClusterIcon,
+          singleMarkerMode: shouldRenderPieClusters,
+          iconCreateFunction: shouldRenderPieClusters ? methods.createPieClusterIcon : methods.createClusterIcon,
           spiderfyDistanceMultiplier: 4,
           disableClusteringAtZoom: props.totalMarkers > PARAMETERS.MAX_ENTRIES_FOR_UNCLUSTERING ? 15 : null,
           animate: props.totalMarkers <= PARAMETERS.MAX_ENTRIES_FOR_UNCLUSTERING,
@@ -858,6 +893,13 @@ export default {
 
     watch(
       () => props.locations,
+      () => {
+        methods.queueRenderLayers();
+      }
+    );
+
+    watch(
+      () => props.locationCacheKey,
       () => {
         methods.queueRenderLayers();
       }
