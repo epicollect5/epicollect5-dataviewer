@@ -49,7 +49,7 @@
             v-if="showDownloadButton"
             type="button"
             class="primary-navbar__nav-link"
-            @click="handleDownload"
+            @click="openDownloadDrawer"
           >
             <ion-icon :icon="cloudDownload" />
             <span>Download</span>
@@ -139,8 +139,8 @@ export default {
         }
 
         if (eventName === 'download') {
-          methods.handleDownload();
           drawerStore.close();
+          methods.openDownloadDrawer();
           return;
         }
 
@@ -187,37 +187,61 @@ export default {
         await tableStore.loadEntries({ params: { page: 1 } });
         void mapStore.loadLocations({ resetFilters: true });
       },
-      handleDownload() {
+      openDownloadDrawer() {
         if (!computedScope.currentProjectSlug.value) {
           return;
         }
 
+        const formStats = projectStore.projectStats?.form_counts?.[navigationStore.currentFormRef];
+        const firstEntryDate = formStats?.first_entry_created || new Date().toISOString();
+        const lastEntryDate = formStats?.last_entry_created || new Date().toISOString();
+
         const availableMappings = Array.isArray(projectStore.projectMapping)
           ? projectStore.projectMapping
           : Object.values(projectStore.projectMapping || {});
-        const activeMapping = helpers.getDefaultMapping(availableMappings) || availableMappings[0] || {};
-        const params = computedScope.isMapPage.value
-          ? {
-              form_ref: computedScope.currentFormRef.value,
-              format: 'csv'
-            }
-          : {
-              ...tableStore.buildEntriesParams(),
-              format: 'csv'
-            };
+        const defaultMapping = helpers.getDefaultMapping(availableMappings) || availableMappings[0] || {};
 
-        if (activeMapping.map_index !== undefined) {
-          params.map_index = activeMapping.map_index;
+        drawerStore.open('app-download', {
+          side: 'left',
+          projectMapping: projectStore.projectMapping,
+          projectSlug: computedScope.currentProjectSlug.value,
+          currentFormRef: navigationStore.currentFormRef,
+          firstEntryDate,
+          lastEntryDate,
+          defaultMapping,
+          onEvent: methods.handleDownloadDrawerEvent
+        });
+      },
+      handleDownloadDrawerEvent(eventName, value) {
+        if (eventName === 'download') {
+          methods.doDownload(value);
+          drawerStore.close();
         }
+      },
+      doDownload(params) {
+        const endpoint = `${PARAMETERS.SERVER_URL}${PARAMETERS.API_DOWNLOAD_ENDPOINT}${computedScope.currentProjectSlug.value}`;
+
+        const queryParams = {
+          map_index: params.map_index,
+          format: params.format
+        };
+
+        const customState = {
+          selectedStartDate: params.selectedStartDate ? new Date(params.selectedStartDate) : new Date(),
+          selectedEndDate: params.selectedEndDate ? new Date(params.selectedEndDate) : new Date()
+        };
+
+        const timeframeQuery = helpers.getTimeframeParams(params.activeTimeframe, customState);
+        Object.assign(queryParams, timeframeQuery);
 
         const query = new URLSearchParams();
-        Object.entries(params).forEach(([key, value]) => {
+        Object.entries(queryParams).forEach(([key, value]) => {
           if (value !== undefined && value !== null && value !== '') {
             query.set(key, value);
           }
         });
 
-        window.location.href = `${PARAMETERS.SERVER_URL}${PARAMETERS.API_DOWNLOAD_ENDPOINT}${computedScope.currentProjectSlug.value}?${query.toString()}`;
+        window.location.href = `${endpoint}?${query.toString()}`;
       }
     };
 

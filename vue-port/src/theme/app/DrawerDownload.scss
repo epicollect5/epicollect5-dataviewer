@@ -1,0 +1,81 @@
+.drawer-download {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.drawer-download__card {
+  margin: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.drawer-download__card-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.drawer-download__card-header ion-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.drawer-download__card-content {
+  padding: 16px;
+}
+
+.drawer-download__card ion-card-header + .card-content-md,
+.drawer-download__card ion-card-header + .card-content-ios {
+  padding-top: 16px;
+}
+
+.drawer-download__format-options {
+  display: flex;
+  gap: 8px;
+}
+
+.drawer-download__format-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--ion-color-secondary);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ion-color-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &--active {
+    background: var(--ion-color-secondary);
+    color: var(--ion-color-secondary-contrast);
+  }
+}
+
+.drawer-download__footer {
+  padding: 0;
+}
+
+.drawer-download__dates-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+.drawer-download__dates-column {
+  min-width: 0;
+}
+
+.drawer-download__dates-label {
+  text-align: center;
+  font-weight: 500;
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.drawer-download__dates-apply {
+  padding: 0 16px 16px;
+}

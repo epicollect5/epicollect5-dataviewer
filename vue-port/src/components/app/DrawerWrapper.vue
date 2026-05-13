@@ -39,6 +39,11 @@
         @download="forward('download')"
         @navigate-page="forward('navigate-page', $event)"
       />
+      <DrawerDownload
+        v-else-if="activeDrawer === 'app-download'"
+        v-bind="drawerPayload"
+        @download="forward('download', $event)"
+      />
     </ion-content>
   </ion-menu>
 </template>
@@ -47,6 +52,7 @@
 import { IonButton, IonContent, IonHeader, IonIcon, IonMenu, IonToolbar, menuController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
+import DrawerDownload from '@/components/app/DrawerDownload.vue';
 import DrawerNavbarPrimary from '@/components/app/DrawerNavbarPrimary.vue';
 import DrawerEntry from '@/components/entry/DrawerEntry.vue';
 import DrawerMap from '@/components/map/DrawerMap.vue';
@@ -61,6 +67,7 @@ export default {
     IonIcon,
     IonMenu,
     IonToolbar,
+    DrawerDownload,
     DrawerNavbarPrimary,
     DrawerEntry,
     DrawerMap
@@ -137,6 +144,10 @@ export default {
 
         if (drawerStore.activeDrawer === 'navbar-primary') {
           return 'Menu';
+        }
+
+        if (drawerStore.activeDrawer === 'app-download') {
+          return 'Download';
         }
 
         return 'Drawer';
