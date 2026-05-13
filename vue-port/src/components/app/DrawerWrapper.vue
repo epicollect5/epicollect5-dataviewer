@@ -3,6 +3,7 @@
     menu-id="app-drawer-menu"
     content-id="app-shell-content"
     type="overlay"
+    :class="drawerClasses"
     :side="drawerSide"
     :disabled="!activeDrawer"
     :swipe-gesture="false"
@@ -140,6 +141,9 @@ export default {
 
         return 'Drawer';
       }),
+      drawerClasses: computed(() => ({
+        'drawer-wrapper--map-filters': drawerStore.activeDrawer === 'map-filters'
+      })),
       drawerSide: computed(() => methods.normalizeDrawerSide(drawerStore.payload?.side))
     };
 

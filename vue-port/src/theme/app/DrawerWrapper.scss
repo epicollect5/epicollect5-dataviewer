@@ -20,6 +20,19 @@
   --color: var(--ion-color-primary);
 }
 
+ion-menu.drawer-wrapper--map-filters {
+  pointer-events: none;
+}
+
+ion-menu.drawer-wrapper--map-filters::part(container) {
+  pointer-events: auto;
+}
+
+ion-menu.drawer-wrapper--map-filters::part(backdrop) {
+  display: none;
+  pointer-events: none;
+}
+
 .menu-pane-visible {
   .menu-inner {
     width: min(420px, 92vw);
