@@ -8,3 +8,4 @@ dist/dataviewer.js
 .env
 copy-to-server.sh
 .aiassistant
+vue-port/dist

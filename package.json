@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "deploy": "gulp css && webpack -p --progress &&  [ -f ./copy-to-server.sh ] && ./copy-to-server.sh || echo 'Skipping copy script (not found)'",
-    "build": "gulp css && webpack -p --progress --analyze",
+    "build": "gulp css && webpack -p --progress",
     "start": "webpack-dev-server & gulp watch",
     "test": "jest --silent",
     "test:watch": "npm test -- --watch",

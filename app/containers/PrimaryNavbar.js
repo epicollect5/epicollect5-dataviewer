@@ -58,7 +58,7 @@ class PrimaryNavbar extends React.Component {
   handleDownloadClick() {
 
     const { projectUser } = this.props;
-    if (projectUser.id === null) {
+    if (PARAMETERS.IS_LOCALHOST === 0 && projectUser.id === null) {
       return false;
     }
 
