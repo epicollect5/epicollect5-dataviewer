@@ -6,6 +6,7 @@
     <ModalDeleteEntry v-else-if="activeModal === 'delete-entry'" />
     <ModalMediaViewer v-else-if="activeModal === 'media-viewer'" :ref="setMediaViewerModal" />
     <ModalViewEntry v-else-if="activeModal === 'view-entry'" />
+    <ModalPrepareDownload v-else-if="activeModal === 'prepare-download'" />
     <ion-content v-else class="ion-padding">
       <h2>{{ modalTitle }}</h2>
       <p>Modal placeholder.</p>
@@ -20,6 +21,7 @@ import ModalDeleteEntry from '@/components/entry/ModalDeleteEntry.vue';
 import ModalViewEntry from '@/components/entry/ModalViewEntry.vue';
 import ModalMediaViewer from '@/components/media/ModalMediaViewer.vue';
 import ModalPhotoViewer from '@/components/media/ModalPhotoViewer.vue';
+import ModalPrepareDownload from '@/components/app/ModalPrepareDownload.vue';
 import ModalUpload from '@/components/upload/ModalUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
 
@@ -32,6 +34,7 @@ export default {
     ModalViewEntry,
     ModalMediaViewer,
     ModalPhotoViewer,
+    ModalPrepareDownload,
     ModalUpload
   },
   setup() {
@@ -65,6 +68,14 @@ export default {
             '--max-width': '80vw',
             '--height': 'min(85vh, 960px)',
             '--max-height': '85vh'
+          };
+        }
+
+        if (modalStore.activeModal === 'prepare-download') {
+          return {
+            '--width': 'min(360px, calc(100vw - 32px))',
+            '--height': '240px',
+            '--border-radius': '8px'
           };
         }
 

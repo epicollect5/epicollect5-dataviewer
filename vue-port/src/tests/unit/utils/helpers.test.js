@@ -53,6 +53,24 @@ describe('domain/shared/helpers', () => {
     expect(uploadTemplate).toContain('map_index=2');
     expect(uploadTemplate).toContain('filename=entries.csv');
 
+    const downloadEntries = helpers.getDownloadEntriesEndpoint({
+      mapIndex: 2,
+      format: PARAMETERS.FORMAT_CSV,
+      activeTimeframe: PARAMETERS.TIMEFRAME.CUSTOM,
+      selectedStartDate: '2024-01-01',
+      selectedEndDate: '2024-01-31',
+      requestTimestamp: 1700000000,
+      projectSlug: 'demo-project'
+    });
+
+    expect(downloadEntries).toContain('/api/internal/download-entries/demo-project?');
+    expect(downloadEntries).toContain('map_index=2');
+    expect(downloadEntries).toContain('format=csv');
+    expect(downloadEntries).toContain('filter_by=created_at');
+    expect(downloadEntries).toContain('filter_from=2024-01-01');
+    expect(downloadEntries).toContain('filter_to=2024-01-31');
+    expect(downloadEntries).toContain('epicollect5-download-entries=1700000000');
+
     const downloadSubset = helpers.getDownloadSubsetEndpoint({
       hierarchyNavigator: [{ selfLink: 'https://five.epicollect.net/api/internal/entries/demo?form_ref=f1&page=2' }],
       filterSortOrder: 'DESC',

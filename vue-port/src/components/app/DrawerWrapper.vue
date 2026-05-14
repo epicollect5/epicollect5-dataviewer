@@ -118,7 +118,9 @@ export default {
         }
       },
       forward(eventName, value) {
-        drawerStore.payload?.onEvent?.(eventName, value);
+        const onEvent = drawerStore.payload?.onEvent;
+
+        onEvent?.(eventName, value);
       }
     };
 

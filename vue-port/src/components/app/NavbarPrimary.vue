@@ -95,9 +95,24 @@ import Dropdown from '@/components/global/Dropdown.vue';
 import { useDrawerStore } from '@/stores/drawerStore';
 import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
+import { useModalStore } from '@/stores/modalStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
 import helpers from '@/utils/helpers';
+
+const DOWNLOAD_COOKIE_POLL_INTERVAL = 250;
+const DOWNLOAD_NAVIGATION_DELAY = 3000;
+
+const getCookieValue = (name) => {
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+  const cookie = cookies.find((item) => item.startsWith(`${encodeURIComponent(name)}=`));
+
+  return cookie ? decodeURIComponent(cookie.split('=').slice(1).join('=')) : null;
+};
+
+const removeCookie = (name) => {
+  document.cookie = `${encodeURIComponent(name)}=; Max-Age=0; path=/`;
+};
 
 export default {
   name: 'NavbarPrimary',
@@ -114,6 +129,7 @@ export default {
     const navigationStore = useNavigationStore();
     const tableStore = useTableStore();
     const mapStore = useMapStore();
+    const modalStore = useModalStore();
 
     const state = reactive({
       drawerStore,
@@ -121,8 +137,11 @@ export default {
       navigationStore,
       tableStore,
       mapStore,
+      modalStore,
       projectLogoSrc: '/favicon.png',
-      avatarSrc: ''
+      avatarSrc: '',
+      downloadCookieInterval: null,
+      downloadNavigationTimeout: null
     });
 
     const methods = {
@@ -215,33 +234,44 @@ export default {
       handleDownloadDrawerEvent(eventName, value) {
         if (eventName === 'download') {
           methods.doDownload(value);
-          drawerStore.close();
         }
       },
       doDownload(params) {
-        const endpoint = `${PARAMETERS.SERVER_URL}${PARAMETERS.API_DOWNLOAD_ENDPOINT}${computedScope.currentProjectSlug.value}`;
-
-        const queryParams = {
-          map_index: params.map_index,
-          format: params.format
-        };
-
-        const customState = {
-          selectedStartDate: params.selectedStartDate ? new Date(params.selectedStartDate) : new Date(),
-          selectedEndDate: params.selectedEndDate ? new Date(params.selectedEndDate) : new Date()
-        };
-
-        const timeframeQuery = helpers.getTimeframeParams(params.activeTimeframe, customState);
-        Object.assign(queryParams, timeframeQuery);
-
-        const query = new URLSearchParams();
-        Object.entries(queryParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            query.set(key, value);
-          }
+        const requestTimestamp = new Date().getTime().toString();
+        const requestCookie = PARAMETERS.COOKIES.DOWNLOAD_ENTRIES;
+        const endpoint = helpers.getDownloadEntriesEndpoint({
+          projectSlug: computedScope.currentProjectSlug.value,
+          mapIndex: params.map_index,
+          format: params.format,
+          activeTimeframe: params.activeTimeframe,
+          selectedStartDate: params.selectedStartDate,
+          selectedEndDate: params.selectedEndDate,
+          requestTimestamp
         });
 
-        window.location.href = `${endpoint}?${query.toString()}`;
+        if (state.downloadCookieInterval) {
+          window.clearInterval(state.downloadCookieInterval);
+        }
+
+        if (state.downloadNavigationTimeout) {
+          window.clearTimeout(state.downloadNavigationTimeout);
+        }
+
+        modalStore.open('prepare-download');
+
+        state.downloadCookieInterval = window.setInterval(() => {
+          if (getCookieValue(requestCookie) === requestTimestamp) {
+            modalStore.close();
+            window.clearInterval(state.downloadCookieInterval);
+            state.downloadCookieInterval = null;
+            removeCookie(requestCookie);
+          }
+        }, DOWNLOAD_COOKIE_POLL_INTERVAL);
+
+        state.downloadNavigationTimeout = window.setTimeout(() => {
+          window.location.href = endpoint;
+          state.downloadNavigationTimeout = null;
+        }, DOWNLOAD_NAVIGATION_DELAY);
       }
     };
 

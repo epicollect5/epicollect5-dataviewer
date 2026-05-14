@@ -1,0 +1,35 @@
+.modal-prepare-download {
+  --background: #fff;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.92);
+}
+
+.modal-prepare-download__body {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.modal-prepare-download__body h2 {
+  margin: 8px 0 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-prepare-download__body p {
+  margin: 0;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.68);
+}
+
+.modal-prepare-download__body .loader-spinner {
+  border-color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.18);
+  border-top-color: var(--ion-color-secondary, #87c7a6);
+}
+
+.modal-prepare-download__warning {
+  font-weight: 600;
+  color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.82) !important;
+}

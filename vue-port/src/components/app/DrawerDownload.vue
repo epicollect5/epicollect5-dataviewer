@@ -35,18 +35,18 @@
           <button
             type="button"
             class="drawer-download__format-btn"
-            :class="{ 'drawer-download__format-btn--active': state.selectedFormat === PARAMETERS.FORMAT_CSV }"
-            @click="handleFormatChange(PARAMETERS.FORMAT_CSV)"
-          >
-            CSV
-          </button>
-          <button
-            type="button"
-            class="drawer-download__format-btn"
             :class="{ 'drawer-download__format-btn--active': state.selectedFormat === PARAMETERS.FORMAT_JSON }"
             @click="handleFormatChange(PARAMETERS.FORMAT_JSON)"
           >
             JSON
+          </button>
+          <button
+            type="button"
+            class="drawer-download__format-btn"
+            :class="{ 'drawer-download__format-btn--active': state.selectedFormat === PARAMETERS.FORMAT_CSV }"
+            @click="handleFormatChange(PARAMETERS.FORMAT_CSV)"
+          >
+            CSV
           </button>
         </div>
       </ion-card-content>
@@ -231,8 +231,6 @@ export default {
       },
       closePickDatesModal() {
         state.showPickDatesModal = false;
-        state.selectedStartDate = computedScope.formattedMinDate.value;
-        state.selectedEndDate = computedScope.formattedMaxDate.value;
       },
       getSelectedMapping() {
         const mappings = Array.isArray(props.projectMapping)

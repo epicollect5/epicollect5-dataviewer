@@ -195,6 +195,24 @@ const helpers = {
     return `${endpoint}${params.projectSlug}?${stringifyQuery(queryParams)}`;
   },
 
+  getDownloadEntriesEndpoint(params) {
+    const endpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_DOWNLOAD_ENDPOINT;
+    const requestCookie = PARAMETERS.COOKIES.DOWNLOAD_ENTRIES;
+    const queryParams = {
+      map_index: params.mapIndex,
+      format: params.format
+    };
+
+    Object.assign(queryParams, this.getTimeframeParams(params.activeTimeframe, {
+      selectedStartDate: params.selectedStartDate ? new Date(params.selectedStartDate) : new Date(),
+      selectedEndDate: params.selectedEndDate ? new Date(params.selectedEndDate) : new Date()
+    }));
+
+    queryParams[requestCookie] = params.requestTimestamp;
+
+    return `${endpoint}${params.projectSlug}?${stringifyQuery(queryParams)}`;
+  },
+
   getDownloadSubsetEndpoint(params) {
     const endpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_DOWNLOAD_SUBSET_ENDPOINT;
     const selfLink = params.hierarchyNavigator[params.hierarchyNavigator.length - 1].selfLink;

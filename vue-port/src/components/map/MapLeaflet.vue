@@ -13,6 +13,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { markRaw, onBeforeUnmount, onMounted, reactive, toRaw, watch } from 'vue';
 import PARAMETERS from '@/core/config/parameters';
+import { CLUSTER_CONTROL_ICON, BASE_LAYER_CONTROL_ICON } from '@/core/map/controlIcons';
 import mapUtils from '@/core/map/mapUtils';
 import { getClusterPieIconHtml, getClusterPieIconModel } from '@/services/map/pieCharts';
 
@@ -22,13 +23,9 @@ const HEATMAP_OPTIONS = {
   blur: 10
 };
 const INITIAL_FIT_DELAY_MS = 1000;
-const STATIC_RAW_CACHE = new Map();
 const STATIC_LAYER_CACHE = new Map();
+let ACTIVE_MAP_CONTEXT_KEY = null;
 
-const CLUSTER_CONTROL_ICON =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAABPFJREFUeJztmFtoXFUUhs/Z5zIz5zKTi04mFxoKbZQYtSVaaSLtg00rxYdCFbxgrcUbiHh7EYqoWKX4pi9WxBdFUVDoSxX7IKXesFRFULFeQKIoGkFbCxIbU791ZiZJx3ObNJlTYX5YnJlz9l7rX3uvvfbaW9PaaKONNpJgWdYqpdROEdM01/T0VvSsOaVCqavDgPQDuq4fQ2aQU8gk7x7Og6z5xaLzvG5dGeoWIc7f0wuFd6dx4tFMCSbBMIxuiL4jZLUGBzQ9cGIyW4YJwIGVkPxGayQ/78RslvwSwWKNngHtfzADV22d0IhzWQOntAYneDfLt8cyppgMEo0tGQfCUxL3WpX8Sd7tZYa8rPmlhp3LbTNM4ytIb7dzdm/WfJqGzAKL+umseSwahM1rpmlta6lRtv8+Ru4+jL+IPKcM44b+gX6jWT2e53v0P5rPF7rStC9XypgyrqXPPrEtO7llWwNNGUXBRjr/KikwSIO1p67014nj85vRRfsNkDiUpi2D1kXbV+s25+zq+m94NZHKYKlUMujweT1raGemv78x8FAzDtD+LuSVlG3vx8Z0iF2Rr/2ibyYqIVsMxWw+Iu8PXzoSW00yg2OQeVbX1bu0/0n68H88yTbtDsXZhtsliQ5QgK3VlQrf/quKjhUcpz+avHkTVGZFx0KRcMCxnVH92DPK6P6CMI0bvLFEB1zPdWn4e9hIyA6KfIp8BKn3eL7AyO4iPi+27VwRgtfz7nhEX5ETtNmRy+V9niNKGXJGeB5dh0Unvz8RG/9xoNaXgfMTHRCg6EY6/FVbuHXjQfhIkeYXSxbPQdptJkwe5/2bPHFMsfDjZi+YiSkZBPrSR9+Dni0s9EHX83mYK3h3WJ9PGnW704TPranIC0qdwUFkFwo+rB1CjvN7PwaGw9qTPbrJ85sY0amoGJ6fBRVkFOkTpsswzQux9QZt/whsK2bGULd7Ra/pFN4UCIsyDkymcOAH1knPspJZDEyGlPD4ID6EgnA4YufyuSy5RoLQ2AHBP2MWsVSit2XLMgGExx3VM68RyFwa1YJ3Dw6vXX9u30iw0PulDGGkX5ZwqYnUNHsJr5dIt4WsOUai0jvAYKtnCKV75f/o+CZ1+ZUTSn6TwyWz7ZfbiItGRrIlGgVy+jpG+2PZ1MK/mxvkO7M01GpuibBgDbm3CJO7o9qsHrpAnNwu5TVJq9xKfokgjV5NeLzN8TG23M4XChZxxpow9rSKWyIIiY5aLXPN6GXrUrS3KrK4mYX1LaAXDtfzipDYDPmNhIWc3A54ftFK258+W+nzsxSPzN44zm8pOIWO5eQcwM7ZLsYeqVes9aILQruR1A709PUZ1DhSuJ1cUCyekCyWLyzTTu36vomB3Rj654wTW/Wuc5pv16XVJW2Di9+Fu7Y+d/H71LI4wAivYgF+H3HclB33APk+NIU2olqCRx5eZkkGodXqWQHFo7VDTdSN85fIYJIeansJtc8iK1d0cUJbs+QOMANyXv4xbAZEmPqDeafQmaTH8Ryd0TgYMwMzpmVWltwBcrjcdT4ZUW3OyGWu4zqpijUG4+Z6zDfokYHYt+Tk6yB3O8T6E7Xbhvo5+VuM3kncNnVqEifo+11tMYueX4Q8x4Xk65OzgeO5ivx/BQbvEeIcA4dXDK1clC70rJYzguhiPxhzfc9eYrpttNHGuYx/AZSPdMo2ZeDNAAAAAElFTkSuQmCC';
-const BASE_LAYER_CONTROL_ICON =
-  'data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABGAAD/4QNxaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6MDI4MDExNzQwNzIwNjgxMTgyMkFCOUVBNDcwNjdDN0EiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RTYxNzExRkVGRjM1MTFFNkIwRTZENTk0MTZFMDhCMTMiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RTYxNzExRkRGRjM1MTFFNkIwRTZENTk0MTZFMDhCMTMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjAyODAxMTc0MDcyMDY4MTE4MjJBQjlFQTQ3MDY3QzdBIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjAyODAxMTc0MDcyMDY4MTE4MjJBQjlFQTQ3MDY3QzdBIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+/+4ADkFkb2JlAGTAAAAAAf/bAIQABAMDAwMDBAMDBAYEAwQGBwUEBAUHCAYGBwYGCAoICQkJCQgKCgwMDAwMCgwMDQ0MDBERERERFBQUFBQUFBQUFAEEBQUIBwgPCgoPFA4ODhQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU/8AAEQgAGAAYAwERAAIRAQMRAf/EAGYAAQAAAAAAAAAAAAAAAAAAAAgBAQAAAAAAAAAAAAAAAAAAAAAQAAAEBAIHCAMBAAAAAAAAAAERAgMSBAUGFAcAITEiExUXQWFxMmIlFhhCMwgZEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwBp5h5kWblZbcxdV71Num0tgBBsFDE/MOkYNMNhvOOK7Ep8RIDHQAJ/oXcnVv5JyVXTDgcu+OcUcVwuLxMZFFw8T2Q+SHcM9/QH3l5mRZuadty91WRU26lS3wAHASML8u6Ri0+2O824ntSrxAwIdANn9f2ZlDedXpFHvcanal0z6Fs0HMF1lxVutzMKRRJzjgrgSDpbQSkUkYqIwEA99Y84+oPTnkKuacPF80i9o5cZY3GFBwPV5vxhi3dAcP8AIFm5Q2bVqvR7HGp3XdEihDNezBaZdTbrszCoVykm4CwQoGj2ilQqOIFERAqrityg3bRpy3bmp7FUok+2LU3IzSAcaWke4dghtSoNYDrAT0A5/V67sR01+fVH64njPjcfuhxFyvGfswJbxH6SPf0BGW7blCtKjSdu2zT2KXRJBsGpSRlUA20hIdwbRHapQ6xHWInoH//Z';
 
 export default {
   name: 'MapLeaflet',
@@ -40,6 +37,10 @@ export default {
     isHidden: {
       type: Boolean,
       default: false
+    },
+    isActive: {
+      type: Boolean,
+      default: true
     },
     locationCacheKey: {
       type: String,
@@ -86,6 +87,9 @@ export default {
       markersLayer: null,
       heatPoints: [],
       cachedMarkers: [],
+      // requestAnimationFrame is a scheduling/debouncing mechanism,
+      // and pendingRenderFrame is how the component cancels
+      // the older scheduled render.
       pendingRenderFrame: null,
       fitBoundsTimeout: null,
       conicGradientSupported: null
@@ -242,67 +246,63 @@ export default {
 
         return markRaw(L.featureGroup(markers));
       },
+      getCurrentMapContextKey() {
+        const cacheParts = methods.getCurrentLayerCacheKey().split('|');
+
+        return cacheParts.slice(0, 2).join('|') || '__default__';
+      },
       getCurrentLayerCacheKey() {
         return props.locationCacheKey || '__default__';
       },
-      getCurrentFilterCacheKey() {
-        if (!props.startDate && !props.endDate) {
-          return '__all__';
-        }
-
-        return `${props.startDate || ''}:${props.endDate || ''}`;
+      shouldCacheCurrentLayers() {
+        return !props.startDate && !props.endDate;
       },
-      ensureLayerCacheEntry() {
-        const cacheKey = methods.getCurrentLayerCacheKey();
-
-        if (!STATIC_LAYER_CACHE.has(cacheKey)) {
-          STATIC_LAYER_CACHE.set(cacheKey, {
-            default: null,
-            byDateRange: new Map()
-          });
-        }
-
-        return STATIC_LAYER_CACHE.get(cacheKey);
-      },
-      getCurrentLayerCache() {
-        const cacheEntry = methods.ensureLayerCacheEntry();
-        const filterKey = methods.getCurrentFilterCacheKey();
-
-        if (filterKey === '__all__') {
-          return cacheEntry.default;
-        }
-
-        return cacheEntry.byDateRange.get(filterKey) || null;
-      },
-      setCurrentLayerCache(bundle) {
-        const cacheEntry = methods.ensureLayerCacheEntry();
-        const filterKey = methods.getCurrentFilterCacheKey();
-
-        if (filterKey === '__all__') {
-          cacheEntry.default = bundle;
+      disposeLayerBundle(bundle) {
+        if (!bundle) {
           return;
         }
 
-        cacheEntry.byDateRange.set(filterKey, bundle);
+        [bundle.clustersLayer, bundle.heatmapLayer, bundle.markersLayer].forEach((layer) => {
+          if (!layer) {
+            return;
+          }
+
+          layer.off?.();
+          layer.clearLayers?.();
+
+          if (mapContext.map?.hasLayer(layer)) {
+            mapContext.map.removeLayer(layer);
+          }
+        });
+
+        bundle.clustersLayer = null;
+        bundle.heatmapLayer = null;
+        bundle.markersLayer = null;
+        bundle.cachedMarkers = [];
+        bundle.heatPoints = [];
       },
-      getRawLocations() {
-        return STATIC_RAW_CACHE.get(methods.getCurrentLayerCacheKey()) || null;
+      clearMemoryCache() {
+        STATIC_LAYER_CACHE.forEach((bundle) => {
+          methods.disposeLayerBundle(bundle);
+        });
+        STATIC_LAYER_CACHE.clear();
       },
-      setRawLocations(rawLocations) {
-        STATIC_RAW_CACHE.set(methods.getCurrentLayerCacheKey(), rawLocations);
+      getCurrentLayerCache() {
+        if (!methods.shouldCacheCurrentLayers()) {
+          return null;
+        }
+
+        return STATIC_LAYER_CACHE.get(methods.getCurrentLayerCacheKey()) || null;
+      },
+      setCurrentLayerCache(bundle) {
+        if (!methods.shouldCacheCurrentLayers()) {
+          return;
+        }
+
+        STATIC_LAYER_CACHE.set(methods.getCurrentLayerCacheKey(), bundle);
       },
       getRenderableLocations() {
-        const rawLocations = methods.getRawLocations();
-
-        if (!rawLocations) {
-          return toRaw(props.locations);
-        }
-
-        if (!props.startDate && !props.endDate) {
-          return rawLocations;
-        }
-
-        return mapUtils.filterLocationsByDate(rawLocations, props.startDate, props.endDate);
+        return toRaw(props.locations);
       },
       supportsConicGradient() {
         if (mapContext.conicGradientSupported !== null) {
@@ -441,11 +441,18 @@ export default {
           return;
         }
 
+        // Schedule rendering for the next paint and collapse rapid prop changes into
+        // one render. The saved frame id lets cleanup cancel stale work before it runs.
         if (mapContext.pendingRenderFrame !== null) {
           window.cancelAnimationFrame(mapContext.pendingRenderFrame);
         }
 
         emit('render-start');
+        /**
+         * renderLayers() builds markers, heat points, clusters, controls, and fits bounds.
+         * Running it immediately during a Vue watcher can compete with Vue DOM updates.
+         * requestAnimationFrame() lets Vue/browser layout settle first.
+         */
         mapContext.pendingRenderFrame = window.requestAnimationFrame(() => {
           mapContext.pendingRenderFrame = null;
           void methods.renderLayers();
@@ -806,6 +813,13 @@ export default {
           return;
         }
 
+        const mapContextKey = methods.getCurrentMapContextKey();
+
+        if (ACTIVE_MAP_CONTEXT_KEY !== mapContextKey) {
+          methods.clearMemoryCache();
+          ACTIVE_MAP_CONTEXT_KEY = mapContextKey;
+        }
+
         const renderToken = state.activeRenderToken + 1;
         state.activeRenderToken = renderToken;
         methods.removeRenderedLayers();
@@ -829,10 +843,6 @@ export default {
           methods.scheduleInitialFit(renderToken);
           methods.notifyReady(renderToken);
           return;
-        }
-
-        if (!props.startDate && !props.endDate) {
-          methods.setRawLocations(toRaw(props.locations));
         }
 
         methods.buildMapArtifacts();
@@ -901,7 +911,26 @@ export default {
     watch(
       () => props.locationCacheKey,
       () => {
+        const mapContextKey = methods.getCurrentMapContextKey();
+
+        if (ACTIVE_MAP_CONTEXT_KEY !== mapContextKey) {
+          methods.clearMemoryCache();
+          ACTIVE_MAP_CONTEXT_KEY = mapContextKey;
+        }
+
         methods.queueRenderLayers();
+      }
+    );
+
+    watch(
+      () => props.isActive,
+      (isActive) => {
+        if (isActive) {
+          return;
+        }
+
+        methods.clearMemoryCache();
+        ACTIVE_MAP_CONTEXT_KEY = null;
       }
     );
 
@@ -931,6 +960,9 @@ export default {
         mapContext.map.remove();
         mapContext.map = null;
       }
+
+      methods.clearMemoryCache();
+      ACTIVE_MAP_CONTEXT_KEY = null;
     });
 
     return {

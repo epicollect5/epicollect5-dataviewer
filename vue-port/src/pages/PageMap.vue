@@ -78,6 +78,7 @@
             v-else-if="shouldRenderMap"
             :ref="setLeafletMap"
             :locations="state.mapStore.visibleLocations"
+            :is-active="isMapPage"
             :is-hidden="isMapPage && showMapLoader"
             :start-date="state.mapStore.startDate"
             :end-date="state.mapStore.endDate"
