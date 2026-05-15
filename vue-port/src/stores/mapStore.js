@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { markRaw } from 'vue';
 import client from '@/services/api/client';
-import { fetchEntriesLocations, fetchEntry } from '@/services/api/entriesApi';
+import { fetchEntriesLocationsCompact, fetchEntry } from '@/services/api/entriesApi';
 import {
   getCachedEntriesLocations,
   getEntriesLocationsRequestUrl,
@@ -13,6 +13,7 @@ import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import PARAMETERS from '@/core/config/parameters';
 import tableModel from '@/core/entries/tableModel';
+import { mergeCompactLocationPayloads } from '@/core/map/compactLocations';
 import mapUtils from '@/core/map/mapUtils';
 
 export const MAP_CACHE_HIT_DELAY_MS = 1000;
@@ -31,6 +32,7 @@ const getLocationQuestionKey = (question) => {
 
 let pendingLocationsRequest = null;
 let pendingLocationsRequestKey = '';
+let activeLocationsRequestKey = '';
 
 const rawArray = (items = []) => markRaw(items);
 
@@ -38,9 +40,70 @@ const delay = (duration) => new Promise((resolve) => {
   window.setTimeout(resolve, duration);
 });
 
+const getChunkLastPage = (payload = {}) => {
+  return Math.max(Number(payload.meta?.chunk_last_page) || 1, 1);
+};
+
+const getChunksPerMapPage = (payload = {}) => {
+  const perPage = Number(payload.meta?.per_page) || 0;
+  const perChunk = Number(payload.meta?.per_chunk) || 0;
+
+  if (perPage <= 0 || perChunk <= 0) {
+    return 1;
+  }
+
+  return Math.max(Math.ceil(perPage / perChunk), 1);
+};
+
+const getChunkPageUrl = (pageUrl, page) => {
+  const nextPageUrl = new URL(pageUrl, client.defaults.baseURL);
+
+  nextPageUrl.searchParams.set('page', page);
+
+  return nextPageUrl.toString();
+};
+
+const getChunkPageFromUrl = (pageUrl) => {
+  if (!pageUrl) {
+    return 1;
+  }
+
+  const parsedUrl = new URL(pageUrl, client.defaults.baseURL);
+
+  return Math.max(Number(parsedUrl.searchParams.get('page')) || 1, 1);
+};
+
+const getMapPageLinks = ({ sourceUrl, firstChunkPage, chunksPerMapPage, chunkLastPage }) => {
+  return {
+    self: getChunkPageUrl(sourceUrl, firstChunkPage),
+    prev: firstChunkPage > 1
+      ? getChunkPageUrl(sourceUrl, Math.max(firstChunkPage - chunksPerMapPage, 1))
+      : null,
+    next: firstChunkPage + chunksPerMapPage <= chunkLastPage
+      ? getChunkPageUrl(sourceUrl, firstChunkPage + chunksPerMapPage)
+      : null
+  };
+};
+
+const getMapPageMeta = ({ meta, firstChunkPage, lastRequestedChunkPage, chunksPerMapPage }) => {
+  const total = Number(meta?.total) || 0;
+  const perPage = Number(meta?.per_page) || 0;
+  const computedLastPage = perPage > 0 ? Math.max(Math.ceil(total / perPage), 1) : meta?.last_page;
+  const currentPage = Math.floor((firstChunkPage - 1) / chunksPerMapPage) + 1;
+
+  return {
+    ...meta,
+    current_page: currentPage,
+    last_page: computedLastPage || meta?.last_page || 1,
+    chunk_page: firstChunkPage,
+    chunk_to: lastRequestedChunkPage
+  };
+};
+
 export const useMapStore = defineStore('map', {
   state: () => ({
     locations: rawArray(),
+    possibleAnswerMap: rawArray(),
     filteredLocations: rawArray(),
     markers: rawArray(),
     hasLoadedInitialPage: false,
@@ -103,7 +166,9 @@ export const useMapStore = defineStore('map', {
     reset() {
       pendingLocationsRequest = null;
       pendingLocationsRequestKey = '';
+      activeLocationsRequestKey = '';
       this.locations = rawArray();
+      this.possibleAnswerMap = rawArray();
       this.filteredLocations = rawArray();
       this.markers = rawArray();
       this.hasLoadedInitialPage = false;
@@ -129,6 +194,74 @@ export const useMapStore = defineStore('map', {
       this.isFetchingEntry = false;
       this.isRejectedPage = false;
       this.errors = [];
+    },
+
+    async fetchCompactLocationPayload(projectSlug, requestParams, pageUrl = '', requestUrl = '') {
+      const firstResponse = pageUrl
+        ? await client.get(pageUrl)
+        : await fetchEntriesLocationsCompact(projectSlug, requestParams);
+      const firstPayload = firstResponse.data;
+      const firstChunkPage = Number(firstPayload.meta?.chunk_page) || getChunkPageFromUrl(pageUrl) || Number(requestParams.page) || 1;
+      const chunkLastPage = getChunkLastPage(firstPayload);
+      const chunksPerMapPage = getChunksPerMapPage(firstPayload);
+      const lastRequestedChunkPage = Math.min(firstChunkPage + chunksPerMapPage - 1, chunkLastPage);
+
+      if (lastRequestedChunkPage <= firstChunkPage) {
+        const mergedPayload = mergeCompactLocationPayloads([firstPayload]);
+        const sourceUrl = getPayloadSelfUrl(mergedPayload) || pageUrl || requestUrl;
+
+        return {
+          ...mergedPayload,
+          meta: getMapPageMeta({
+            meta: mergedPayload.meta,
+            firstChunkPage,
+            lastRequestedChunkPage,
+            chunksPerMapPage
+          }),
+          links: getMapPageLinks({
+            sourceUrl,
+            firstChunkPage,
+            chunksPerMapPage,
+            chunkLastPage
+          })
+        };
+      }
+
+      const chunkRequests = [];
+
+      for (let page = firstChunkPage + 1; page <= lastRequestedChunkPage; page += 1) {
+        chunkRequests.push(
+          pageUrl
+            ? client.get(getChunkPageUrl(pageUrl, page))
+            : fetchEntriesLocationsCompact(projectSlug, {
+              ...requestParams,
+              page
+            })
+        );
+      }
+
+      const chunkResponses = await Promise.all(chunkRequests);
+      const mergedPayload = mergeCompactLocationPayloads([
+        firstPayload,
+        ...chunkResponses.map((response) => response.data)
+      ]);
+      const sourceUrl = getPayloadSelfUrl(mergedPayload) || pageUrl || requestUrl;
+
+      return {
+        ...mergedPayload,
+        meta: getMapPageMeta({
+          meta: mergedPayload.meta,
+          firstChunkPage,
+          lastRequestedChunkPage,
+          chunksPerMapPage
+        }),
+        links: getMapPageLinks({
+          sourceUrl,
+          firstChunkPage,
+          chunksPerMapPage,
+          chunkLastPage
+        })
+      };
     },
 
     getLocationQuestions() {
@@ -160,6 +293,7 @@ export const useMapStore = defineStore('map', {
       const navigationStore = useNavigationStore();
 
       this.locations = rawArray();
+      this.possibleAnswerMap = rawArray();
       this.filteredLocations = rawArray();
       this.markers = rawArray();
       this.hasLoadedInitialPage = true;
@@ -303,6 +437,7 @@ export const useMapStore = defineStore('map', {
       }
 
       pendingLocationsRequestKey = requestContextKey;
+      activeLocationsRequestKey = requestContextKey;
       pendingLocationsRequest = (async () => {
         try {
           const shouldUseCache = Boolean(pageUrl);
@@ -321,11 +456,7 @@ export const useMapStore = defineStore('map', {
           if (payload) {
             await delay(MAP_CACHE_HIT_DELAY_MS);
           } else {
-            const response = pageUrl
-              ? await client.get(pageUrl)
-              : await fetchEntriesLocations(projectStore.projectSlug, requestParams);
-
-            payload = response.data;
+            payload = await this.fetchCompactLocationPayload(projectStore.projectSlug, requestParams, pageUrl, requestUrl);
 
             const canonicalPageUrl = getPayloadSelfUrl(payload);
             const cacheUrl = canonicalPageUrl || requestUrl;
@@ -343,8 +474,13 @@ export const useMapStore = defineStore('map', {
             }
           }
 
+          if (activeLocationsRequestKey !== requestContextKey) {
+            return;
+          }
+
           this.requestParams = requestParams;
-          this.locations = rawArray(payload.data?.geojson?.features || []);
+          this.locations = rawArray(payload.data?.points || []);
+          this.possibleAnswerMap = rawArray(payload.data?.pa_map || []);
           this.pagination = payload.meta;
           this.links = payload.links || payload.link || null;
           this.selectedEntry = null;
@@ -353,14 +489,20 @@ export const useMapStore = defineStore('map', {
           this.lastLoadedLocationQuestionKey = locationQuestionKey;
           this.recomputeMarkers();
         } catch (error) {
+          if (activeLocationsRequestKey !== requestContextKey) {
+            return;
+          }
+
           this.isRejectedPage = true;
           this.errors = error.response?.data?.errors || [error.message];
           this.locations = rawArray();
           this.filteredLocations = rawArray();
           this.markers = rawArray();
         } finally {
-          this.isFetchingPage = false;
-          this.hasLoadedInitialPage = true;
+          if (activeLocationsRequestKey === requestContextKey) {
+            this.isFetchingPage = false;
+            this.hasLoadedInitialPage = true;
+          }
 
           if (pendingLocationsRequestKey === requestContextKey) {
             pendingLocationsRequest = null;

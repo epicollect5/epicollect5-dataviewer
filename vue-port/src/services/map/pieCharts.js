@@ -10,9 +10,10 @@ const getAnswerLabel = (answer) => {
   return answer?.answer || answer?.value || answer?.map_to || answer?.label || '';
 };
 
-export const buildPieChartLegend = (answers = {}) => {
+export const buildPieChartLegend = (answers = {}, possibleAnswerMap = []) => {
   return Object.entries(answers).map(([answerRef, answer]) => ({
     answerRef,
+    possibleAnswerIndex: possibleAnswerMap.indexOf(answerRef),
     answer: getAnswerLabel(answer),
     color: getRandomColor()
   }));
@@ -53,16 +54,22 @@ export const getPieBackground = ({ segments, total, emptyColor = CLUSTER_PIE_EMP
   return `conic-gradient(${stops.join(', ')})`;
 };
 
+const markerHasPossibleAnswer = (marker, possibleAnswerIndex) => {
+  const possibleAnswerIndexes = marker.options.possibleAnswerIndexes || [];
+
+  return possibleAnswerIndex >= 0 && possibleAnswerIndexes.includes(possibleAnswerIndex);
+};
+
 export const getClusterPieSegments = ({ markers, legend }) => {
   const segments = [];
   let total = 0;
 
   legend.forEach((legendItem) => {
-    const answerRef = legendItem.answerRef;
+    const possibleAnswerIndex = legendItem.possibleAnswerIndex;
     let count = 0;
 
     markers.forEach((marker) => {
-      if (marker.options.possibleAnswers?.[answerRef]) {
+      if (markerHasPossibleAnswer(marker, possibleAnswerIndex)) {
         count += 1;
       }
     });

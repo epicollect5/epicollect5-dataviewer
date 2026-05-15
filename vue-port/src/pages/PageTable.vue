@@ -144,8 +144,8 @@ export default {
             : await projectStore.loadProject(computedScope.resolvedProjectSlug.value);
 
         if (didLoadProject && navigationStore.currentFormRef) {
-          await tableStore.loadEntries();
           void mapStore.loadLocations({ resetFilters: true });
+          await tableStore.loadEntries();
         }
       },
       async handleTitleChange(title) {

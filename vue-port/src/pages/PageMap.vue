@@ -86,6 +86,7 @@
             :clusters-enabled="state.mapStore.clustersEnabled"
             :location-cache-key="locationCacheKey"
             :pie-chart-legend="pieChartLegend"
+            :possible-answer-map="state.mapStore.possibleAnswerMap"
             @marker-click="handleMarkerClick"
             @render-start="handleMapRenderStart"
             @progress="handleRenderProgress"
@@ -208,7 +209,8 @@ export default {
         return buildDistributionChart({
           entries: mapStore.visibleLocations,
           legend: computedScope.pieChartLegend.value,
-          selectedDistributionQuestion: mapStore.selectedDistributionQuestion
+          selectedDistributionQuestion: mapStore.selectedDistributionQuestion,
+          possibleAnswerMap: mapStore.possibleAnswerMap
         });
       },
       handleClusterToggle(enabled) {
@@ -359,14 +361,15 @@ export default {
       pieChartLegend: computed(() => {
         const answers = mapStore.selectedDistributionQuestion?.possibleAnswersHashMap || {};
 
-        return buildPieChartLegend(answers);
+        return buildPieChartLegend(answers, mapStore.possibleAnswerMap);
       }),
       locationCacheKey: computed(() => {
         const question = mapStore.selectedLocationQuestion;
         const questionKey = question ? `${question.branch_ref || ''}:${question.input_ref || ''}` : 'default';
         const distributionKey = mapStore.selectedDistributionQuestion?.inputRef || 'none';
+        const pageKey = mapStore.pagination?.current_page || 1;
 
-        return `${projectStore.projectSlug || 'project'}|${navigationStore.currentFormRef || 'form'}|${questionKey}|${distributionKey}`;
+        return `${projectStore.projectSlug || 'project'}|${navigationStore.currentFormRef || 'form'}|${questionKey}|${distributionKey}|${pageKey}`;
       }),
       shouldRenderMap: computed(() => {
         return computedScope.hasLocationQuestions.value && !mapStore.isRejectedPage && mapStore.locations.length > 0;

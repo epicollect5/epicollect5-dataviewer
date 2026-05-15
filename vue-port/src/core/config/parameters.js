@@ -30,6 +30,7 @@ const PARAMETERS = {
   API_MEDIA_ENDPOINT: '/api/internal/media/',
   API_ENTRIES_ENDPOINT: '/api/internal/entries/',
   API_ENTRIES_LOCATIONS_ENDPOINT: '/api/internal/entries-locations/',
+  API_ENTRIES_LOCATIONS_COMPACT_ENDPOINT: '/api/internal/entries-locations-compact/',
   API_DOWNLOAD_ENDPOINT: '/api/internal/download-entries/',
   API_DOWNLOAD_MEDIA_ENDPOINT: '/api/internal/download-media/',
   API_UPLOAD_TEMPLATE_ENDPOINT: '/api/internal/upload-template/',

@@ -1,3 +1,5 @@
+import { getLocationCoordinates, getLocationCreatedAt, getLocationTitle, getLocationUuid } from '@/core/map/compactLocations';
+
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const toDate = (value) => {
@@ -72,7 +74,7 @@ const filterLocationsByDate = (entries, startDate, endDate) => {
   const upperBound = endDate ? toDate(`${endDate}T23:59:59`) : null;
 
   return entries.filter((entry) => {
-    const createdAt = toDate(entry?.properties?.created_at);
+    const createdAt = toDate(getLocationCreatedAt(entry));
 
     if (!createdAt) {
       return false;
@@ -116,7 +118,7 @@ const buildMarkerItems = (entries, clustered = true) => {
   let processedCount = 0;
 
   entries.forEach((entry, index) => {
-    const coordinates = entry?.geometry?.coordinates || [];
+    const coordinates = getLocationCoordinates(entry);
     const longitude = Number(coordinates[0]);
     const latitude = Number(coordinates[1]);
 
@@ -126,9 +128,10 @@ const buildMarkerItems = (entries, clustered = true) => {
 
     processedCount += 1;
 
-    const key = clustered ? `${latitude}:${longitude}` : `${entry?.properties?.uuid || index}:${latitude}:${longitude}`;
+    const entryUuid = getLocationUuid(entry);
+    const key = clustered ? `${latitude}:${longitude}` : `${entryUuid || index}:${latitude}:${longitude}`;
     const bucket = buckets.get(key);
-    const title = entry?.properties?.title || 'Untitled entry';
+    const title = getLocationTitle(entry) || 'Untitled entry';
 
     if (bucket) {
       bucket.count += 1;
@@ -141,12 +144,12 @@ const buildMarkerItems = (entries, clustered = true) => {
     }
 
     buckets.set(key, {
-      id: entry?.properties?.uuid || `marker-${index}`,
+      id: entryUuid || `marker-${index}`,
       latitude,
       longitude,
       count: 1,
       title,
-      entryUuid: entry?.properties?.uuid || null,
+      entryUuid,
       titles: [title]
     });
   });

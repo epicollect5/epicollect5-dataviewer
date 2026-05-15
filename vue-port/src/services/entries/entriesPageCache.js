@@ -178,7 +178,7 @@ export const getEntriesLocationsRequestUrl = ({ pageUrl = '', projectSlug = '', 
   }
 
   const requestUrl = client.getUri({
-    url: `${PARAMETERS.API_ENTRIES_LOCATIONS_ENDPOINT}${projectSlug}`,
+    url: `${PARAMETERS.API_ENTRIES_LOCATIONS_COMPACT_ENDPOINT}${projectSlug}`,
     params
   });
 

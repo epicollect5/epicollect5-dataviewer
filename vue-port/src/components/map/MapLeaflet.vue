@@ -14,6 +14,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { markRaw, onBeforeUnmount, onMounted, reactive, toRaw, watch } from 'vue';
 import PARAMETERS from '@/core/config/parameters';
 import { CLUSTER_CONTROL_ICON, BASE_LAYER_CONTROL_ICON } from '@/core/map/controlIcons';
+import { getLocationCoordinates, getLocationTitle, getLocationUuid } from '@/core/map/compactLocations';
 import mapUtils from '@/core/map/mapUtils';
 import { getClusterPieIconHtml, getClusterPieIconModel } from '@/services/map/pieCharts';
 
@@ -22,7 +23,7 @@ const HEATMAP_OPTIONS = {
   minOpacity: 0.5,
   blur: 10
 };
-const INITIAL_FIT_DELAY_MS = 1000;
+const INITIAL_FIT_DELAY_MS = 500;
 const STATIC_LAYER_CACHE = new Map();
 let ACTIVE_MAP_CONTEXT_KEY = null;
 
@@ -63,6 +64,10 @@ export default {
       default: true
     },
     pieChartLegend: {
+      type: Array,
+      default: () => []
+    },
+    possibleAnswerMap: {
       type: Array,
       default: () => []
     }
@@ -183,14 +188,9 @@ export default {
       canShowMarkersOverlay() {
         return props.totalMarkers < PARAMETERS.MAX_ENTRIES_FOR_UNCLUSTERING;
       },
-      buildLeafletMarker(entry, colors) {
-        const coordinates = entry?.geometry?.coordinates || [];
-        const longitude = Number(coordinates[0]);
-        const latitude = Number(coordinates[1]);
-
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-          return null;
-        }
+      buildLeafletMarker(entry, colors, latitude, longitude) {
+        const entryUuid = getLocationUuid(entry);
+        const title = getLocationTitle(entry);
 
         return L.circleMarker([latitude, longitude], {
           radius: 10,
@@ -198,10 +198,10 @@ export default {
           color: colors.border,
           fillColor: colors.fill,
           fillOpacity: 1,
-          entryUuid: entry?.properties?.uuid || null,
-          title: entry?.properties?.title || '',
-          popupHtml: entry?.properties?.title || '',
-          possibleAnswers: entry?.properties?.possible_answers || {}
+          entryUuid,
+          title,
+          popupHtml: title,
+          possibleAnswerIndexes: entry?.pa || []
         });
       },
       buildMapArtifacts() {
@@ -213,16 +213,15 @@ export default {
 
         for (let index = 0; index < totalLocations; index += 1) {
           const entry = toRaw(rawLocations[index]);
-          const coordinates = entry?.geometry?.coordinates || [];
-          const longitude = Number(coordinates[0]);
-          const latitude = Number(coordinates[1]);
+          const latitude = entry.y;
+          const longitude = entry.x;
 
           if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
             continue;
           }
 
           heatPoints.push([latitude, longitude]);
-          const marker = methods.buildLeafletMarker(entry, colors);
+          const marker = methods.buildLeafletMarker(entry, colors, latitude, longitude);
 
           if (marker) {
             markers.push(marker);
@@ -238,7 +237,16 @@ export default {
         const markers = [];
 
         for (let index = 0; index < rawLocations.length; index += 1) {
-          const marker = methods.buildLeafletMarker(rawLocations[index], colors);
+          const entry = rawLocations[index];
+          const coordinates = getLocationCoordinates(entry);
+          const longitude = Number(coordinates[0]);
+          const latitude = Number(coordinates[1]);
+
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            continue;
+          }
+
+          const marker = methods.buildLeafletMarker(entry, colors, latitude, longitude);
 
           if (marker) {
             markers.push(marker);
@@ -257,6 +265,9 @@ export default {
       },
       shouldCacheCurrentLayers() {
         return !props.startDate && !props.endDate;
+      },
+      hasRenderedLayers() {
+        return Boolean(mapContext.clustersLayer || mapContext.heatmapLayer || mapContext.markersLayer || mapContext.heatPoints.length > 0);
       },
       disposeLayerBundle(bundle) {
         if (!bundle) {
@@ -541,8 +552,6 @@ export default {
           state.activeOverlay = PARAMETERS.MAP_OVERLAYS.CLUSTERS;
         }
 
-        methods.removeRenderedLayers();
-
         switch (state.activeOverlay) {
           case PARAMETERS.MAP_OVERLAYS.HEATMAP:
             if (!mapContext.heatmapLayer) {
@@ -553,6 +562,13 @@ export default {
                 currentCache.heatmapLayer = mapContext.heatmapLayer;
               }
             }
+
+            if (mapContext.map.hasLayer(mapContext.heatmapLayer)) {
+              methods.syncOverlayControl();
+              return;
+            }
+
+            methods.removeRenderedLayers();
 
             if (mapContext.heatmapLayer) {
               mapContext.heatmapLayer.addTo(mapContext.map);
@@ -571,12 +587,24 @@ export default {
             }
 
             if (mapContext.markersLayer && methods.canShowMarkersOverlay()) {
+              if (mapContext.map.hasLayer(mapContext.markersLayer)) {
+                methods.syncOverlayControl();
+                return;
+              }
+
+              methods.removeRenderedLayers();
               mapContext.markersLayer.addTo(mapContext.map);
             }
             break;
           case PARAMETERS.MAP_OVERLAYS.CLUSTERS:
           default:
             if (mapContext.clustersLayer) {
+              if (mapContext.map.hasLayer(mapContext.clustersLayer)) {
+                methods.syncOverlayControl();
+                return;
+              }
+
+              methods.removeRenderedLayers();
               mapContext.clustersLayer.addTo(mapContext.map);
             }
             break;
@@ -936,12 +964,18 @@ export default {
     watch(
       () => props.isActive,
       (isActive) => {
-        if (isActive) {
+        if (!isActive) {
           return;
         }
 
-        methods.clearMemoryCache();
-        ACTIVE_MAP_CONTEXT_KEY = null;
+        methods.invalidateMapSize();
+
+        if (!methods.hasRenderedLayers()) {
+          methods.queueRenderLayers();
+          return;
+        }
+
+        methods.applyInitialFit();
       }
     );
 

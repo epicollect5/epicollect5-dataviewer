@@ -37,14 +37,16 @@ describe('components/app/DrawerWrapper', () => {
     });
 
     expect(wrapper.vm.drawerClasses).toEqual({
-      'drawer-wrapper--map-filters': true
+      'drawer-wrapper--map-filters': true,
+      'drawer-wrapper--map-interactive': true
     });
 
     drawerStore.open('map-entry', {});
     await wrapper.vm.$nextTick();
 
     expect(wrapper.vm.drawerClasses).toEqual({
-      'drawer-wrapper--map-filters': false
+      'drawer-wrapper--map-filters': false,
+      'drawer-wrapper--map-interactive': true
     });
   });
 });

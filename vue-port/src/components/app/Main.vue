@@ -3,7 +3,7 @@
     <DrawerWrapper />
     <ion-page id="app-shell-content" class="app-shell-page" :class="{ 'app-shell-page--ready': !isProjectBootLoading }">
       <NavbarPrimary v-if="!isProjectBootLoading" />
-      <ion-content fullscreen>
+      <ion-content id="app-shell-main-content" fullscreen>
         <router-view v-slot="{ Component }">
           <keep-alive include="PageData">
             <component :is="Component" />

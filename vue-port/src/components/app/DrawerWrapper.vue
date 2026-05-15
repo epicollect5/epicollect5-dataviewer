@@ -1,7 +1,7 @@
 <template>
-  <ion-menu
+    <ion-menu
     menu-id="app-drawer-menu"
-    content-id="app-shell-content"
+    content-id="app-shell-main-content"
     type="overlay"
     :class="drawerClasses"
     :side="drawerSide"
@@ -155,6 +155,7 @@ export default {
         return 'Drawer';
       }),
       drawerClasses: computed(() => ({
+        'drawer-wrapper--map-filters': drawerStore.activeDrawer === 'map-filters',
         'drawer-wrapper--map-interactive': ['map-filters', 'map-entry'].includes(drawerStore.activeDrawer)
       })),
       drawerSide: computed(() => methods.normalizeDrawerSide(drawerStore.payload?.side))
