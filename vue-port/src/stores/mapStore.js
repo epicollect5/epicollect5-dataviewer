@@ -11,6 +11,8 @@ import {
 } from '@/services/entries/entriesPageCache';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
+import PARAMETERS from '@/core/config/parameters';
+import tableModel from '@/core/entries/tableModel';
 import mapUtils from '@/core/map/mapUtils';
 
 export const MAP_CACHE_HIT_DELAY_MS = 1000;
@@ -68,6 +70,33 @@ export const useMapStore = defineStore('map', {
   getters: {
     visibleLocations(state) {
       return state.filteredLocations.length > 0 || state.startDate || state.endDate ? state.filteredLocations : state.locations;
+    },
+    selectedEntryTitle(state) {
+      if (!state.selectedEntry) {
+        return '';
+      }
+
+      const projectStore = useProjectStore();
+      const navigationStore = useNavigationStore();
+
+      if (!projectStore.projectSlug || !projectStore.projectExtra || !navigationStore.currentFormRef) {
+        return '';
+      }
+
+      const branchRef = state.selectedLocationQuestion?.branch_ref || '';
+      const rows = tableModel.getRows(
+        projectStore.projectSlug,
+        projectStore.projectExtra,
+        navigationStore.currentFormRef,
+        state.selectedEntry,
+        branchRef
+      );
+      const titleIndex = branchRef
+        ? PARAMETERS.TABLE_FIXED_HEADERS_TITLE_INDEX - 1
+        : PARAMETERS.TABLE_FIXED_HEADERS_TITLE_INDEX;
+      const uuidIndex = 0;
+
+      return rows[0]?.[titleIndex]?.answer || rows[0]?.[uuidIndex]?.entryUuid || '';
     }
   },
   actions: {

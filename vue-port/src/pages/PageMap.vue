@@ -285,6 +285,7 @@ export default {
           side: 'left'
         });
         await mapStore.loadEntry(marker.entryUuid);
+        state.leafletMap?.setActiveMarkerPopupTitle?.(mapStore.selectedEntryTitle);
       },
       closeEntryPopup() {
         state.leafletMap?.closeActivePopup?.();

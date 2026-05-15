@@ -155,7 +155,7 @@ export default {
         return 'Drawer';
       }),
       drawerClasses: computed(() => ({
-        'drawer-wrapper--map-filters': drawerStore.activeDrawer === 'map-filters'
+        'drawer-wrapper--map-interactive': ['map-filters', 'map-entry'].includes(drawerStore.activeDrawer)
       })),
       drawerSide: computed(() => methods.normalizeDrawerSide(drawerStore.payload?.side))
     };

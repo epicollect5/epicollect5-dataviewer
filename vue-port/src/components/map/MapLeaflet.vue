@@ -85,6 +85,7 @@ export default {
       clustersLayer: null,
       heatmapLayer: null,
       markersLayer: null,
+      activeMarkerLayer: null,
       heatPoints: [],
       cachedMarkers: [],
       // requestAnimationFrame is a scheduling/debouncing mechanism,
@@ -198,8 +199,8 @@ export default {
           fillColor: colors.fill,
           fillOpacity: 1,
           entryUuid: entry?.properties?.uuid || null,
-          title: entry?.properties?.title || 'Untitled entry',
-          popupHtml: entry?.properties?.title || 'Untitled entry',
+          title: entry?.properties?.title || '',
+          popupHtml: entry?.properties?.title || '',
           possibleAnswers: entry?.properties?.possible_answers || {}
         });
       },
@@ -353,16 +354,26 @@ export default {
           return;
         }
 
-        if (typeof layer.bindPopup === 'function' && !layer.getPopup?.() && layer.options.popupHtml) {
-          layer.bindPopup(layer.options.popupHtml);
+        mapContext.activeMarkerLayer = layer;
+
+        if (typeof layer.bindPopup === 'function' && !layer.getPopup?.()) {
+          layer.bindPopup(layer.options.popupHtml || 'Loading...');
         }
 
         layer.openPopup?.();
 
         emit('marker-click', {
-          entryUuid: layer.options.entryUuid,
-          title: layer.options.title || 'Untitled entry'
+          entryUuid: layer.options.entryUuid
         });
+      },
+      setActiveMarkerPopupTitle(title) {
+        if (!mapContext.activeMarkerLayer || !title) {
+          return;
+        }
+
+        mapContext.activeMarkerLayer.setPopupContent?.(title);
+        mapContext.activeMarkerLayer.options.title = title;
+        mapContext.activeMarkerLayer.options.popupHtml = title;
       },
       emitProgress(processed, total) {
         const safeTotal = total || 0;

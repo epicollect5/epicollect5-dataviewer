@@ -20,15 +20,15 @@
   --color: var(--ion-color-primary);
 }
 
-ion-menu.drawer-wrapper--map-filters {
+ion-menu.drawer-wrapper--map-interactive {
   pointer-events: none;
 }
 
-ion-menu.drawer-wrapper--map-filters::part(container) {
+ion-menu.drawer-wrapper--map-interactive::part(container) {
   pointer-events: auto;
 }
 
-ion-menu.drawer-wrapper--map-filters::part(backdrop) {
+ion-menu.drawer-wrapper--map-interactive::part(backdrop) {
   display: none;
   pointer-events: none;
 }
