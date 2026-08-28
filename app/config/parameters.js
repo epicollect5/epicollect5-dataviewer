@@ -57,11 +57,11 @@ const PARAMETERS = {
     ESRI_TILES_PROVIDER_ATTRIBUTION: 'Powered by Esri | Esri, Maxar, Earthstar Geographics, and the GIS User Community',
 
     //carto https://carto.com/basemaps/
-    CARTO_LIGHT_TILES_PROVIDER: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+    CARTO_LIGHT_TILES_PROVIDER: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png?key=' + process.env.REACT_APP_CARTO_API_KEY,
     CARTO_TILES_ATTRIBUTION: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
 
     CARTO_DARK_TILES_PROVIDER:
-      'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=' + process.env.REACT_APP_CARTO_API_KEY,
 
     CARTO_DARK_TILES_ATTRIBUTION:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, ' +
