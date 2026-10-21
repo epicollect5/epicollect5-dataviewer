@@ -437,7 +437,7 @@ const reverseEntryParser = {
                             const today = new Date();
                             const year = today.getUTCFullYear();
                             const month = ('0' + (today.getUTCMonth() + 1)).slice(-2);
-                            const day = ('0' + today.getUTCDay()).slice(-2);
+                            const day = ('0' + today.getUTCDate()).slice(-2);
 
                             if (answerValue === '') {
                                 timeAnswer = '';
@@ -464,7 +464,7 @@ const reverseEntryParser = {
                                         break;
                                     case PARAMETERS.TIME_FORMAT_5:
                                         // TIME_FORMAT_5: 'mm:ss',
-                                        timeAnswer = '00:' + parts[1] + ':' + parts[0];
+                                        timeAnswer = '00:' + parts[0] + ':' + parts[1];
                                         break;
                                     default:
                                     //do nothing
