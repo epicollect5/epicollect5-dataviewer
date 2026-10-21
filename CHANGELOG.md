@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.2.0
+- Build: upgraded axios, lodash, moment and url-parse to clear the reported security advisories
+- Tests: added a test coverage pass for the Redux state, the actions and the entries display pipeline
+- Docs: added the legacy known defects list, as a porting checklist for the Vue rewrite
 ## 0.1.9
 - Bulk upload: reject files with duplicate headers, trim CSV headers and stop on duplicate UUIDs
 - Bulk upload: fixed location jumps and time answers when the answer is empty
