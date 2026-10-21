@@ -2,16 +2,38 @@ import React from 'react';
 import { shallow, mount, render } from 'enzyme';
 import CellMedia from 'components/table/CellMedia';
 import PARAMETERS from 'config/parameters';
-import { StyleSheetTestUtils } from 'aphrodite';
+
+//react-images injects styles through aphrodite, which needs a real document and
+//is not part of what CellMedia does, so the lightbox is stubbed out
+jest.mock('react-images', () => {
+
+    const Lightbox = () => null;
+    Lightbox.displayName = 'Lightbox';
+
+    return Lightbox;
+});
 
 describe('(Component) CellMedia', () => {
 
-    beforeEach(() => {
+    let wrapper;
 
-        StyleSheetTestUtils.suppressStyleInjection();
-    });
+    //rendering is delayed by a random timeout to slow down media requests, skip it
+    const mountCell = (props) => {
+
+        wrapper = mount(<CellMedia {...props} />);
+        wrapper.setState({ render: true });
+        wrapper.update();
+
+        return wrapper;
+    };
+
     afterEach(() => {
-        StyleSheetTestUtils.clearBufferAndResumeStyleInjection();
+
+        if (wrapper) {
+            //clears the delayed render timer scheduled in componentDidMount
+            wrapper.unmount();
+            wrapper = null;
+        }
     });
 
 
@@ -22,17 +44,18 @@ describe('(Component) CellMedia', () => {
                 inputType: PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE,
                 cellType: PARAMETERS.CEll_TYPES.MEDIA,
                 answer: {
-                    entry_full: 'https://path-to-file.ext',
+                    entry_original: 'https://path-to-file.ext',
                     entry_thumb: 'https://path-to-thumb.ext'
                 }
             }
         };
-        const wrapper = mount(<CellMedia {...props} />);
+        mountCell(props);
+
         expect(wrapper).toHaveLength(1);
 
         //check href is set properly
         expect(wrapper.find('div.thumb-wrapper a').getDOMNode().attributes.getNamedItem('href').value)
-            .toEqual(props.content.answer.entry_full);
+            .toEqual(props.content.answer.entry_original);
 
         //check thumb url is set properly
         expect(wrapper.find('div.thumb-wrapper img').getDOMNode().attributes.getNamedItem('src').value)
@@ -56,7 +79,8 @@ describe('(Component) CellMedia', () => {
                 }
             }
         };
-        const wrapper = mount(<CellMedia {...props} />);
+        mountCell(props);
+
         expect(wrapper).toHaveLength(1);
 
         const lightbox = wrapper.find('Lightbox');
@@ -77,7 +101,8 @@ describe('(Component) CellMedia', () => {
                 }
             }
         };
-        const wrapper = mount(<CellMedia {...props} />);
+        mountCell(props);
+
         expect(wrapper).toHaveLength(1);
 
         const lightbox = wrapper.find('Lightbox');
@@ -94,12 +119,13 @@ describe('(Component) CellMedia', () => {
                 inputType: PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE,
                 cellType: PARAMETERS.CEll_TYPES.MEDIA,
                 answer: {
-                    entry_full: 'https://path-to-file.ext'
+                    entry_original: 'https://path-to-file.ext',
+                    entry_thumb: 'https://path-to-thumb.ext'
                 }
             }
         };
 
-        const wrapper = mount(<CellMedia {...props} />);
+        mountCell(props);
         let lightbox = wrapper.find('Lightbox');
         expect(lightbox).toHaveLength(1);
 

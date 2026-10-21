@@ -13,6 +13,8 @@ describe('(Component) MediaPopup', () => {
         };
         const type = PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE;
         const wrapper = shallow(<MediaPopup content={content} type={type} />);
+        //media is only rendered inside the modal once it is open and the file check passed
+        wrapper.setState({ showModal: true, showLoader: false, fileNotFound: false });
         expect(wrapper).toHaveLength(1);
         expect(wrapper.find('audio')).toHaveLength(1);
         expect(wrapper.find('video')).toHaveLength(0);
@@ -26,6 +28,8 @@ describe('(Component) MediaPopup', () => {
         };
         const type = PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE;
         const wrapper = shallow(<MediaPopup content={content} type={type} />);
+        //media is only rendered inside the modal once it is open and the file check passed
+        wrapper.setState({ showModal: true, showLoader: false, fileNotFound: false });
         expect(wrapper).toHaveLength(1);
         expect(wrapper.find('video')).toHaveLength(1);
         expect(wrapper.find('audio')).toHaveLength(0);
