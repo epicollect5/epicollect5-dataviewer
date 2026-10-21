@@ -148,7 +148,7 @@ const buildEntry = (answers) => {
     };
 };
 
-const jumpMappingFor = (inputRef, mapTo, when, answerRef) => {
+const jumpMappingFor = (inputRef, mapTo, when, answerRef, toInputRef) => {
     return {
         ref2MapTo: {
             [inputRef]: mapTo
@@ -156,7 +156,7 @@ const jumpMappingFor = (inputRef, mapTo, when, answerRef) => {
         reverse: {
             [mapTo]: {
                 reverse_jumps: [{
-                    toInputRef: 'END',
+                    toInputRef: toInputRef || 'END',
                     when,
                     answer: null,
                     answer_ref: answerRef
@@ -245,6 +245,80 @@ describe('reverse-entry-parser jumped answers test', () => {
         expect(result.groupChildCheckbox.answer).toEqual([]);
         expect(result.groupChildText.answer).toBe('');
         expect(result.source.answer).toEqual(['a-ref']);
+    });
+
+});
+
+describe('reverse-entry-parser NO_ANSWER_GIVEN jump test', () => {
+
+    const noAnswerJump = [{ to: 'q3', when: 'NO_ANSWER_GIVEN', answer_ref: null }];
+
+    const buildEntriesWithSource = (sourceType, sourceAnswer, q2Answer) => {
+        return [
+            buildEntry({
+                source: { answer: sourceAnswer, was_jumped: false },
+                q2: { answer: q2Answer, was_jumped: false },
+                q3: { answer: 'target', was_jumped: false }
+            }),
+            buildInput('source', sourceType, noAnswerJump),
+            buildInput('q2', 'text'),
+            buildInput('q3', 'text')
+        ];
+    };
+
+    it('should not jump when a dropdown has an answer', () => {
+        const [entry, ...inputs] = buildEntriesWithSource('dropdown', 'yes-ref', 'keep me');
+
+        const entries = reverseEntryParser.setEntryJumps(
+            [entry],
+            inputs,
+            jumpMappingFor('source', 'Source Q', 'NO_ANSWER_GIVEN', null, 'q3'),
+            null
+        );
+
+        const result = entries[0].data.entry.answers;
+
+        expect(result.q2.answer).toBe('keep me');
+        expect(result.q2.was_jumped).toBe(false);
+        expect(result.q3.answer).toBe('target');
+    });
+
+    it('should jump when a dropdown has no answer', () => {
+        const [entry, ...inputs] = buildEntriesWithSource('dropdown', '', 'keep me');
+
+        const entries = reverseEntryParser.setEntryJumps(
+            [entry],
+            inputs,
+            jumpMappingFor('source', 'Source Q', 'NO_ANSWER_GIVEN', null, 'q3'),
+            null
+        );
+
+        const result = entries[0].data.entry.answers;
+
+        expect(result.q2.answer).toBe('');
+        expect(result.q2.was_jumped).toBe(true);
+        expect(result.q3.answer).toBe('target');
+        expect(result.q3.was_jumped).toBe(false);
+    });
+
+    it('should use the checkbox answers to decide the jump', () => {
+        const [answered, ...inputs] = buildEntriesWithSource('checkbox', ['a-ref'], 'keep me');
+        const [unanswered] = buildEntriesWithSource('checkbox', [], 'keep me');
+
+        const entries = reverseEntryParser.setEntryJumps(
+            [answered, unanswered],
+            inputs,
+            jumpMappingFor('source', 'Source Q', 'NO_ANSWER_GIVEN', null, 'q3'),
+            null
+        );
+
+        const answeredResult = entries[0].data.entry.answers;
+        const unansweredResult = entries[1].data.entry.answers;
+
+        expect(answeredResult.q2.answer).toBe('keep me');
+        expect(answeredResult.q2.was_jumped).toBe(false);
+        expect(unansweredResult.q2.answer).toBe('');
+        expect(unansweredResult.q2.was_jumped).toBe(true);
     });
 
 });

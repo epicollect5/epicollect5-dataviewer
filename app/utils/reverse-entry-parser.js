@@ -160,15 +160,26 @@ const reverseEntryParser = {
                                     questionsJumpedRefs = new Set([...questionsJumpedRefs, ...jumpedInputsRefs]);
                                 }
                                     break;
-                                case 'NO_ANSWER_GIVEN':
-                                    //todo check this and also checkboxes and search, '' or [] ????
-                                    if (reverseJump.answer_ref === null) {
+                                case 'NO_ANSWER_GIVEN': {
+                                    /**
+                                     * The form definition stores a null answer_ref for this condition,
+                                     * as there is no answer to match.
+                                     * The jump has to fire only when the entry has no answer
+                                     * for this question: an empty array for checkbox/search,
+                                     * an empty string for radio/dropdown and the other types.
+                                     */
+                                    const noAnswerGiven = Array.isArray(answer)
+                                        ? answer.length === 0
+                                        : answer === null || answer === undefined || (typeof answer === 'string' && answer.trim() === '');
+
+                                    if (noAnswerGiven) {
                                         //we have to jump
                                         const destinationRef = reverseJump.toInputRef;
                                         //from current input to jump destination, grab all input refs, they need to be set as jumped
                                         jumpedInputsRefs = self.getjumpedInputRefs(inputs, inputIndex, destinationRef);
                                         questionsJumpedRefs = new Set([...questionsJumpedRefs, ...jumpedInputsRefs]);
                                     }
+                                }
                                     break;
                                 default:
                                 //do nothing
