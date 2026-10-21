@@ -2,6 +2,9 @@
   "permissions": {
     "allow": [
       "mcp__codegraph__codegraph_explore",
+      "mcp__fff__find_files",
+      "mcp__fff__grep",
+      "mcp__fff__multi_grep",
       "Shell(git status:*)",
       "Shell(git diff:*)",
       "Shell(git log:*)",
