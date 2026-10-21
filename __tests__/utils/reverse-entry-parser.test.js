@@ -127,3 +127,124 @@ describe('reverse-entry-parser time question test', () => {
     });
 
 });
+
+const buildInput = (ref, type, jumps, group) => {
+    return {
+        ref,
+        type,
+        jumps: jumps || [],
+        group: group || []
+    };
+};
+
+const buildEntry = (answers) => {
+    return {
+        data: {
+            type: 'entry',
+            entry: {
+                answers
+            }
+        }
+    };
+};
+
+const jumpMappingFor = (inputRef, mapTo, when, answerRef) => {
+    return {
+        ref2MapTo: {
+            [inputRef]: mapTo
+        },
+        reverse: {
+            [mapTo]: {
+                reverse_jumps: [{
+                    toInputRef: 'END',
+                    when,
+                    answer: null,
+                    answer_ref: answerRef
+                }]
+            }
+        }
+    };
+};
+
+describe('reverse-entry-parser jumped answers test', () => {
+
+    it('should send [] for jumped checkbox and search questions and "" for every other type', () => {
+        const answers = {
+            source: { answer: 'yes-ref', was_jumped: false },
+            checkbox: { answer: ['a'], was_jumped: false },
+            searchsingle: { answer: ['b'], was_jumped: false },
+            searchmultiple: { answer: ['c'], was_jumped: false },
+            radio: { answer: 'r', was_jumped: false },
+            dropdown: { answer: 'd', was_jumped: false },
+            text: { answer: 'hello', was_jumped: false },
+            location: { answer: { latitude: 1, longitude: 2, accuracy: 3 }, was_jumped: false }
+        };
+
+        const inputs = [
+            buildInput('source', 'dropdown', [{ to: 'END', when: 'IS', answer_ref: 'yes-ref' }]),
+            buildInput('checkbox', 'checkbox'),
+            buildInput('searchsingle', 'searchsingle'),
+            buildInput('searchmultiple', 'searchmultiple'),
+            buildInput('radio', 'radio'),
+            buildInput('dropdown', 'dropdown'),
+            buildInput('text', 'text'),
+            buildInput('location', 'location')
+        ];
+
+        const entries = reverseEntryParser.setEntryJumps(
+            [buildEntry(answers)],
+            inputs,
+            jumpMappingFor('source', 'Source Q', 'IS', 'yes-ref'),
+            null
+        );
+
+        const result = entries[0].data.entry.answers;
+
+        expect(result.checkbox.answer).toEqual([]);
+        expect(result.searchsingle.answer).toEqual([]);
+        expect(result.searchmultiple.answer).toEqual([]);
+        expect(result.radio.answer).toBe('');
+        expect(result.dropdown.answer).toBe('');
+        expect(result.text.answer).toBe('');
+        expect(result.location.answer).toBe('');
+        expect(result.source.answer).toBe('yes-ref');
+        expect(result.text.was_jumped).toBe(true);
+        expect(result.source.was_jumped).toBe(false);
+    });
+
+    it('should use the jumped question type even when the jumping question is a checkbox', () => {
+        const answers = {
+            source: { answer: ['a-ref'], was_jumped: false },
+            text: { answer: 'hello', was_jumped: false },
+            checkbox: { answer: ['b-ref'], was_jumped: false },
+            groupChildCheckbox: { answer: ['c-ref'], was_jumped: false },
+            groupChildText: { answer: 'group text', was_jumped: false }
+        };
+
+        const inputs = [
+            buildInput('source', 'checkbox', [{ to: 'END', when: 'IS', answer_ref: 'a-ref' }]),
+            buildInput('text', 'text'),
+            buildInput('checkbox', 'checkbox'),
+            buildInput('group', 'group', [], [
+                buildInput('groupChildCheckbox', 'checkbox'),
+                buildInput('groupChildText', 'text')
+            ])
+        ];
+
+        const entries = reverseEntryParser.setEntryJumps(
+            [buildEntry(answers)],
+            inputs,
+            jumpMappingFor('source', 'Source Q', 'IS', 'a-ref'),
+            null
+        );
+
+        const result = entries[0].data.entry.answers;
+
+        expect(result.text.answer).toBe('');
+        expect(result.checkbox.answer).toEqual([]);
+        expect(result.groupChildCheckbox.answer).toEqual([]);
+        expect(result.groupChildText.answer).toBe('');
+        expect(result.source.answer).toEqual(['a-ref']);
+    });
+
+});

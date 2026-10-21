@@ -69,6 +69,16 @@ const reverseEntryParser = {
         //hierarchy or branch entry?
         const entryType = currentBranchRef ? 'branch_entry' : 'entry';
 
+        //map every input ref (group inputs included) to its type,
+        //as a jumped question needs the empty value matching its own type
+        const inputTypesByRef = {};
+        inputs.forEach((formInput) => {
+            inputTypesByRef[formInput.ref] = formInput.type;
+            (formInput.group || []).forEach((groupInput) => {
+                inputTypesByRef[groupInput.ref] = groupInput.type;
+            });
+        });
+
         entriesClone.forEach((entry, entryIndex) => {
 
             let questionsJumpedRefs = new Set([]);
@@ -173,12 +183,6 @@ const reverseEntryParser = {
 
                     Object.keys(entry.data[entryType].answers).forEach((inputRef) => {
 
-                        const inputTypesWithAnswerArray = [
-                            PARAMETERS.INPUT_TYPES.EC5_CHECKBOX_TYPE,
-                            PARAMETERS.INPUT_TYPES.EC5_SEARCH_SINGLE_TYPE,
-                            PARAMETERS.INPUT_TYPES.EC5_SEARCH_MULTIPLE_TYPE
-                        ];
-
                         //was this question jumped by the form logic?
                         if (questionsJumpedRefs.has(inputRef)) {
                             //ok: this question was jumped by the form logic
@@ -186,7 +190,7 @@ const reverseEntryParser = {
 
                             //todo: here we need to trigger the error on server side for bulk uploads
                             //todo:because it is not possible to provide values for jumped questions
-                            if (inputTypesWithAnswerArray.includes(input.type)) {
+                            if (PARAMETERS.MULTIPLE_ANSWERS_TYPES_AS_ARRAY.indexOf(inputTypesByRef[inputRef]) > -1) {
                                 //above question types get empty array when no answer is provided
                                 entriesClone[entryIndex].data[entryType].answers[inputRef].answer = [];
                             } else {
