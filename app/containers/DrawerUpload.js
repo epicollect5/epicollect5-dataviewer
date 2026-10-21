@@ -391,6 +391,12 @@ class DrawerUpload extends React.Component {
                     true,
                 skipEmptyLines:
                     'greedy',
+                //Excel adds a BOM and manual edits can leave spaces around headers:
+                //trim them so the header check and the ec5_uuid lookup work
+                transformHeader:
+                    (header) => {
+                        return header.trim();
+                    },
                 delimiter:
                     ',',
                 escapeChar: '"'
