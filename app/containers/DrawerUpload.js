@@ -355,6 +355,10 @@ class DrawerUpload extends React.Component {
                                 } else {
                                     this.props.showToastFileUploadError(PARAMETERS.LABELS.FILE_UUID_ERROR);
                                 }
+
+                                //do not stage the entries, otherwise they would be uploaded
+                                //the next time the upload modal is opened
+                                return false;
                             }
 
                             if (entries.length > 0) {
