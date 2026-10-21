@@ -27,4 +27,20 @@ describe('(Component) ErrorView', () => {
             expect(node.text()).toBe(errors[index].title);
         });
     });
+
+    it('+++ display a plain error that is not a list', () => {
+        const wrapper = shallow(<ErrorView errors="Something went wrong" />);
+        const errorView = wrapper.find('div#error-view');
+
+        expect(errorView.text()).toBe('Something went wrong');
+    });
+
+    it('+++ display a react node error that is not a list', () => {
+        const wrapper = shallow(<ErrorView errors={<p className="an-error">Something went wrong</p>} />);
+        const errorView = wrapper.find('div#error-view');
+
+        expect(errorView.children()).toHaveLength(1);
+        expect(errorView.children().at(0).type()).toBe('p');
+    });
+
 });

@@ -1,31 +1,6 @@
 import reverseEntryParser from 'utils/reverse-entry-parser';
 import PARAMETERS from 'config/parameters';
-
-const RealDate = Date;
-
-/**
- * Replace the global Date so that new Date() always returns the given instant.
- * This keeps the UTC date/time maths deterministic regardless of when the tests run.
- */
-const mockCurrentDate = (isoString) => {
-    const fixedTime = new RealDate(isoString).getTime();
-
-    function MockDate(...args) {
-        if (args.length === 0) {
-            return new RealDate(fixedTime);
-        }
-        return new RealDate(...args);
-    }
-
-    MockDate.now = () => {
-        return fixedTime;
-    };
-    MockDate.parse = RealDate.parse;
-    MockDate.UTC = RealDate.UTC;
-    MockDate.prototype = RealDate.prototype;
-
-    global.Date = MockDate;
-};
+import { RealDate, mockCurrentDate, restoreRealDate } from '../fixtures/mockDate';
 
 const reverseMappingForTime = (timeFormat) => {
     return {
@@ -61,7 +36,7 @@ const parseTimeAnswer = (answerValue, timeFormat) => {
 describe('reverse-entry-parser time question test', () => {
 
     afterEach(() => {
-        global.Date = RealDate;
+        restoreRealDate();
     });
 
     it('should use the day of the month, not the day of the week, on a Sunday (UTC)', () => {
@@ -404,6 +379,200 @@ describe('reverse-entry-parser location jump test', () => {
         expect(result[locationRef].was_jumped).toBe(false);
         expect(result[q2Ref].was_jumped).toBe(true);
         expect(result[q3Ref].was_jumped).toBe(true);
+    });
+
+});
+
+describe('reverse-entry-parser getEntry test', () => {
+
+    const baseParams = {
+        uuid: 'an-uuid',
+        currentFormRef: 'form-1',
+        currentBranchRef: null,
+        entryTitle: 'A title',
+        reverseAnswer: { answer: { 'text-ref': { answer: 'an answer', was_jumped: false } } },
+        projectVersion: 5,
+        parentEntryUuid: null,
+        parentFormRef: null,
+        currentBranchOwnerUuid: null
+    };
+
+    it('should build a regular entry', () => {
+        const entry = reverseEntryParser.getEntry(baseParams);
+
+        expect(entry.data.type).toBe('entry');
+        expect(entry.data.id).toBe('an-uuid');
+        expect(entry.data.attributes.form).toEqual({ ref: 'form-1', type: 'hierarchy' });
+        expect(entry.data.relationships.parent).toEqual({});
+        expect(entry.data.relationships.branch).toEqual({});
+        expect(entry.data.entry.entry_uuid).toBe('an-uuid');
+        expect(entry.data.entry.title).toBe('A title');
+        expect(entry.data.entry.answers).toEqual({ 'text-ref': { answer: 'an answer', was_jumped: false } });
+        expect(entry.data.entry.project_version).toBe(5);
+        expect(entry.data.entry.created_at).toEqual(expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/));
+    });
+
+    it('should build a child form entry', () => {
+        const entry = reverseEntryParser.getEntry({
+            ...baseParams,
+            parentEntryUuid: 'parent-uuid',
+            parentFormRef: 'parent-form'
+        });
+
+        expect(entry.data.relationships.parent).toEqual({
+            data: {
+                parent_form_ref: 'parent-form',
+                parent_entry_uuid: 'parent-uuid'
+            }
+        });
+    });
+
+    it('should build a branch entry', () => {
+        const entry = reverseEntryParser.getEntry({
+            ...baseParams,
+            currentBranchRef: 'branch-ref',
+            currentBranchOwnerUuid: 'owner-uuid'
+        });
+
+        expect(entry.data.type).toBe('branch_entry');
+        expect(entry.data.branch_entry.entry_uuid).toBe('an-uuid');
+        expect(entry.data.relationships.branch).toEqual({
+            data: {
+                owner_input_ref: 'branch-ref',
+                owner_entry_uuid: 'owner-uuid'
+            }
+        });
+    });
+
+});
+
+describe('reverse-entry-parser getjumpedInputRefs test', () => {
+
+    const inputs = [
+        { ref: 'q1', type: PARAMETERS.INPUT_TYPES.EC5_TEXT_TYPE, group: [] },
+        { ref: 'q2', type: PARAMETERS.INPUT_TYPES.EC5_TEXT_TYPE, group: [] },
+        { ref: 'q3', type: PARAMETERS.INPUT_TYPES.EC5_GROUP_TYPE, group: [{ ref: 'q3a', type: PARAMETERS.INPUT_TYPES.EC5_TEXT_TYPE }] },
+        { ref: 'q4', type: PARAMETERS.INPUT_TYPES.EC5_TEXT_TYPE, group: [] }
+    ];
+
+    it('should grab every ref after the input when jumping to the end', () => {
+        expect(reverseEntryParser.getjumpedInputRefs(inputs, 0, 'END')).toEqual(['q2', 'q3', 'q4', 'q3a']);
+    });
+
+    it('should grab the refs up to the destination', () => {
+        expect(reverseEntryParser.getjumpedInputRefs(inputs, 0, 'q3')).toEqual(['q2']);
+    });
+
+    it('should grab the group member refs too', () => {
+        expect(reverseEntryParser.getjumpedInputRefs(inputs, 1, 'q4')).toEqual(['q3', 'q3a']);
+    });
+
+});
+
+describe('reverse-entry-parser getReverseAnswers test', () => {
+
+    const buildMapping = (reverse) => {
+        const ref2MapTo = {};
+        Object.keys(reverse).forEach((header) => {
+            ref2MapTo[reverse[header].input_ref] = header;
+        });
+        return { ref2MapTo, reverse };
+    };
+
+    it('should split a location over three headers', () => {
+        const reverseMapping = buildMapping({
+            'lat_Q1': { input_ref: 'location-ref', type: PARAMETERS.INPUT_TYPES.EC5_LOCATION_TYPE },
+            'long_Q1': { input_ref: 'location-ref', type: PARAMETERS.INPUT_TYPES.EC5_LOCATION_TYPE },
+            'accuracy_Q1': { input_ref: 'location-ref', type: PARAMETERS.INPUT_TYPES.EC5_LOCATION_TYPE }
+        });
+
+        const answers = reverseEntryParser.getReverseAnswers([
+            { ec5_uuid: 'an-uuid', 'lat_Q1': '45.463822', 'long_Q1': '9.190268', 'accuracy_Q1': '12' }
+        ], reverseMapping, [], null, {});
+
+        expect(answers[0].answer['location-ref'].answer).toEqual({
+            latitude: 45.463822,
+            longitude: 9.190268,
+            accuracy: 12
+        });
+        expect(answers[0].answer['location-ref'].was_jumped).toBe(false);
+        expect(answers[0].uuid).toBe('an-uuid');
+    });
+
+    it('should map a radio value back to its answer ref', () => {
+        const reverseMapping = buildMapping({
+            'Q1': {
+                input_ref: 'radio-ref',
+                type: PARAMETERS.INPUT_TYPES.EC5_RADIO_TYPE,
+                reverse_possible_answers: { 'Radio A': 'radio-ref-a' }
+            }
+        });
+
+        const answers = reverseEntryParser.getReverseAnswers([
+            { ec5_uuid: 'an-uuid', 'Q1': 'Radio A' }
+        ], reverseMapping, [], null, {});
+
+        expect(answers[0].answer['radio-ref'].answer).toBe('radio-ref-a');
+    });
+
+    it('should keep a value that does not match any possible answer', () => {
+        const reverseMapping = buildMapping({
+            'Q1': {
+                input_ref: 'radio-ref',
+                type: PARAMETERS.INPUT_TYPES.EC5_RADIO_TYPE,
+                reverse_possible_answers: { 'Radio A': 'radio-ref-a' }
+            }
+        });
+
+        const answers = reverseEntryParser.getReverseAnswers([
+            { ec5_uuid: 'an-uuid', 'Q1': 'Radio Z' }
+        ], reverseMapping, [], null, {});
+
+        expect(answers[0].answer['radio-ref'].answer).toBe('Radio Z');
+    });
+
+    it('should map the checkbox values back to their answer refs', () => {
+        const reverseMapping = buildMapping({
+            'Q1': {
+                input_ref: 'checkbox-ref',
+                type: PARAMETERS.INPUT_TYPES.EC5_CHECKBOX_TYPE,
+                reverse_possible_answers: { 'Checkbox A': 'checkbox-ref-a' }
+            }
+        });
+
+        const answers = reverseEntryParser.getReverseAnswers([
+            { ec5_uuid: 'an-uuid', 'Q1': 'Checkbox A, Checkbox B' }
+        ], reverseMapping, [], null, {});
+
+        expect(answers[0].answer['checkbox-ref'].answer).toEqual(['checkbox-ref-a', '-Checkbox B-']);
+    });
+
+    it('should add an empty answer for the media questions that are not in the file', () => {
+        const reverseMapping = buildMapping({
+            'Q1': { input_ref: 'photo-ref', type: PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE }
+        });
+
+        const inputsExtra = {
+            'photo-ref': { data: { type: PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE } }
+        };
+
+        const answers = reverseEntryParser.getReverseAnswers([
+            { ec5_uuid: 'an-uuid' }
+        ], reverseMapping, [], null, inputsExtra);
+
+        expect(answers[0].answer['photo-ref']).toEqual({ was_jumped: false, answer: '' });
+    });
+
+    it('should add an empty answer for every branch', () => {
+        const reverseMapping = buildMapping({
+            'Q1': { input_ref: 'text-ref', type: PARAMETERS.INPUT_TYPES.EC5_TEXT_TYPE }
+        });
+
+        const answers = reverseEntryParser.getReverseAnswers([
+            { ec5_uuid: 'an-uuid', 'Q1': 'an answer' }
+        ], reverseMapping, ['branch-ref'], null, {});
+
+        expect(answers[0].answer['branch-ref']).toEqual({ was_jumped: false, answer: '' });
     });
 
 });
