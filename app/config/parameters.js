@@ -240,6 +240,7 @@ const PARAMETERS = {
         FILE_UPLOAD_ERROR_NO_ROWS: 'Invalid file, no entries found',
         FILE_SIZE_ERROR: 'File size exceeded',
         FILE_MAPPING_ERROR: 'File mapping does not match',
+        FILE_DUPLICATE_HEADERS_ERROR: 'File contains duplicate headers',
         FILE_UUID_ERROR: 'File contains duplicate ec5_uuid values',
         FILE_BRANCH_UUID_ERROR: 'File contains duplicate ec5_branch_uuid values',
         FILE_DOWNLOAD_ERROR: 'Cannot download file',
