@@ -1,5 +1,23 @@
 # Release Notes
 
+## 0.1.9
+- Bulk upload: reject files with duplicate headers, trim CSV headers and stop on duplicate UUIDs
+- Bulk upload: fixed location jumps and time answers when the answer is empty
+- Tests: fixed the media and filter controls suites; the full Jest suite is green again
+## 0.1.8
+- Added API key support for CARTO tile providers and updated tile layer subdomains
+- Download checks for the local environment before running
+## 0.1.7
+- Removed the pink background from the date picker
+## 0.1.6
+- Replaced Mapbox tiles with free alternatives and updated tile layer attributions
+## 0.1.5
+- Added timestamp versioning to media URLs so edited files are not served from cache
+- Added the version in the logo url query string for caching
+## 0.1.4
+- Added the version in the logo url query string for caching
+## 0.1.3
+- Added loading state, error handling and a pagination control to the entries table
 ## 0.1.2
 - Updated Node.js requirement to 18; added .nvmrc, and example copy-to-server script
 - Modernized build/dev workflow: 
