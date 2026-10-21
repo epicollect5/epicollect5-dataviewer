@@ -7,6 +7,30 @@
 - Do NOT introduce new patterns unless explicitly requested
 - Follow existing architecture and conventions from `docs/`
 
+## Environment
+
+- The shell here has `NODE_ENV=production` set. npm therefore defaults to
+  `omit=dev`, so **any** `npm install` or `npm ci` reifies the tree *without*
+  dev dependencies and **deletes** the build and test toolchain from
+  `node_modules` — webpack, gulp, babel, jest, enzyme. The repo is then
+  neither buildable nor testable, and the damage is not obvious until
+  `npx webpack` tries to fetch webpack 5. This has happened more than once:
+  always install with `--include=dev`:
+  `npm ci --include=dev --lockfile-version 2 --legacy-peer-deps`
+  (`--legacy-peer-deps` is required because the tree pins webpack 1 while
+  `dotenv-webpack` wants webpack 4/5, and npm 11 refuses the conflict
+  otherwise).
+- `npm install <pkg>` is **not** additive here: it re-resolves the whole tree
+  and prunes what it considers extraneous. After any install, check with
+  `npm ls --depth=0` that webpack, gulp and jest are still present, and
+  restore with `npm ci --include=dev` if they are not.
+- `NODE_ENV=production` also changes application behaviour:
+  `app/config/parameters.js` sets `IS_LOCALHOST` to `0`, so the **internal**
+  bulk-upload endpoint is used (`IS_LOCALHOST === 1`, i.e. any non-production
+  `NODE_ENV`, switches it to the external one). Do not assume `NODE_ENV=test`
+  in a shell — Jest only defaults it when it is unset — so assert on the
+  parameter rather than on the environment.
+
 ## Two Codebases
 
 This repository holds **two applications**. They have different stacks, different
@@ -82,6 +106,9 @@ A behaviour-preserving refactor changes structure while preserving behaviour, co
 - Run with `npm test`, or `npm test -- <path>` for a single file
 - `setupTests.js` at the repo root configures the Enzyme adapter
 - The whole suite is green — a failing test is a regression, not a known baseline
+- Every axios call site is mocked, so a green suite does **not** prove the app
+  works in a browser: changes to the HTTP layer need a manual smoke test
+  (load a project, open an entry, upload, download, play media)
 
 ### Vue port (`vue-port/`)
 
