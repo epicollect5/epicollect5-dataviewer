@@ -99,10 +99,16 @@ A behaviour-preserving refactor changes structure while preserving behaviour, co
 
 ## Search Tools
 
+- For file search and content grep, use the fff MCP tools — `mcp__fff__find_files`
+  (paths), `mcp__fff__grep` (content) and `mcp__fff__multi_grep` (several patterns
+  at once). Include the known directory or module in the first search, use
+  `definitions_only` for declarations, and read more source only when the
+  returned lines need context.
 - For symbol-level questions (call paths, architecture, "how does X work"), use
-  codegraph first — `mcp__codegraph__codegraph_explore`. One call returns the
+  codegraph — `mcp__codegraph__codegraph_explore`. One call returns the
   verbatim source grouped by file, plus the call path and blast radius.
-- For file search and content search, use the built-in Grep/Glob tools.
+- fff indexes the git-tracked tree, so the gitignored `vue-port/` is not in its
+  index — use codegraph for the port's source.
 - codegraph does not index configs, docs, stylesheets or build files — read those
   directly.
 
