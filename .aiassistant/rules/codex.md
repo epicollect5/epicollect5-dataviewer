@@ -31,4 +31,5 @@ apply: always
 
 ## Tools
 
+- Use codegraph (`mcp__codegraph__codegraph_explore`) for symbol-level questions — call paths, architecture, "how does X work" — before grepping
 - Use grep, not rg (ripgrep is not installed)
