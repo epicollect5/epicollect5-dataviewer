@@ -662,6 +662,11 @@ const reverseEntryParser = {
                     reverseMapping[mapTo].input_ref = inputRef;
                     reverseMapping[mapTo].type = input.type;
 
+                    //a location is split over three headers sharing the same mapping object,
+                    //but jumps and missing answers are looked up by input ref,
+                    //so map it to the first header
+                    mappingHashMap[inputRef] = mapTo;
+
                     mapTo = 'long_' + value[1].map_to;
                     reverseMapping[mapTo] = value[1];
                     reverseMapping[mapTo].input_ref = inputRef;

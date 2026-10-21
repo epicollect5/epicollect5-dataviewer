@@ -322,3 +322,88 @@ describe('reverse-entry-parser NO_ANSWER_GIVEN jump test', () => {
     });
 
 });
+
+describe('reverse-entry-parser location jump test', () => {
+
+    it('should reverse map and apply a jump on a location question', () => {
+        const formRef = 'form-ref';
+        const locationRef = 'q1-location';
+        const q2Ref = 'q2-text';
+        const q3Ref = 'q3-text';
+
+        const locationInput = {
+            ref: locationRef,
+            type: PARAMETERS.INPUT_TYPES.EC5_LOCATION_TYPE,
+            is_title: false,
+            datetime_format: null,
+            jumps: [{ to: 'END', when: 'ALL', answer_ref: null }]
+        };
+        const textInput = (ref) => {
+            return {
+                ref,
+                type: PARAMETERS.INPUT_TYPES.EC5_TEXT_TYPE,
+                is_title: false,
+                datetime_format: null,
+                jumps: []
+            };
+        };
+
+        //a location is split over three columns (lat, long, accuracy)
+        const inputs = [locationInput, textInput(q2Ref), textInput(q3Ref)];
+        const currentFormMapping = {
+            [locationRef]: { map_to: 'Q1', possible_answers: {} },
+            [q2Ref]: { map_to: 'Q2', possible_answers: {} },
+            [q3Ref]: { map_to: 'Q3', possible_answers: {} }
+        };
+        const projectExtra = {
+            inputs: {
+                [locationRef]: { data: locationInput },
+                [q2Ref]: { data: inputs[1] },
+                [q3Ref]: { data: inputs[2] }
+            }
+        };
+        const projectDefinition = {
+            project: {
+                forms: [{ ref: formRef, inputs }]
+            }
+        };
+
+        //must not throw: the location ref needs to be mapped to one of its headers
+        const reverseMapping = reverseEntryParser.getReverseMapping(
+            formRef,
+            currentFormMapping,
+            projectExtra,
+            projectDefinition,
+            null
+        );
+
+        expect(reverseMapping.ref2MapTo[locationRef]).toBe('lat_Q1');
+        expect(reverseMapping.reverse.lat_Q1.reverse_jumps).toEqual([{
+            to: 'END',
+            toInputRef: 'END',
+            when: 'ALL',
+            answer: null,
+            answer_ref: null
+        }]);
+
+        //the jump must be applied, keeping the location answer
+        const entries = reverseEntryParser.setEntryJumps(
+            [buildEntry({
+                [locationRef]: { answer: { latitude: 1.5, longitude: 2.5, accuracy: 3 }, was_jumped: false },
+                [q2Ref]: { answer: 'hello', was_jumped: false },
+                [q3Ref]: { answer: 'world', was_jumped: false }
+            })],
+            inputs,
+            reverseMapping,
+            null
+        );
+
+        const result = entries[0].data.entry.answers;
+
+        expect(result[locationRef].answer).toEqual({ latitude: 1.5, longitude: 2.5, accuracy: 3 });
+        expect(result[locationRef].was_jumped).toBe(false);
+        expect(result[q2Ref].was_jumped).toBe(true);
+        expect(result[q3Ref].was_jumped).toBe(true);
+    });
+
+});
