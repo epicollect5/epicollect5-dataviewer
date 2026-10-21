@@ -140,6 +140,19 @@ SCSS, compiled by gulp — **no JS file imports a `.scss` file**.
 The shared partials `_variables.scss` and `_mediaQueries.scss` are used by every
 other partial. A change to either silently changes every component.
 
+### Why gulp, and not the webpack SCSS loader
+
+`webpack.config.js` **does** configure an SCSS loader and
+`ExtractTextPlugin('dataviewer.css')` — but that path is **dead code**.
+`ExtractTextPlugin` only emits CSS for modules the JS bundle actually imports,
+and **no JS file imports a stylesheet**: the two stylesheets are `<link>`ed from
+`app/index.html` instead. Webpack therefore extracts **nothing**, and
+`dist/dataviewer.css` is produced only by gulp (`gulp-sass` → dart-sass, then
+`clean-css` with `compatibility: 'ie8'`).
+
+Verified: running `webpack` on its own leaves `dist/dataviewer.css` byte-for-byte
+untouched — same hash, same mtime.
+
 ## Utils
 
 `app/utils/` holds pure helpers, one concern per file:
@@ -259,6 +272,36 @@ npm start          # webpack-dev-server (port 2222) & gulp watch
 npm test           # jest --silent
 ```
 
+### Build phase — two pipelines, one command
+
+The legacy app has **two independent asset pipelines**, and `npm run build` runs
+both, in this order:
+
+| Step | Tool | Reads | Writes |
+|---|---|---|---|
+| 1 | `gulp css` | `app/theme/app.scss`, `app/vendor/css/dataviewer/*.css` | `dist/dataviewer.css`, `dist/vendor-dataviewer.css` |
+| 2 | `webpack -p` | `app/app.js` and the JS tree | `dist/dataviewer.js` (+ `.map`) |
+
+They do not overlap, and **neither is optional**:
+
+- **Never build with `webpack` alone.** The webpack SCSS loader is dead code
+  (see [Styling](#styling)), so webpack extracts no CSS and never touches
+  `dist/dataviewer.css`. Skipping `gulp css` ships an **unstyled app** — and
+  the build **still succeeds**. There is no error to notice.
+- `gulp css` is `series(scss, vendorCss)` and produces **both** stylesheets.
+  There is no `default` gulp task: bare `gulp` fails with
+  `Task never defined: default`. The task to run is `gulp css`.
+- gulp/vinyl-fs **preserves the mtime when the written content is unchanged**,
+  so an old timestamp on `dist/dataviewer.css` is not evidence of a stale file.
+  Check the content, or the history of `app/theme/`, instead.
+- `dist/dataviewer.css` and `dist/vendor-dataviewer.css` are **tracked in
+  git**; `dist/dataviewer.js` and `dist/*.map` are **gitignored** and ship as
+  release assets instead.
+- In production (`-p`) the `HtmlWebpackPlugin` is disabled, so
+  `dist/index.html` is the committed file, not a regenerated one.
+
+### Artifacts
+
 `npm run build` produces the two deployable artifacts:
 
 - `dist/dataviewer.js`
@@ -273,11 +316,12 @@ is the committed template.
 The release version is plain semver `X.Y.Z`:
 
 - `CHANGELOG.md` → `# Release Notes`, then one `## X.Y.Z` heading per release
-- git tags are `X.Y.Z` (latest `0.1.8`)
+- git tags are `X.Y.Z` (latest `0.2.0`)
 
-> **`package.json` and `package-lock.json` currently say `1.0.0`, which has
-> drifted from the tag/CHANGELOG (`0.1.8`).** The git tag and the CHANGELOG
-> heading are the authoritative version. `package.json` is not.
+> **The git tag and the CHANGELOG heading are the authoritative version.**
+> `package.json` and `package-lock.json` (both version fields) are bumped to
+> match on every release and must not be allowed to drift from them — a
+> mismatch makes the released build impossible to identify.
 
 ## Vue port
 

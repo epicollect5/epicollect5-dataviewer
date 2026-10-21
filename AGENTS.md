@@ -31,6 +31,19 @@
   in a shell — Jest only defaults it when it is unset — so assert on the
   parameter rather than on the environment.
 
+## Build
+
+- The legacy app has **two** asset pipelines: `gulp css` (SCSS → `dist/dataviewer.css`
+  and `dist/vendor-dataviewer.css`) and `webpack` (JS → `dist/dataviewer.js`).
+  **Always build with `npm run build`** (`gulp css && webpack -p --progress`).
+- **Never build with `webpack` alone.** The webpack SCSS loader is dead code — no JS
+  file imports a stylesheet, so `ExtractTextPlugin` extracts nothing and webpack
+  never touches `dist/dataviewer.css`. Skipping `gulp css` ships an **unstyled
+  app** and the build **still succeeds**: no error to notice. See
+  `docs/ARCHITECTURE.md` → Styling → "Why gulp, and not the webpack SCSS loader".
+- `gulp css` produces both stylesheets; there is no `default` gulp task (bare
+  `gulp` fails with `Task never defined: default`).
+
 ## Two Codebases
 
 This repository holds **two applications**. They have different stacks, different
