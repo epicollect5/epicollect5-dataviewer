@@ -16,11 +16,26 @@ const entryParser = {
         const rawEntry = branchInputRef ? currentEntry.branch_entry : currentEntry.entry;
         const attributes = currentEntry.attributes;
         const relationships = currentEntry.relationships;
-        const inputRawAnswer = rawEntry ? rawEntry.answers[inputRef] : currentEntry.answers[inputRef];
+        //the entry, the answers map and the answer itself can all be missing
+        const rawAnswers = rawEntry ? rawEntry.answers : currentEntry.answers;
+        const inputRawAnswer = rawAnswers ? rawAnswers[inputRef] : undefined;
         const uploadedAt = rawEntry ? rawEntry.uploaded_at : currentEntry.uploaded_at;
 
+        //no answer at all for this input: return an empty answer
+        if (!inputRawAnswer) {
+            return [{
+                entryUuid,
+                attributes,
+                relationships,
+                inputRef: input.ref,
+                inputType: input.type,
+                cellType: PARAMETERS.CEll_TYPES.TEXT,
+                answer: ''
+            }];
+        }
+
         //was the question jumped? return immediately with an empty answer object
-        if (rawEntry.answers[inputRef].was_jumped) {
+        if (inputRawAnswer.was_jumped) {
             //set it to empty string then
             parsedAnswer = [{
                 entryUuid,

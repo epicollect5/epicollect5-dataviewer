@@ -224,6 +224,52 @@ describe('entry parser utils test', () => {
             const parsed = parse('branch-radio-ref', branchRow, BRANCH_REF);
             expect(parsed[0].answer).toBe('Branch Radio A');
         });
+
+        it('should return an empty answer when the input has no answer', () => {
+            const entryWithoutAnswers = {
+                ...getEntry(),
+                entry: {
+                    ...getEntry().entry,
+                    answers: {}
+                }
+            };
+
+            const parsed = parse('text-ref', entryWithoutAnswers);
+
+            expect(parsed).toHaveLength(1);
+            expect(parsed[0].answer).toBe('');
+            expect(parsed[0].cellType).toBe(PARAMETERS.CEll_TYPES.TEXT);
+            expect(parsed[0].inputRef).toBe('text-ref');
+        });
+
+        it('should return an empty answer when the branch entry has no answers', () => {
+            const branchRowWithoutAnswers = {
+                ...getEntry(),
+                branch_entry: {
+                    ...getBranchEntry(),
+                    answers: {}
+                }
+            };
+
+            const parsed = parse('branch-text-ref', branchRowWithoutAnswers, BRANCH_REF);
+
+            expect(parsed).toHaveLength(1);
+            expect(parsed[0].answer).toBe('');
+            expect(parsed[0].cellType).toBe(PARAMETERS.CEll_TYPES.TEXT);
+        });
+
+        it('should return an empty answer when the branch entry is missing', () => {
+            const rowWithoutBranchEntry = {
+                ...getEntry(),
+                branch_entry: null
+            };
+
+            const parsed = parse('branch-text-ref', rowWithoutBranchEntry, BRANCH_REF);
+
+            expect(parsed).toHaveLength(1);
+            expect(parsed[0].answer).toBe('');
+            expect(parsed[0].cellType).toBe(PARAMETERS.CEll_TYPES.TEXT);
+        });
     });
 
     describe('getEmptyEntryForDisplay', () => {
