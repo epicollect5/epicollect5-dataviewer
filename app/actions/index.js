@@ -482,13 +482,16 @@ export const fetchEntriesTablePage = (requestUrl, projectSlug, formRef, projectE
         });
         axios.get(requestUrl)
             .then(function(response) {
+                //the loader stays up for a minimum time, so it does not flash:
+                //this is not a guard against multiple clicks, the pagination
+                //buttons have their own one (see SecondaryNavbar)
                 setTimeout(function() {
                     dispatch({
                         type: FETCH_ENTRIES_TABLE_PAGE + '_FULFILLED',
                         payload: response,
                         meta: { projectSlug, formRef, projectExtra, currentBranchRef }
                     });
-                }, 2000);
+                }, PARAMETERS.DELAY.TABLE_PAGE_MIN);
             })
             .catch(function(error) {
                 dispatch({

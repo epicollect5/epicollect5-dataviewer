@@ -302,7 +302,9 @@ const PARAMETERS = {
     DELAY: {
         SHORT: 250,
         MEDIUM: 500,
-        LONG: 1000
+        LONG: 1000,
+        //minimum time the table page loader stays up, so it does not flash
+        TABLE_PAGE_MIN: 2000
     },
     MAP_OVERLAYS: {
         CLUSTERS: 'Clusters',
