@@ -257,6 +257,17 @@ export default function tableReducer(state = initialState, action) {
         case DELETE_ENTRY + '_FULFILLED': {
             //remove row from table
             const newRows = helpers.removeItem(state.rows, state.rowIndexToDelete);
+
+            //the pagination is null until the first table page has been loaded,
+            //so there is no total to update
+            if (!state.pagination) {
+                return {
+                    ...state,
+                    rows: newRows,
+                    rowIndexToDelete: null
+                };
+            }
+
             //update total
             const newTotal = state.pagination.total - 1;
 

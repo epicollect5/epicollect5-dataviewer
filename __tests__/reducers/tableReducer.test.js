@@ -282,6 +282,21 @@ describe('table reducer test', () => {
         expect(state.pagination.newest).toBe('a date');
     });
 
+    it('should remove the row without a total when no page has been loaded', () => {
+        const state = tableReducer({
+            ...initialState,
+            rows: [['row-0'], ['row-1']],
+            rowIndexToDelete: 1
+        }, {
+            type: DELETE_ENTRY + '_FULFILLED'
+        });
+
+        expect(state.rows).toEqual([['row-0']]);
+        expect(state.rowIndexToDelete).toBe(null);
+        //the pagination is still null, as it was before the delete
+        expect(state.pagination).toBe(null);
+    });
+
     it('should clear the row to delete when the entry could not be deleted', () => {
         const state = tableReducer({
             ...initialState,
