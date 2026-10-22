@@ -48,6 +48,7 @@ fixed code.
 | `544b007` `refactor(reducers): keep the navigation state out of module scope` | 6 |
 | `7abe805` `fix(utils): guard the answer dereference in the entry parser` | 7 |
 | `fe93970` `fix(requests): settle the bulk upload promise on network failure` | 9 |
+| `7ae167a` `fix(containers): ignore the stale responses of a stopped upload` | 9 (follow-up) |
 
 Fixing `app/` diverges it from `vue-port/`, which lives on `codex/datavuer`. The same fixes have to
 be re-applied there.
@@ -261,10 +262,28 @@ result, so such a failure hung the upload flow with no error shown.
   other upload-level errors.
 - `failedReverseEntries` is now reset when a new upload round starts, so a previous round's
   failures cannot reach the "failed only" filter.
-- Two container tests cover the failed row and the continued chain; the request-layer test would
-  time out against the old code, which is the hang itself.
+- Four container tests cover the failed row, the continued chain, and the two stale-callback cases
+  below; the request-layer test would time out against the old code, which is the hang itself.
+
+**A related flaw, found while fixing this one (not introduced by it):** stopping an upload does
+not cancel the request that is in flight — `uploadOneEntry` has no cancel token and no timeout, so
+the POST stays alive. The modal is a single, always-mounted instance (`Main.js:155` renders it
+unconditionally, and `render()` returns `null` rather than unmounting), so the next upload round
+shares the same `this.state.responses` and the same queue. A response from the stopped round that
+arrived *after* the next round had started was therefore appended to the new round's table — and,
+worse, its callback shifted an entry out of the new round's queue and started a second concurrent
+upload, so entries could be uploaded twice or skipped. `wasInterruptedUpload` did not prevent it:
+it is reset to `false` when the new round starts, and it is a round-level boolean, not a
+per-request token.
+
+The fix numbers each upload round (`uploadRound`) and checks it in every callback, so a late
+response or failure from a stopped round is dropped instead of touching the current one. The
+pre-existing success path had the same flaw and is covered by the same fix.
 
 **In Vue: reject (or time out).** The upload flow must surface the failure instead of hanging.
+If the flow can be stopped, also give each upload run an identity of its own and drop the
+callbacks that arrive after it ended — a cancelled request that still answers must not write into
+the next run's results.
 
 ## 10. [re-implemented] `getQueryString` never returns the query string
 
