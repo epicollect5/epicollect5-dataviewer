@@ -49,6 +49,7 @@ fixed code.
 | `7abe805` `fix(utils): guard the answer dereference in the entry parser` | 7 |
 | `fe93970` `fix(requests): settle the bulk upload promise on network failure` | 9 |
 | `7ae167a` `fix(containers): ignore the stale responses of a stopped upload` | 9 (follow-up) |
+| `4f49bd6` `fix(containers): stop the upload when the modal is closed` | 9 (follow-up) |
 
 Fixing `app/` diverges it from `vue-port/`, which lives on `codex/datavuer`. The same fixes have to
 be re-applied there.
@@ -264,6 +265,8 @@ result, so such a failure hung the upload flow with no error shown.
   failures cannot reach the "failed only" filter.
 - Four container tests cover the failed row, the continued chain, and the two stale-callback cases
   below; the request-layer test would time out against the old code, which is the hang itself.
+- Three more cover the stop itself: no entry is submitted after the user stopped, no result lands
+  after the modal was closed, and a new run starts with an empty result state.
 
 **A related flaw, found while fixing this one (not introduced by it):** stopping an upload does
 not cancel the request that is in flight — `uploadOneEntry` has no cancel token and no timeout, so
@@ -280,10 +283,24 @@ The fix numbers each upload round (`uploadRound`) and checks it in every callbac
 response or failure from a stopped round is dropped instead of touching the current one. The
 pre-existing success path had the same flaw and is covered by the same fix.
 
+Closing the modal invalidates the round as well. Two things followed from the round being a
+round-level flag rather than a per-request token:
+
+- **An entry could reach the server after the user stopped the upload.** The chain waits a second
+  (`PARAMETERS.DELAY.LONG`) between entries, and the entry waiting in that delay was submitted
+  unconditionally: the interruption was only checked *after* the POST came back. The round and the
+  interruption are now checked before the entry is submitted, so a stopped upload submits nothing
+  more.
+- **A result could land after the modal was closed.** Closing with the last entry still in flight
+  takes the branch that does not set `wasInterruptedUpload` (the queue is already empty), so the
+  late response was accepted and appended to the results — and the next run did not clear them,
+  so its table showed the previous run's row. Closing now invalidates the round, and each run
+  starts with an empty result state (`resultsRound`).
+
 **In Vue: reject (or time out).** The upload flow must surface the failure instead of hanging.
 If the flow can be stopped, also give each upload run an identity of its own and drop the
 callbacks that arrive after it ended — a cancelled request that still answers must not write into
-the next run's results.
+the next run's results — and check the interruption *before* submitting, not only after.
 
 ## 10. [re-implemented] `getQueryString` never returns the query string
 
