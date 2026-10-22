@@ -35,6 +35,8 @@ class ModalUploadEntries extends React.Component {
         //each upload round gets a number, so that the requests still pending
         //when a new round starts can be told apart from the current ones
         this.uploadRound = 0;
+        //the round the results in the state belong to
+        this.resultsRound = 0;
 
         this.close = this.close.bind(this);
         this.handleClickNext = this.handleClickNext.bind(this);
@@ -166,6 +168,10 @@ class ModalUploadEntries extends React.Component {
 
         const { projectSlug, currentBranchRef, isViewingChildren } = this.props;
 
+        //the round is over: whatever is still pending must not reach the server
+        //nor add any result to this one
+        this.uploadRound += 1;
+
         if (this.clonedReverseEntries.length > 0) {
 
             if (window.confirm('Are you sure? This will stop the uploads')) {
@@ -230,6 +236,8 @@ class ModalUploadEntries extends React.Component {
 
     componentDidMount () {
         console.log(' 1 -modal upload mounted');
+        //a round may have started on the first render
+        this.resultsRound = this.uploadRound;
     }
 
     componentDidUpdate () {
@@ -243,6 +251,16 @@ class ModalUploadEntries extends React.Component {
         //but we do not end up in an infinite loop
         if (!showModalUploadEntries) {
             this.isFirstRun = true;
+        }
+
+        //a new round starts with no results: the ones of the previous round
+        //must not show up in its table
+        if (this.resultsRound !== this.uploadRound) {
+            this.resultsRound = this.uploadRound;
+            this.setState({
+                responses: [],
+                failedResponses: []
+            });
         }
 
         if (this.clonedReverseEntries.length === 0) {
@@ -289,6 +307,11 @@ class ModalUploadEntries extends React.Component {
             };
 
             window.setTimeout(() => {
+            //the upload can be stopped while the entry is waiting to be sent:
+            //it must not reach the server then
+            if (round !== this.uploadRound || this.wasInterruptedUpload) {
+                return;
+            }
             requests.uploadOneEntry(entry, projectSlug).then((response) => {
 
                 if (round !== this.uploadRound) {

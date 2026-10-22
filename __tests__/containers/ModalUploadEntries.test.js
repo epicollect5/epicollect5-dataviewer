@@ -4,6 +4,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
+import promiseMiddleware from 'redux-promise-middleware';
 import axios from 'axios';
 import reducers from 'reducers';
 import ModalUploadEntries from 'containers/ModalUploadEntries';
@@ -27,6 +28,12 @@ const settle = (times) => {
             .then(() => waitReal(30));
     }
     return chain;
+};
+
+//run the upload timeouts once and let the promise chain settle
+const settleOnce = () => {
+    jest.runAllTimers();
+    return waitReal(30);
 };
 
 //the modal reads the project mapping of the current form, the hierarchy
@@ -71,7 +78,7 @@ const getWrapper = (reverseEntries) => {
         drawerReducer: {
             activeMapping: { map_index: 0 }
         }
-    }, applyMiddleware(thunk));
+    }, applyMiddleware(promiseMiddleware(), thunk));
 
     return shallow(<ModalUploadEntries />, { context: { store } }).dive();
 };
@@ -82,6 +89,9 @@ describe('(Container) ModalUploadEntries', () => {
         //the uploads are chained with a timeout between them
         jest.useFakeTimers();
         axios.post.mockReset();
+        //the table refresh the modal triggers when it closes never answers here
+        axios.get.mockReset();
+        axios.get.mockReturnValue(new Promise(() => {}));
     });
 
     afterEach(() => {
@@ -199,5 +209,73 @@ describe('(Container) ModalUploadEntries', () => {
                 //and it must not start another upload
                 expect(axios.post).toHaveBeenCalledTimes(2);
             });
+    });
+
+    it('should not upload an entry after the user stopped the upload', () => {
+        axios.post.mockReturnValue(Promise.resolve({ status: 200, data: { data: { code: 'ec5_357' } } }));
+
+        const wrapper = getWrapper([{ an: 'entry-1' }, { an: 'entry-2' }]);
+
+        return settleOnce()
+            .then(() => {
+                //the first entry is uploaded, the second one is waiting to be sent
+                expect(axios.post).toHaveBeenCalledTimes(1);
+
+                //the user stops the upload
+                window.confirm = jest.fn(() => true);
+                wrapper.instance().close();
+
+                //the waiting entry must not reach the server
+                jest.runAllTimers();
+
+                return waitReal(30);
+            })
+            .then(() => {
+                expect(axios.post).toHaveBeenCalledTimes(1);
+            });
+    });
+
+    it('should not add a result after the modal was closed', () => {
+        let resolveRequest;
+        axios.post.mockReturnValueOnce(new Promise((resolve) => {
+            resolveRequest = resolve;
+        }));
+
+        const wrapper = getWrapper([{ an: 'entry-1' }]);
+
+        return settleOnce()
+            .then(() => {
+                expect(axios.post).toHaveBeenCalledTimes(1);
+
+                //the user closes the modal while the entry is still in flight
+                wrapper.instance().close();
+
+                //the request answers, late
+                resolveRequest({ status: 200, data: { data: { code: 'ec5_357' } } });
+
+                return settleOnce();
+            })
+            .then(() => {
+                //the late response must not add a result after the close
+                expect(wrapper.state('responses')).toHaveLength(0);
+            });
+    });
+
+    it('should start a new run with empty results', () => {
+        axios.post.mockReturnValue(Promise.resolve({ status: 200, data: { data: { code: 'ec5_357' } } }));
+
+        const wrapper = getWrapper([{ an: 'entry-1' }]);
+        //the results of a previous run are still in the state
+        wrapper.setState({ responses: [{ a: 'stale result' }] });
+
+        //a new run starts
+        wrapper.instance().isFirstRun = true;
+        wrapper.setProps({});
+
+        return settleOnce().then(() => {
+            //the stale result is gone, only the new run's one is left
+            expect(wrapper.state('responses')).toHaveLength(2);
+            expect(wrapper.state('responses')).not.toContainEqual({ a: 'stale result' });
+        });
     });
 });
