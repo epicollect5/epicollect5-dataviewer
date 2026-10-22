@@ -120,4 +120,84 @@ describe('(Container) ModalUploadEntries', () => {
             expect(wrapper.state('responses')).toHaveLength(4);
         });
     });
+
+    it('should ignore a late failure from a stopped upload', () => {
+        let rejectFirstRequest;
+        axios.post
+            .mockReturnValueOnce(new Promise((resolve, reject) => {
+                rejectFirstRequest = reject;
+            }))
+            .mockReturnValueOnce(Promise.resolve({ status: 200, data: { data: { code: 'ec5_357' } } }));
+
+        const wrapper = getWrapper([{ an: 'entry-1' }]);
+
+        return settle()
+            .then(() => {
+                //the first entry is being uploaded, its request is still in flight
+                expect(axios.post).toHaveBeenCalledTimes(1);
+
+                //the user stops the upload and starts a new one
+                wrapper.instance().wasInterruptedUpload = true;
+                wrapper.instance().isFirstRun = true;
+                wrapper.setProps({});
+
+                return settle();
+            })
+            .then(() => {
+                //the new round uploaded its entry
+                expect(axios.post).toHaveBeenCalledTimes(2);
+                expect(wrapper.state('responses')).toHaveLength(2);
+
+                //the request of the stopped round fails, late
+                rejectFirstRequest(new Error('Network Error'));
+
+                return settle();
+            })
+            .then(() => {
+                //the late failure must not touch the new round
+                expect(wrapper.state('failedResponses')).toHaveLength(0);
+                expect(wrapper.state('responses')).toHaveLength(2);
+                //and it must not start another upload
+                expect(axios.post).toHaveBeenCalledTimes(2);
+            });
+    });
+
+    it('should ignore a late response from a stopped upload', () => {
+        let resolveFirstRequest;
+        axios.post
+            .mockReturnValueOnce(new Promise((resolve) => {
+                resolveFirstRequest = resolve;
+            }))
+            .mockReturnValueOnce(Promise.resolve({ status: 200, data: { data: { code: 'ec5_357' } } }));
+
+        const wrapper = getWrapper([{ an: 'entry-1' }]);
+
+        return settle()
+            .then(() => {
+                expect(axios.post).toHaveBeenCalledTimes(1);
+
+                //the user stops the upload and starts a new one
+                wrapper.instance().wasInterruptedUpload = true;
+                wrapper.instance().isFirstRun = true;
+                wrapper.setProps({});
+
+                return settle();
+            })
+            .then(() => {
+                expect(axios.post).toHaveBeenCalledTimes(2);
+                expect(wrapper.state('responses')).toHaveLength(2);
+
+                //the request of the stopped round answers, late
+                resolveFirstRequest({ status: 200, data: { data: { code: 'ec5_357' } } });
+
+                return settle();
+            })
+            .then(() => {
+                //the late response must not touch the new round
+                expect(wrapper.state('failedResponses')).toHaveLength(0);
+                expect(wrapper.state('responses')).toHaveLength(2);
+                //and it must not start another upload
+                expect(axios.post).toHaveBeenCalledTimes(2);
+            });
+    });
 });
