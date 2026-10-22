@@ -252,6 +252,8 @@ describe('helpers utils test', () => {
             parentFormRef: 'form-1',
             parentEntryUuid: 'parent-uuid'
         });
+        //the first form has no parent
+        expect(helpers.getParentFormForUpload(forms, 'form-1')).toBe(false);
         //not found
         expect(helpers.getParentFormForUpload(forms, 'not-a-form')).toBe(false);
     });

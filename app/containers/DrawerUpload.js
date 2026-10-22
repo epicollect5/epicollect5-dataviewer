@@ -321,7 +321,12 @@ class DrawerUpload extends React.Component {
                             //When the following is one, users are navigating using the form switcher
                             if (hierarchyNavigator.length > 1) {
                                 //users are navigating down the children/branches
-                                parentFormForUpload = helpers.getParentFormForUpload(hierarchyNavigator, currentFormRef);
+                                const parentForm = helpers.getParentFormForUpload(hierarchyNavigator, currentFormRef);
+                                //the helper returns false when there is no parent form:
+                                //keep the nulls, as the entry parser checks them against null
+                                if (parentForm) {
+                                    parentFormForUpload = parentForm;
+                                }
                             }
 
                             //parse all the reverse answers to get entry object for upload

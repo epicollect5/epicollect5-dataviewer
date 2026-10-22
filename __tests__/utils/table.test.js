@@ -184,6 +184,10 @@ describe('table utils test', () => {
         it('should return false when the form ref is not in the list', () => {
             expect(table.getChildFormRef(forms, 'not-a-form')).toBe(false);
         });
+
+        it('should return false when the form is the last one', () => {
+            expect(table.getChildFormRef(forms, 'c')).toBe(false);
+        });
     });
 
     describe('getParentFormRef', () => {
@@ -197,6 +201,10 @@ describe('table utils test', () => {
 
         it('should return false when the form ref is not in the list', () => {
             expect(table.getParentFormRef(forms, 'not-a-form')).toBe(false);
+        });
+
+        it('should return false when the form is the first one', () => {
+            expect(table.getParentFormRef(forms, 'a')).toBe(false);
         });
     });
 });

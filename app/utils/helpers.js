@@ -261,7 +261,8 @@ const helpers = {
     getParentFormForUpload: (forms, currentFormRef) => {
         for (let i = 0, len = forms.length; i < len; i++) {
             if (forms[i].formRef === currentFormRef) {
-                if (i !== len) {
+                //the first form has no parent: i is never len, so the check was always true
+                if (i !== 0) {
                     return {
                         parentFormRef: forms[i - 1].formRef,
                         parentEntryUuid: forms[i].parentEntryUuid
