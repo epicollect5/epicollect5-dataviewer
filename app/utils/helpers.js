@@ -105,8 +105,13 @@ const helpers = {
         return false;
     },
     getQueryString(url) {
-        const urlParts = url.split('?', 1); //split only on first occurrence
-        return urlParts[urlParts.length - 1];
+        //the second argument of split() limits the number of results, not the number of
+        //splits, so it used to return the url up to the first '?' and never the query string
+        const queryIndex = url.indexOf('?');
+        if (queryIndex === -1) {
+            return '';
+        }
+        return url.slice(queryIndex + 1);
     },
 
     getTimeframeParams(activeTimeframe, currentState) {

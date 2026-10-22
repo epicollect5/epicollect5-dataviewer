@@ -256,6 +256,15 @@ describe('helpers utils test', () => {
         expect(helpers.getParentFormForUpload(forms, 'not-a-form')).toBe(false);
     });
 
+    it('should return the query string of an url', () => {
+
+        expect(helpers.getQueryString('https://five.epicollect.net/project/data?form_ref=form-1')).toBe('form_ref=form-1');
+        //only the first '?' separates the query string
+        expect(helpers.getQueryString('https://five.epicollect.net/project/data?a=1?b=2')).toBe('a=1?b=2');
+        //no query string at all
+        expect(helpers.getQueryString('https://five.epicollect.net/project/data')).toBe('');
+    });
+
     it('should tell if an answer matches a jump', () => {
 
         const textInput = { type: PARAMETERS.INPUT_TYPES.EC5_TEXT_TYPE };
