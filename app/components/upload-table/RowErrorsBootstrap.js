@@ -58,6 +58,11 @@ class RowErrorsBootstrap extends React.Component {
                             }
 
                             //todo put these errors in constants
+                            //the server never answered (network error, timeout)
+                            if (error.source === PARAMETERS.UPLOAD_ERRORS.CLIENT_SOURCE && error.code === PARAMETERS.UPLOAD_ERRORS.CLIENT_CODE) {
+                                errorTitle = error.title;
+                                return false;
+                            }
                             //is the project version out of date?
                             if (error.source === 'upload-controller' && error.code === 'ec5_201') {
                                 errorTitle = error.title;
@@ -173,6 +178,11 @@ class RowErrorsBootstrap extends React.Component {
                                         }
 
                                         //todo put these errors in constants
+                                        //the server never answered (network error, timeout)
+                                        if (error.source === PARAMETERS.UPLOAD_ERRORS.CLIENT_SOURCE && error.code === PARAMETERS.UPLOAD_ERRORS.CLIENT_CODE) {
+                                            errorTitle = error.title;
+                                            return false;
+                                        }
                                         //is the project version out of date?
                                         if (error.source === 'upload-controller' && error.code === 'ec5_201') {
                                             errorTitle = error.title;

@@ -265,6 +265,8 @@ class ModalUploadEntries extends React.Component {
 
         if (this.isFirstRun) {
             this.clonedReverseEntries = reverseEntries.slice(0);
+            //a new upload round starts with a clean list of failures
+            this.failedReverseEntries = [];
             this.wasInterruptedUpload = false;
         }
 
@@ -299,6 +301,34 @@ class ModalUploadEntries extends React.Component {
                         });
                     }
                 }
+            }).catch(() => {
+                //the server never answered (network error, timeout): the entry may or
+                //may not have been uploaded, so it is reported as failed and the
+                //upload carries on with the next entry
+                if (this.wasInterruptedUpload) {
+                    return;
+                }
+
+                const errorResponse = {
+                    errors: [{
+                        source: PARAMETERS.UPLOAD_ERRORS.CLIENT_SOURCE,
+                        code: PARAMETERS.UPLOAD_ERRORS.CLIENT_CODE,
+                        title: PARAMETERS.LABELS.FILE_UPLOAD_NETWORK_ERROR
+                    }]
+                };
+
+                this.failedReverseEntries.push(...[entry, entry]);
+
+                this.setState((state) => {
+                    return {
+                        responses: state.responses.concat([errorResponse, errorResponse]),
+                        failedResponses: state.failedResponses.concat([errorResponse, errorResponse])
+                    };
+                }, () => {
+                    if (this.clonedReverseEntries.length !== 0) {
+                        uploadEntries(this.clonedReverseEntries.shift());
+                    }
+                });
             });
             }, PARAMETERS.DELAY.LONG);
         };

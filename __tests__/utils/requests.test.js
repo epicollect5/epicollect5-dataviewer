@@ -87,5 +87,19 @@ describe('requests utils test', () => {
                 expect(result).toEqual({ errors: ['an error'] });
             });
         });
+
+        it('should reject when the upload fails without a response', () => {
+            //a network error, a timeout or a dns failure: the server never answered
+            const error = new Error('Network Error');
+            axios.post.mockReturnValue(Promise.reject(error));
+
+            return requests.uploadOneEntry({ an: 'entry' }, 'a-project')
+                .then(() => {
+                    throw new Error('the upload should have been rejected');
+                })
+                .catch((reason) => {
+                    expect(reason).toBe(error);
+                });
+        });
     });
 });

@@ -243,8 +243,16 @@ const PARAMETERS = {
         FILE_DUPLICATE_HEADERS_ERROR: 'File contains duplicate headers',
         FILE_UUID_ERROR: 'File contains duplicate ec5_uuid values',
         FILE_BRANCH_UUID_ERROR: 'File contains duplicate ec5_branch_uuid values',
+        //the entry may or may not have been uploaded, as the server never answered
+        FILE_UPLOAD_NETWORK_ERROR: 'Upload not confirmed by the server, check your connection and retry',
         FILE_DOWNLOAD_ERROR: 'Cannot download file',
         DELETE_ENTRY_ERROR: 'Error, entry not deleted'
+    },
+
+    //the upload errors raised on the client, when the server never answered
+    UPLOAD_ERRORS: {
+        CLIENT_SOURCE: 'upload-client',
+        CLIENT_CODE: 'client-network-error'
     },
 
     TOAST_OPTIONS: {
