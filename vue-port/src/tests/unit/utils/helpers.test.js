@@ -26,6 +26,29 @@ describe('domain/shared/helpers', () => {
     expect(helpers.getFormName(forms, 'f3')).toBe('Test');
   });
 
+  it('returns the query string of an url', () => {
+    expect(helpers.getQueryString('https://five.epicollect.net/data?first=1&second=2')).toBe('first=1&second=2');
+    expect(helpers.getQueryString('https://five.epicollect.net/data?first=1')).toBe('first=1');
+    expect(helpers.getQueryString('https://five.epicollect.net/data')).toBe('');
+  });
+
+  it('returns false for navigation outside the list bounds', () => {
+    const forms = [{ ref: 'f1' }, { ref: 'f2' }, { ref: 'f3' }];
+    const uploadForms = [
+      { formRef: 'f1' },
+      { formRef: 'f2', parentEntryUuid: 'parent-1' }
+    ];
+
+    expect(helpers.getNextForm(forms, 'f3')).toBe(false);
+    expect(helpers.getPrevForm(forms, 'f1')).toBe(false);
+    expect(helpers.getParentFormForUpload(uploadForms, 'f1')).toBe(false);
+    expect(helpers.getParentFormForUpload(uploadForms, 'f2')).toEqual({
+      parentFormRef: 'f1',
+      parentEntryUuid: 'parent-1'
+    });
+    expect(helpers.getParentFormForUpload(uploadForms, 'missing')).toBe(false);
+  });
+
   it('truncates text using legacy defaults', () => {
     expect(helpers.textTruncate('Mirko is at home', 10, null)).toBe('Mirko i...');
     expect(helpers.textTruncate('Mirko', 10, null)).toBe('Mirko');
