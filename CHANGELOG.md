@@ -1,5 +1,15 @@
 # Release Notes
 
+## 0.3.0
+- Bulk upload: a network failure now reports the entry as failed and carries on with the next one instead of hanging
+- Bulk upload: stopping the upload or closing the modal no longer submits the entries still waiting or shows stale results in the next run
+- Bulk upload: fixed the parent form lookup when the uploaded form is the first in the hierarchy
+- Entries table: an entry with no answer for a question no longer breaks the table
+- Navigation: fixed the child and parent form bounds checks; the first and last form no longer throw
+- Entries table: deleting before the first page has loaded no longer throws
+- Removed the unused ButtonImport and ModalStartDate components and their styles
+- Tests: 432 tests across 28 suites, covering the bulk upload network failure and the stopped upload handling
+- Docs: recorded the legacy known issues as the Vue porting contract
 ## 0.2.0
 - Build: upgraded axios, lodash, moment and url-parse to clear the reported security advisories
 - Tests: added a test coverage pass for the Redux state, the actions and the entries display pipeline
