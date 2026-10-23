@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { markRaw } from 'vue';
+import PARAMETERS from '@/core/config/parameters';
 import client from '@/services/api/client';
 import { mapTableRowsToGrid } from '@/core/entries/ag-grid/columnDefs';
 import { deleteEntry as deleteEntryRequest } from '@/services/api/deleteApi';
@@ -15,8 +16,6 @@ import tableModel from '@/core/entries/tableModel';
 import { useFiltersStore } from '@/stores/filtersStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
-
-export const TABLE_CACHE_HIT_DELAY_MS = 1000;
 
 const tableRowsContext = {
   gridRows: markRaw([])
@@ -141,9 +140,7 @@ export const useTableStore = defineStore('table', {
         const cachedResponseData = shouldUseCache ? await getCachedEntriesPage({ projectRef, requestUrl }) : null;
         let responseData = cachedResponseData;
 
-        if (responseData) {
-          await delay(TABLE_CACHE_HIT_DELAY_MS);
-        } else {
+        if (!responseData) {
           const response = options.pageUrl
             ? await client.get(options.pageUrl)
             : await fetchEntries(projectStore.projectSlug, requestParams);
@@ -165,6 +162,9 @@ export const useTableStore = defineStore('table', {
             void Promise.all(cacheWrites).catch(() => {});
           }
         }
+
+        //the loader stays up for a minimum time, so it does not flash
+        await delay(PARAMETERS.DELAY.TABLE_PAGE_MIN);
 
         const formRef = navigationStore.currentFormRef;
 
