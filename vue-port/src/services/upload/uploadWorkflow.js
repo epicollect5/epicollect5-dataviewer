@@ -18,7 +18,13 @@ const trimParsedRows = (rows = []) => {
 
 const getParentFormUploadContext = (navigationStore, currentFormRef) => {
   if (navigationStore.hierarchyNavigator.length > 1) {
-    return helpers.getParentFormForUpload(navigationStore.hierarchyNavigator, currentFormRef);
+    const parentForm = helpers.getParentFormForUpload(navigationStore.hierarchyNavigator, currentFormRef);
+
+    //the helper returns false when there is no parent form: keep the nulls,
+    //as the entry parser checks them against null
+    if (parentForm) {
+      return parentForm;
+    }
   }
 
   return {
@@ -94,6 +100,22 @@ export const prepareUploadFile = async ({
     };
   }
 
+  const parsedHeaders = parsed.meta.fields.map((header) => header.trim());
+  //newer Papaparse versions rename duplicate headers instead of rejecting them,
+  //so read the raw header row to detect them
+  const rawHeaderFields = (Papa.parse(content, { header: false, preview: 1 }).data[0] || []).map((header) => String(header).trim());
+  const duplicatedHeaders = rawHeaderFields.filter((header, index) => rawHeaderFields.indexOf(header) !== index);
+
+  //duplicated headers are silently collapsed by the parser (the last value wins),
+  //so bail out instead of uploading incomplete data
+  if (duplicatedHeaders.length > 0) {
+    return {
+      success: false,
+      parsingError: PARAMETERS.LABELS.FILE_DUPLICATE_HEADERS_ERROR,
+      data: null
+    };
+  }
+
   const forms = projectDefinition.project.forms;
   const formIndex = helpers.getFormIndexFromRef(forms, currentFormRef);
   const currentFormMapping = activeMapping.forms[currentFormRef];
@@ -113,7 +135,6 @@ export const prepareUploadFile = async ({
   });
 
   const bulkUploadableHeaders = headersResponse.data.data.headers;
-  const parsedHeaders = parsed.meta.fields.map((header) => header.trim());
 
   if (!bulkUploadableHeaders.every((header) => parsedHeaders.includes(header))) {
     return {
@@ -144,12 +165,18 @@ export const prepareUploadFile = async ({
 
   const parentFormForUpload = getParentFormUploadContext(navigationStore, currentFormRef);
   const generatedUuids = [];
+  const uuids = [];
   const entries = reverseAnswers.map((reverseAnswer) => {
     let uuid = reverseAnswer.uuid;
 
     if (!uuid) {
       uuid = helpers.generateUuid();
       generatedUuids.push(uuid);
+    }
+
+    //keep track of duplicate uuids (user might have tampered with them)
+    if (uuids.indexOf(uuid) === -1) {
+      uuids.push(uuid);
     }
 
     return reverseEntryParser.getEntry({
@@ -165,13 +192,24 @@ export const prepareUploadFile = async ({
     });
   });
 
+  if (entries.length > uuids.length) {
+    return {
+      success: false,
+      parsingError: PARAMETERS.LABELS.FILE_UUID_ERROR,
+      data: null
+    };
+  }
+
+  const inputs = forms[formIndex].inputs;
+  const entriesWithJumpsFlow = reverseEntryParser.setEntryJumps(entries, inputs, reverseMapping, null);
+
   return {
     success: true,
     parsingError: '',
     data: {
       uploadedRows: rows,
       bulkUploadableHeaders,
-      reverseEntries: entries,
+      reverseEntries: entriesWithJumpsFlow,
       reverseMapping,
       generatedUuids
     }
