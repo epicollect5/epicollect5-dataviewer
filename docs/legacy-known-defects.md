@@ -123,9 +123,9 @@ any table page has loaded threw a `TypeError`.
 
 Unreachable through the UI — a delete always originates from a rendered row.
 
-**Legacy status:** fixed — the case removes the row and clears `rowIndexToDelete` first, then
-returns the state untouched when `pagination` is still `null`, and only decrements the total
-otherwise. A reducer test covers the no-pagination path.
+**Legacy status:** fixed — when `pagination` is still `null` the case removes the row and clears
+`rowIndexToDelete`, and leaves `pagination` unchanged; otherwise it also decrements the total. A
+reducer test covers the no-pagination path.
 
 **In Vue:** initialise the pagination state (or guard it) on its own terms. The Vue store has no
 `combineReducers` default, so "the initial state is null" is a Vue decision, not a legacy one.
