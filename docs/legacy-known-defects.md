@@ -259,7 +259,7 @@ result, so such a failure hung the upload flow with no error shown.
 - `uploadOneEntry` still resolves with the server's error payload when the server answered, and
   now rejects when it did not.
 - `containers/ModalUploadEntries.js` catches the rejection, records the entry as a failed row,
-  shows "Upload not confirmed by the server" (it may or may not have been stored, so a retry can
+  shows "Network error" (it may or may not have been stored, so a retry can
   duplicate — the wording deliberately does not say "rejected"), and carries on with the next
   entry instead of stopping.
 - The synthetic error carries `PARAMETERS.UPLOAD_ERRORS.CLIENT_SOURCE` / `CLIENT_CODE`, which

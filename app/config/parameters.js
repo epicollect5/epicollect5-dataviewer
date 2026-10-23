@@ -244,7 +244,7 @@ const PARAMETERS = {
         FILE_UUID_ERROR: 'File contains duplicate ec5_uuid values',
         FILE_BRANCH_UUID_ERROR: 'File contains duplicate ec5_branch_uuid values',
         //the entry may or may not have been uploaded, as the server never answered
-        FILE_UPLOAD_NETWORK_ERROR: 'Upload not confirmed by the server, check your connection and retry',
+        FILE_UPLOAD_NETWORK_ERROR: 'Network error, check your connection and retry',
         FILE_DOWNLOAD_ERROR: 'Cannot download file',
         DELETE_ENTRY_ERROR: 'Error, entry not deleted'
     },
