@@ -168,13 +168,13 @@ class ModalUploadEntries extends React.Component {
 
         const { projectSlug, currentBranchRef, isViewingChildren } = this.props;
 
-        //the round is over: whatever is still pending must not reach the server
-        //nor add any result to this one
-        this.uploadRound += 1;
-
         if (this.clonedReverseEntries.length > 0) {
 
             if (window.confirm('Are you sure? This will stop the uploads')) {
+                //the round is over: whatever is still pending must not reach the
+                //server nor add any result to this one
+                this.uploadRound += 1;
+
                 //set this flag so we can keep the modal open showing a loader while waiting for a page
                 //refresh in the background to show the just uploaded entries
                 this.wasInterruptedUpload = true;
@@ -207,6 +207,10 @@ class ModalUploadEntries extends React.Component {
                 });
             }
         } else {
+            //the round is over: whatever is still pending must not reach the
+            //server nor add any result to this one
+            this.uploadRound += 1;
+
             //reset arrays
             this.failedReverseEntries = [];
             this.clonedReverseEntries = [];

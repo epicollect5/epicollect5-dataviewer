@@ -211,10 +211,44 @@ describe('(Container) ModalUploadEntries', () => {
             });
     });
 
-    it('should not upload an entry after the user stopped the upload', () => {
+    it('should carry on with the upload when the user cancels the confirmation', () => {
+        //three entries: one is uploaded, one is waiting to be sent and one is
+        //still queued, so the modal asks for a confirmation
         axios.post.mockReturnValue(Promise.resolve({ status: 200, data: { data: { code: 'ec5_357' } } }));
 
-        const wrapper = getWrapper([{ an: 'entry-1' }, { an: 'entry-2' }]);
+        const wrapper = getWrapper([{ an: 'entry-1' }, { an: 'entry-2' }, { an: 'entry-3' }]);
+
+        return settleOnce()
+            .then(() => {
+                //the first entry is uploaded, the second one is waiting to be sent
+                expect(axios.post).toHaveBeenCalledTimes(1);
+
+                //the user closes the modal but cancels the confirmation
+                window.confirm = jest.fn(() => false);
+                wrapper.instance().close();
+
+                //the upload carries on, the waiting entry is sent
+                jest.runAllTimers();
+
+                return waitReal(30);
+            })
+            .then(() => {
+                expect(axios.post).toHaveBeenCalledTimes(2);
+
+                //stop the upload, so that nothing is left pending for the next test
+                window.confirm = jest.fn(() => true);
+                wrapper.instance().close();
+
+                return waitReal(30);
+            });
+    });
+
+    it('should not upload an entry after the user stopped the upload', () => {
+        //three entries: one is uploaded, one is waiting to be sent and one is
+        //still queued, so the modal asks for a confirmation
+        axios.post.mockReturnValue(Promise.resolve({ status: 200, data: { data: { code: 'ec5_357' } } }));
+
+        const wrapper = getWrapper([{ an: 'entry-1' }, { an: 'entry-2' }, { an: 'entry-3' }]);
 
         return settleOnce()
             .then(() => {
