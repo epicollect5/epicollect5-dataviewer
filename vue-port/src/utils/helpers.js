@@ -145,8 +145,13 @@ const helpers = {
   },
 
   getQueryString(url) {
-    const urlParts = url.split('?', 1);
-    return urlParts[urlParts.length - 1];
+    const queryIndex = url.indexOf('?');
+
+    if (queryIndex === -1) {
+      return '';
+    }
+
+    return url.slice(queryIndex + 1);
   },
 
   getTimeframeParams(activeTimeframe, currentState) {
@@ -286,7 +291,7 @@ const helpers = {
   getParentFormForUpload(forms, currentFormRef) {
     for (let index = 0; index < forms.length; index += 1) {
       if (forms[index].formRef === currentFormRef) {
-        if (index !== forms.length) {
+        if (index !== 0) {
           return {
             parentFormRef: forms[index - 1].formRef,
             parentEntryUuid: forms[index].parentEntryUuid
