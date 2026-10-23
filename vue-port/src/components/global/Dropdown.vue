@@ -152,7 +152,13 @@ export default {
           return;
         }
 
-        state.event = event;
+        //anchor the popover to the whole trigger: Ionic positions it from the
+        //clicked element's rect, so clicking the chevron would open it off screen
+        state.event = {
+          target: event.currentTarget,
+          clientX: event.clientX,
+          clientY: event.clientY
+        };
         state.isOpen = true;
       },
       closePopover() {
