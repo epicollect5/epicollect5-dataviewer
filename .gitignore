@@ -9,3 +9,5 @@ dist/dataviewer.js
 .env
 copy-to-server.sh
 QA-*
+freebuff-*
+.freebuff
