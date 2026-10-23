@@ -297,6 +297,11 @@ round-level flag rather than a per-request token:
   so its table showed the previous run's row. Closing now invalidates the round, and each run
   starts with an empty result state (`resultsRound`).
 
+The round is invalidated **only when the modal really closes**: the confirmation the user gets when
+entries are still queued can be declined, and declining it must leave the upload running.
+Invalidating the round before the confirmation would drop the response of the pending request and
+strand the upload with the modal still open.
+
 **In Vue: reject (or time out).** The upload flow must surface the failure instead of hanging.
 If the flow can be stopped, also give each upload run an identity of its own and drop the
 callbacks that arrive after it ended — a cancelled request that still answers must not write into
