@@ -1,9 +1,9 @@
 <template>
   <ion-app>
     <DrawerWrapper />
-    <ion-page id="app-shell-content" class="app-shell-page" :class="pageClasses">
+    <ion-page id="app-content" class="app-page" :class="pageClasses">
       <NavbarPrimary v-if="isProjectBootReady" />
-      <ion-content id="app-shell-main-content" fullscreen>
+      <ion-content id="app-main-content" fullscreen>
         <router-view v-slot="{ Component }">
           <keep-alive include="PageData">
             <component :is="Component" />
@@ -15,8 +15,8 @@
       <OverlayWait />
     </ion-page>
 
-    <transition name="app-shell-fade">
-      <div v-if="isProjectBootLoading" class="app-shell-loader">
+    <transition name="app-fade">
+      <div v-if="isProjectBootLoading" class="app-loader">
         <LoaderSpinner />
       </div>
     </transition>
@@ -88,7 +88,7 @@ export default {
       }),
       isProjectBootReady: computed(() => !computedScope.isProjectBootLoading.value),
       pageClasses: computed(() => ({
-        'app-shell-page--ready': computedScope.isProjectBootReady.value
+        'app-page--ready': computedScope.isProjectBootReady.value
       }))
     };
 

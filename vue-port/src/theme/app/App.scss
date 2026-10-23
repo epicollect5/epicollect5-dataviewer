@@ -1,4 +1,4 @@
-.app-shell-loader {
+.app-loader {
   position: fixed;
   inset: 0;
   display: grid;
@@ -7,21 +7,21 @@
   z-index: 1;
 }
 
-.app-shell-page {
+.app-page {
   opacity: 0;
   transition: opacity 220ms ease;
 }
 
-.app-shell-page--ready {
+.app-page--ready {
   opacity: 1;
 }
 
-.app-shell-fade-enter-active,
-.app-shell-fade-leave-active {
+.app-fade-enter-active,
+.app-fade-leave-active {
   transition: opacity 220ms ease;
 }
 
-.app-shell-fade-enter-from,
-.app-shell-fade-leave-to {
+.app-fade-enter-from,
+.app-fade-leave-to {
   opacity: 0;
 }
