@@ -74,7 +74,10 @@
         </div>
 
         <footer class="table-view__footer">
-          <button type="button" class="table-view__upload-button" @click="handleOpenUpload">Upload</button>
+          <button type="button" class="table-view__upload-button" @click="handleOpenUpload">
+            <ion-icon :icon="cloudUpload" />
+            <span>Upload</span>
+          </button>
         </footer>
       </section>
     </template>
@@ -83,7 +86,7 @@
 
 <script>
 import { IonIcon } from '@ionic/vue';
-import { chevronBackCircle, chevronForwardCircle } from 'ionicons/icons';
+import { chevronBackCircle, chevronForwardCircle, cloudUpload } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import NavbarSecondary from '@/components/main/NavbarSecondary.vue';
@@ -93,13 +96,12 @@ import TableEmptyState from '@/components/table/StateEmptyTable.vue';
 import TableToolbar from '@/components/table/ToolbarTable.vue';
 import { getOrderSorting } from '@/core/entries/orderSorting';
 import mapUtils from '@/core/map/mapUtils';
+import { useDrawerStore } from '@/stores/drawerStore';
 import { useFiltersStore } from '@/stores/filtersStore';
 import { useMapStore } from '@/stores/mapStore';
-import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
-import { useUploadStore } from '@/stores/uploadStore';
 
 export default {
   name: 'PageTable',
@@ -117,8 +119,7 @@ export default {
     const filtersStore = useFiltersStore();
     const tableStore = useTableStore();
     const mapStore = useMapStore();
-    const modalStore = useModalStore();
-    const uploadStore = useUploadStore();
+    const drawerStore = useDrawerStore();
 
     const state = reactive({
       projectStore,
@@ -126,8 +127,7 @@ export default {
       filtersStore,
       tableStore,
       mapStore,
-      modalStore,
-      uploadStore
+      drawerStore
     });
 
     const methods = {
@@ -179,8 +179,9 @@ export default {
         return methods.loadPage(tableStore.links?.next);
       },
       handleOpenUpload() {
-        uploadStore.reset();
-        modalStore.open('upload');
+        drawerStore.open('upload', {
+          side: 'left'
+        });
       }
     };
 
@@ -218,7 +219,8 @@ export default {
 
     const icons = {
       chevronBackCircle,
-      chevronForwardCircle
+      chevronForwardCircle,
+      cloudUpload
     };
 
     return {

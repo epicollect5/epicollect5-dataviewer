@@ -1,7 +1,7 @@
 <template>
   <ion-menu
     menu-id="app-drawer-menu"
-    content-id="app-shell-main-content"
+    content-id="app-main-content"
     type="overlay"
     :class="drawerClasses"
     :side="drawerSide"
@@ -14,7 +14,7 @@
         <div class="drawer-wrapper__header">
           <h2>{{ drawerTitle }}</h2>
           <ion-button fill="clear" color="primary" class="drawer-wrapper__close-icon" aria-label="Close drawer" @click="closeMenu">
-            <ion-icon :icon="close" />
+            <ion-icon :icon="closeIcon" />
           </ion-button>
         </div>
       </ion-toolbar>
@@ -44,18 +44,20 @@
         v-bind="drawerPayload"
         @download="handleDownload"
       />
+      <DrawerUpload v-else-if="isUploadDrawer" />
     </ion-content>
   </ion-menu>
 </template>
 
 <script>
 import { IonButton, IonContent, IonHeader, IonIcon, IonMenu, IonToolbar, menuController } from '@ionic/vue';
-import { close } from 'ionicons/icons';
+import { chevronBack, close } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import DrawerDownload from '@/components/main/DrawerDownload.vue';
 import DrawerNavbarPrimary from '@/components/main/DrawerNavbarPrimary.vue';
 import DrawerEntry from '@/components/entry/DrawerEntry.vue';
 import DrawerMap from '@/components/map/DrawerMap.vue';
+import DrawerUpload from '@/components/upload/DrawerUpload.vue';
 import { useDrawerStore } from '@/stores/drawerStore';
 
 export default {
@@ -70,7 +72,8 @@ export default {
     DrawerDownload,
     DrawerNavbarPrimary,
     DrawerEntry,
-    DrawerMap
+    DrawerMap,
+    DrawerUpload
   },
   setup() {
     const drawerStore = useDrawerStore();
@@ -158,6 +161,7 @@ export default {
       isFiltersDrawer: computed(() => drawerStore.activeDrawer === 'map-filters'),
       isNavbarDrawer: computed(() => drawerStore.activeDrawer === 'navbar-primary'),
       isDownloadDrawer: computed(() => drawerStore.activeDrawer === 'app-download'),
+      isUploadDrawer: computed(() => drawerStore.activeDrawer === 'upload'),
       payload: computed(() => drawerStore.payload),
       drawerPayload: computed(() => {
         if (!drawerStore.payload) {
@@ -184,11 +188,17 @@ export default {
           return 'Download';
         }
 
+        if (drawerStore.activeDrawer === 'upload') {
+          return 'Upload';
+        }
+
         return 'Drawer';
       }),
+      closeIcon: computed(() => (drawerStore.activeDrawer === 'upload' ? chevronBack : close)),
       drawerClasses: computed(() => ({
         'drawer-wrapper--map-filters': drawerStore.activeDrawer === 'map-filters',
-        'drawer-wrapper--map-interactive': ['map-filters', 'map-entry'].includes(drawerStore.activeDrawer)
+        'drawer-wrapper--map-interactive': ['map-filters', 'map-entry'].includes(drawerStore.activeDrawer),
+        'drawer-wrapper--upload': drawerStore.activeDrawer === 'upload'
       })),
       drawerSide: computed(() => methods.normalizeDrawerSide(drawerStore.payload?.side))
     };

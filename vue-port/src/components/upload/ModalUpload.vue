@@ -1,7 +1,7 @@
 <template>
   <ion-header>
     <ion-toolbar>
-      <ion-title>Bulk Upload</ion-title>
+      <ion-title>Uploading entries</ion-title>
       <ion-buttons slot="end">
         <ion-button :disabled="state.uploadStore.isUploading" @click="handleClose">Close</ion-button>
       </ion-buttons>
@@ -10,79 +10,55 @@
 
   <ion-content class="ion-padding">
     <section class="upload-modal">
-      <div class="upload-modal__controls">
-        <label class="upload-modal__field">
-          <span>Mapping</span>
-          <Dropdown
-            :model-value="state.uploadStore.activeMappingIndex"
-            :options="mappingOptions"
-            @change="handleMappingChange"
-          />
-        </label>
-
-        <label class="upload-modal__field upload-modal__field--search">
-          <span>CSV file</span>
-          <input type="file" accept=".csv,text/csv" @change="handleFileChange" />
-        </label>
-
-        <div class="upload-modal__actions">
-          <ion-button :disabled="isPrepareDisabled" @click="prepareUpload">
-            Prepare
-          </ion-button>
-          <ion-button
-            color="secondary"
-            :disabled="isUploadDisabled"
-            @click="startUpload"
-          >
-            Upload
-          </ion-button>
-        </div>
+      <div v-if="isUploadingFirstResults" class="upload-modal__loading">
+        <LoaderSpinner />
+        <p>Uploading entries...</p>
       </div>
 
-      <p v-if="state.uploadStore.parsingError" class="upload-modal__error">{{ state.uploadStore.parsingError }}</p>
-
-      <div v-if="hasPreparedRows" class="upload-modal__status">
-        <label>
-          <input
-            type="checkbox"
-            :checked="state.uploadStore.filterByFailed"
-            :disabled="isFailedFilterDisabled"
-            @change="handleFailedFilterToggle"
-          />
-          Show only failed rows
-        </label>
-        <span>
-          Uploaded {{ state.uploadStore.uploadResults.length }} / {{ state.uploadStore.reverseEntries.length }}
-          <template v-if="state.uploadStore.isUploading"> · {{ state.uploadStore.uploadProgress }}%</template>
-        </span>
-        <div class="upload-modal__actions">
-          <ion-button
-            fill="outline"
-            :disabled="isFailedDownloadDisabled"
-            @click="downloadFailedRows"
-          >
-            Download failed rows
-          </ion-button>
+      <template v-else>
+        <div v-if="hasResults" class="upload-modal__status">
+          <label>
+            <input
+              type="checkbox"
+              :checked="state.uploadStore.filterByFailed"
+              :disabled="isFailedFilterDisabled"
+              @change="handleFailedFilterToggle"
+            />
+            Show only failed rows
+          </label>
+          <span>
+            Uploaded {{ state.uploadStore.uploadResults.length }} / {{ state.uploadStore.reverseEntries.length }}
+            <template v-if="state.uploadStore.isUploading"> · {{ state.uploadStore.uploadProgress }}%</template>
+          </span>
+          <div class="upload-modal__actions">
+            <ion-button
+              fill="outline"
+              :disabled="isFailedDownloadDisabled"
+              @click="downloadFailedRows"
+            >
+              Download failed rows
+            </ion-button>
+          </div>
         </div>
-      </div>
 
-      <UploadGrid
-        v-if="hasPagedRows"
-        :headers="state.uploadStore.availableHeaders"
-        :rows="pagedRows"
-      />
+        <UploadGrid
+          v-if="hasPagedRows"
+          :headers="state.uploadStore.availableHeaders"
+          :rows="pagedRows"
+        />
 
-      <div v-if="hasPagination" class="upload-modal__pagination">
-        <span>Page {{ state.currentPage }} / {{ totalPages }}</span>
-        <div class="upload-modal__actions">
-          <ion-button fill="outline" :disabled="isOnFirstPage" @click="goToPreviousPage">Prev</ion-button>
-          <ion-button fill="outline" :disabled="isOnLastPage" @click="goToNextPage">Next</ion-button>
+        <div v-if="hasPagination" class="upload-modal__pagination">
+          <span>Page {{ state.currentPage }} / {{ totalPages }}</span>
+          <div class="upload-modal__actions">
+            <ion-button fill="outline" :disabled="isOnFirstPage" @click="goToPreviousPage">Prev</ion-button>
+            <ion-button fill="outline" :disabled="isOnLastPage" @click="goToNextPage">Next</ion-button>
+          </div>
         </div>
-      </div>
 
-      <p v-else class="upload-modal__hint">
-        Choose a CSV file, prepare it against the current mapping, then upload to inspect row-level validation.
-      </p>
+        <p v-if="!hasResults && !hasPagedRows" class="upload-modal__hint">
+          No entries have been prepared for upload.
+        </p>
+      </template>
     </section>
   </ion-content>
 </template>
@@ -98,10 +74,9 @@ import {
 } from '@ionic/vue';
 import Papa from 'papaparse';
 import { computed, reactive, watch } from 'vue';
-import Dropdown from '@/components/global/Dropdown.vue';
+import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import UploadGrid from '@/components/upload/GridUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
-import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
 import { useToastStore } from '@/stores/toastStore';
@@ -116,7 +91,7 @@ export default {
     IonButton,
     IonButtons,
     IonContent,
-    Dropdown,
+    LoaderSpinner,
     IonHeader,
     IonTitle,
     IonToolbar,
@@ -124,7 +99,6 @@ export default {
   },
   setup() {
     const modalStore = useModalStore();
-    const navigationStore = useNavigationStore();
     const projectStore = useProjectStore();
     const tableStore = useTableStore();
     const toastStore = useToastStore();
@@ -132,12 +106,10 @@ export default {
 
     const state = reactive({
       modalStore,
-      navigationStore,
       projectStore,
       tableStore,
       toastStore,
       uploadStore,
-      selectedFile: null,
       currentPage: 1
     });
 
@@ -146,15 +118,10 @@ export default {
         const shouldReload = uploadStore.uploadResults.length > 0 && !uploadStore.isUploading;
         uploadStore.reset();
         modalStore.close();
+
         if (shouldReload) {
           await tableStore.loadEntries({ params: { page: 1 } });
         }
-      },
-      handleFileChange(event) {
-        state.selectedFile = event.target.files?.[0] || null;
-      },
-      handleMappingChange(index) {
-        uploadStore.setActiveMapping(Number(index));
       },
       handleFailedFilterChange(value) {
         uploadStore.setFilterByFailed(value);
@@ -170,53 +137,6 @@ export default {
       goToNextPage() {
         if (state.currentPage < computedScope.totalPages.value) {
           state.currentPage += 1;
-        }
-      },
-      async prepareUpload() {
-        if (!state.selectedFile) {
-          return;
-        }
-
-        state.currentPage = 1;
-        navigationStore.setBusy(true);
-
-        try {
-          const wasPrepared = await uploadStore.prepareFile(state.selectedFile);
-
-          if (wasPrepared) {
-            toastStore.show(`Prepared ${uploadStore.reverseEntries.length} row(s).`, {
-              color: 'success'
-            });
-          } else if (uploadStore.parsingError) {
-            toastStore.show(uploadStore.parsingError, {
-              color: 'danger',
-              duration: 2500
-            });
-          }
-        } finally {
-          navigationStore.setBusy(false);
-        }
-      },
-      async startUpload() {
-        state.currentPage = 1;
-        navigationStore.setBusy(true);
-
-        try {
-          await uploadStore.uploadPreparedEntries();
-
-          const failures = uploadStore.uploadResults.filter((result) => result.status === 'error').length;
-
-          toastStore.show(
-            failures > 0
-              ? `Upload finished with ${failures} failed row(s).`
-              : `Uploaded ${uploadStore.uploadResults.length} row(s).`,
-            {
-              color: failures > 0 ? 'warning' : 'success',
-              duration: 2600
-            }
-          );
-        } finally {
-          navigationStore.setBusy(false);
         }
       },
       downloadFailedRows() {
@@ -243,15 +163,8 @@ export default {
     };
 
     const computedScope = {
-      mappingOptions: computed(() => {
-        return projectStore.projectMapping.map((mapping, index) => ({
-          label: mapping.name,
-          value: index
-        }));
-      }),
-      isPrepareDisabled: computed(() => !state.selectedFile || uploadStore.isPreparing),
-      isUploadDisabled: computed(() => uploadStore.reverseEntries.length === 0 || uploadStore.isUploading),
-      hasPreparedRows: computed(() => uploadStore.reverseEntries.length > 0),
+      isUploadingFirstResults: computed(() => uploadStore.isUploading && uploadStore.uploadResults.length === 0),
+      hasResults: computed(() => uploadStore.uploadResults.length > 0),
       isFailedFilterDisabled: computed(() => uploadStore.failedReverseEntries.length === 0),
       isFailedDownloadDisabled: computed(() => computedScope.failedRowsForDownload.value.length === 0),
       hasPagedRows: computed(() => computedScope.pagedRows.value.length > 0),
