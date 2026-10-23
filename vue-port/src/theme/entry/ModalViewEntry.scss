@@ -67,5 +67,13 @@
   border-radius: 10px;
   background: var(--ion-color-secondary);
   color: #333333;
+  font-weight: 700;
+  text-transform: uppercase;
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.view-entry-modal__media-button:hover {
+  background: #d0e9dc;
+  color: #333333;
 }

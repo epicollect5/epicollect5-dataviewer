@@ -36,6 +36,16 @@ ion-button {
   --border-radius: 10px;
 }
 
+ion-button[color="secondary"] {
+  --background-hover: #d0e9dc;
+  --color-hover: #333333;
+}
+
+ion-button[color="secondary"]::part(native) {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .secondary-navbar-pagination {
   display: inline-flex;
   align-items: center;

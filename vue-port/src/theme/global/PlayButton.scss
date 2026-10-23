@@ -11,9 +11,16 @@
   border-radius: 4px;
   background: var(--ion-color-secondary);
   color: #333333;
+  font-weight: 700;
   cursor: pointer;
   text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease;
   white-space: nowrap;
+}
+
+.play-button:hover {
+  background: #d0e9dc;
+  color: #333333;
 }
 
 .play-button__icon {

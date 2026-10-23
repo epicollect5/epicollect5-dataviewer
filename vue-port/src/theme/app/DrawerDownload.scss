@@ -51,6 +51,13 @@
   &--active {
     background: var(--ion-color-secondary);
     color: var(--ion-color-secondary-contrast);
+    font-weight: 700;
+    text-transform: uppercase;
+
+    &:hover {
+      background: #d0e9dc;
+      color: #333;
+    }
   }
 }
 

@@ -65,15 +65,30 @@
 .entries-grid__action-button--edit {
   background: var(--ion-color-secondary);
   color: #333333;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .entries-grid__action-button--delete {
   background: var(--ion-color-danger);
   color: var(--ion-color-danger-contrast);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.entries-grid__action-button--delete:hover {
+  background: var(--ion-color-danger-shade);
+  color: var(--ion-color-danger-contrast);
 }
 
 .entries-grid__action-button--add {
   background: var(--ion-color-secondary);
+  color: #333333;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.entries-grid__action-button--view:hover,
+.entries-grid__action-button--edit:hover,
+.entries-grid__action-button--add:hover {
+  background: #d0e9dc;
   color: #333333;
 }
 

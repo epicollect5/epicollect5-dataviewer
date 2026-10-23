@@ -20,6 +20,25 @@
   --color: var(--ion-color-primary);
 }
 
+ion-menu.drawer-wrapper--upload {
+  .drawer-wrapper__header {
+    padding: 8px;
+    border-bottom: 0;
+    box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .drawer-wrapper__header h2 {
+    font-size: 27px;
+    font-weight: 400;
+    color: #444;
+  }
+
+  .drawer-wrapper__close-icon {
+    --color: #333;
+    margin: 3px;
+  }
+}
+
 ion-menu.drawer-wrapper--map-interactive {
   pointer-events: none;
 }
