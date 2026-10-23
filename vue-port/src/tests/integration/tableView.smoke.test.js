@@ -2,12 +2,12 @@ import { createPinia, setActivePinia } from 'pinia';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createRouter, createMemoryHistory } from 'vue-router';
 import PageTable from '@/pages/PageTable.vue';
+import routes from '@/router/routes';
+import { useDrawerStore } from '@/stores/drawerStore';
 import { useFiltersStore } from '@/stores/filtersStore';
-import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
-import { useUploadStore } from '@/stores/uploadStore';
 
 describe('TableView smoke', () => {
   beforeEach(() => {
@@ -39,8 +39,7 @@ describe('TableView smoke', () => {
     const navigationStore = useNavigationStore();
     const filtersStore = useFiltersStore();
     const tableStore = useTableStore();
-    const modalStore = useModalStore();
-    const uploadStore = useUploadStore();
+    const drawerStore = useDrawerStore();
 
     projectStore.projectSlug = 'demo';
     projectStore.isFetching = false;
@@ -63,9 +62,6 @@ describe('TableView smoke', () => {
       next: null
     };
     tableStore.loadEntries = vi.fn().mockResolvedValue();
-
-    uploadStore.uploadedRows = [{ title: 'stale row' }];
-    uploadStore.uploadResults = [{ status: 'ok' }];
 
     const wrapper = mount(PageTable, {
       global: {
@@ -92,8 +88,33 @@ describe('TableView smoke', () => {
     const uploadButton = wrapper.findAll('button').find((button) => button.text() === 'Upload');
     await uploadButton.trigger('click');
 
-    expect(modalStore.activeModal).toBe('upload');
-    expect(uploadStore.uploadedRows).toEqual([]);
-    expect(uploadStore.uploadResults).toEqual([]);
+    expect(drawerStore.activeDrawer).toBe('upload');
+    expect(drawerStore.payload.side).toBe('left');
+  });
+
+  it('loads the project from the slug in the url', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes
+    });
+
+    await router.push('/project/another-project/data');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const loadProject = vi.spyOn(projectStore, 'loadProject').mockResolvedValue(true);
+
+    mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(router.currentRoute.value.params.projectSlug).toBe('another-project');
+    expect(loadProject).toHaveBeenCalledWith('another-project');
   });
 });
