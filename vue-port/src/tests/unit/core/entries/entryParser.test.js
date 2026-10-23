@@ -177,4 +177,95 @@ describe('domain/entries/entryParser', () => {
       { groupInputRef: 'group_text', question: 'Group text' }
     ]);
   });
+
+  it('returns an empty answer when the answer or the raw entry is missing', () => {
+    const entryWithoutAnswers = {
+      ...singleEntry,
+      entry: {
+        ...singleEntry.entry,
+        answers: {}
+      }
+    };
+
+    expect(
+      entryParser.getParsedEntryForDisplay(
+        projectSlug,
+        formRef,
+        entryWithoutAnswers,
+        'location_input',
+        projectExtra,
+        'uuid-1'
+      )
+    ).toEqual([
+      expect.objectContaining({
+        answer: '',
+        cellType: PARAMETERS.CEll_TYPES.TEXT
+      })
+    ]);
+
+    const branchEntryWithoutAnswers = {
+      attributes: {},
+      relationships: {},
+      branch_entry: {
+        entry_uuid: 'branch-uuid'
+      }
+    };
+
+    expect(
+      entryParser.getParsedEntryForDisplay(
+        projectSlug,
+        formRef,
+        branchEntryWithoutAnswers,
+        'location_input',
+        projectExtra,
+        'branch-uuid',
+        'branch_input'
+      )
+    ).toEqual([
+      expect.objectContaining({
+        answer: '',
+        cellType: PARAMETERS.CEll_TYPES.TEXT
+      })
+    ]);
+
+    const missingBranchEntry = {
+      attributes: {},
+      relationships: {}
+    };
+
+    expect(
+      entryParser.getParsedEntryForDisplay(
+        projectSlug,
+        formRef,
+        missingBranchEntry,
+        'location_input',
+        projectExtra,
+        'branch-uuid',
+        'branch_input'
+      )
+    ).toEqual([
+      expect.objectContaining({
+        answer: '',
+        cellType: PARAMETERS.CEll_TYPES.TEXT
+      })
+    ]);
+  });
+});
+
+describe('domain/entries/tableModel form navigation', () => {
+  const forms = [{ ref: 'form_1' }, { ref: 'form_2' }, { ref: 'form_3' }];
+
+  it('returns false when there is no child form', () => {
+    expect(tableModel.getChildFormRef(forms, 'form_1')).toBe('form_2');
+    expect(tableModel.getChildFormRef(forms, 'form_2')).toBe('form_3');
+    expect(tableModel.getChildFormRef(forms, 'form_3')).toBe(false);
+    expect(tableModel.getChildFormRef(forms, 'missing')).toBe(false);
+  });
+
+  it('returns false when there is no parent form', () => {
+    expect(tableModel.getParentFormRef(forms, 'form_3')).toBe('form_2');
+    expect(tableModel.getParentFormRef(forms, 'form_2')).toBe('form_1');
+    expect(tableModel.getParentFormRef(forms, 'form_1')).toBe(false);
+    expect(tableModel.getParentFormRef(forms, 'missing')).toBe(false);
+  });
 });

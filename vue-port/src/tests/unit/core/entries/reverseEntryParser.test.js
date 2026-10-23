@@ -200,3 +200,222 @@ describe('domain/entries/reverseEntryParser', () => {
     expect(result[0].answer.branch_1.answer).toBe('');
   });
 });
+
+const buildInput = (ref, type, jumps, group) => ({
+  ref,
+  type,
+  jumps: jumps || [],
+  group: group || []
+});
+
+const buildEntry = (answers) => ({
+  data: {
+    type: 'entry',
+    entry: {
+      answers
+    }
+  }
+});
+
+const jumpMappingFor = (inputRef, mapTo, when, answerRef, toInputRef) => ({
+  ref2MapTo: {
+    [inputRef]: mapTo
+  },
+  reverse: {
+    [mapTo]: {
+      reverse_jumps: [
+        {
+          toInputRef: toInputRef || 'END',
+          when,
+          answer: null,
+          answer_ref: answerRef
+        }
+      ]
+    }
+  }
+});
+
+describe('domain/entries/reverseEntryParser time answers', () => {
+  const reverseMappingForTime = (timeFormat) => ({
+    ref2MapTo: {
+      'time-input-ref': 'Time question'
+    },
+    reverse: {
+      'Time question': {
+        input_ref: 'time-input-ref',
+        type: PARAMETERS.INPUT_TYPES.EC5_TIME_TYPE,
+        datetime_format: timeFormat,
+        is_title: false
+      }
+    }
+  });
+
+  const parseTimeAnswer = (answerValue, timeFormat) => {
+    const reverseAnswers = reverseEntryParser.getReverseAnswers(
+      [{ ec5_uuid: '', 'Time question': answerValue }],
+      reverseMappingForTime(timeFormat),
+      [],
+      null,
+      {}
+    );
+
+    return reverseAnswers[0].answer['time-input-ref'].answer;
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('uses the day of the month, not the day of the week', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-25T20:26:00.000Z'));
+
+    expect(parseTimeAnswer('20:26', PARAMETERS.TIME_FORMAT_3)).toBe('2026-10-25T20:26:00.000');
+  });
+
+  it('does not swap minutes and seconds for mm:ss answers', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-25T20:26:00.000Z'));
+
+    expect(parseTimeAnswer('59:29', PARAMETERS.TIME_FORMAT_5)).toBe('2026-10-25T00:59:29.000');
+  });
+
+  it('keeps empty answers empty', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-25T20:26:00.000Z'));
+
+    expect(parseTimeAnswer('', PARAMETERS.TIME_FORMAT_3)).toBe('');
+  });
+});
+
+describe('domain/entries/reverseEntryParser jumps', () => {
+  it('uses the jumped question type for empty answers', () => {
+    const answers = {
+      source: { answer: ['a-ref'], was_jumped: false },
+      text: { answer: 'hello', was_jumped: false },
+      checkbox: { answer: ['b-ref'], was_jumped: false },
+      groupChildCheckbox: { answer: ['c-ref'], was_jumped: false },
+      groupChildText: { answer: 'group text', was_jumped: false }
+    };
+
+    const inputs = [
+      buildInput('source', 'checkbox', [{ to: 'END', when: 'IS', answer_ref: 'a-ref' }]),
+      buildInput('text', 'text'),
+      buildInput('checkbox', 'checkbox'),
+      buildInput('group', 'group', [], [
+        buildInput('groupChildCheckbox', 'checkbox'),
+        buildInput('groupChildText', 'text')
+      ])
+    ];
+
+    const entries = reverseEntryParser.setEntryJumps(
+      [buildEntry(answers)],
+      inputs,
+      jumpMappingFor('source', 'Source Q', 'IS', 'a-ref'),
+      null
+    );
+
+    const result = entries[0].data.entry.answers;
+
+    expect(result.text.answer).toBe('');
+    expect(result.checkbox.answer).toEqual([]);
+    expect(result.groupChildCheckbox.answer).toEqual([]);
+    expect(result.groupChildText.answer).toBe('');
+    expect(result.source.answer).toEqual(['a-ref']);
+  });
+
+  it('only jumps on NO_ANSWER_GIVEN when the answer is empty', () => {
+    const noAnswerJump = [{ to: 'q3', when: 'NO_ANSWER_GIVEN', answer_ref: null }];
+    const inputs = [buildInput('source', 'dropdown', noAnswerJump), buildInput('q2', 'text'), buildInput('q3', 'text')];
+    const answered = buildEntry({
+      source: { answer: 'yes-ref', was_jumped: false },
+      q2: { answer: 'keep me', was_jumped: false },
+      q3: { answer: 'target', was_jumped: false }
+    });
+    const unanswered = buildEntry({
+      source: { answer: '', was_jumped: false },
+      q2: { answer: 'keep me', was_jumped: false },
+      q3: { answer: 'target', was_jumped: false }
+    });
+
+    const entries = reverseEntryParser.setEntryJumps(
+      [answered, unanswered],
+      inputs,
+      jumpMappingFor('source', 'Source Q', 'NO_ANSWER_GIVEN', null, 'q3'),
+      null
+    );
+
+    expect(entries[0].data.entry.answers.q2.answer).toBe('keep me');
+    expect(entries[0].data.entry.answers.q2.was_jumped).toBe(false);
+    expect(entries[1].data.entry.answers.q2.answer).toBe('');
+    expect(entries[1].data.entry.answers.q2.was_jumped).toBe(true);
+  });
+
+  it('reverse maps and applies a jump on a location question', () => {
+    const formRef = 'form-ref';
+    const locationRef = 'q1-location';
+    const q2Ref = 'q2-text';
+    const q3Ref = 'q3-text';
+    const locationInput = buildInput(locationRef, PARAMETERS.INPUT_TYPES.EC5_LOCATION_TYPE, [
+      { to: 'END', when: 'ALL', answer_ref: null }
+    ]);
+    const textInput = (ref) => buildInput(ref, PARAMETERS.INPUT_TYPES.EC5_TEXT_TYPE);
+    const inputs = [locationInput, textInput(q2Ref), textInput(q3Ref)];
+    const currentFormMapping = {
+      [locationRef]: { map_to: 'Q1', possible_answers: {} },
+      [q2Ref]: { map_to: 'Q2', possible_answers: {} },
+      [q3Ref]: { map_to: 'Q3', possible_answers: {} }
+    };
+    const projectExtra = {
+      inputs: {
+        [locationRef]: { data: locationInput },
+        [q2Ref]: { data: inputs[1] },
+        [q3Ref]: { data: inputs[2] }
+      }
+    };
+    const projectDefinition = {
+      project: {
+        forms: [{ ref: formRef, inputs }]
+      }
+    };
+
+    const reverseMapping = reverseEntryParser.getReverseMapping(
+      formRef,
+      currentFormMapping,
+      projectExtra,
+      projectDefinition,
+      null
+    );
+
+    expect(reverseMapping.ref2MapTo[locationRef]).toBe('lat_Q1');
+    expect(reverseMapping.reverse.lat_Q1.reverse_jumps).toEqual([
+      {
+        to: 'END',
+        toInputRef: 'END',
+        when: 'ALL',
+        answer: null,
+        answer_ref: null
+      }
+    ]);
+
+    const entries = reverseEntryParser.setEntryJumps(
+      [
+        buildEntry({
+          [locationRef]: { answer: { latitude: 1.5, longitude: 2.5, accuracy: 3 }, was_jumped: false },
+          [q2Ref]: { answer: 'hello', was_jumped: false },
+          [q3Ref]: { answer: 'world', was_jumped: false }
+        })
+      ],
+      inputs,
+      reverseMapping,
+      null
+    );
+
+    const result = entries[0].data.entry.answers;
+
+    expect(result[locationRef].answer).toEqual({ latitude: 1.5, longitude: 2.5, accuracy: 3 });
+    expect(result[locationRef].was_jumped).toBe(false);
+    expect(result[q2Ref].was_jumped).toBe(true);
+    expect(result[q3Ref].was_jumped).toBe(true);
+  });
+});
