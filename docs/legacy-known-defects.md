@@ -1,4 +1,4 @@
-# Known legacy defects — do not reproduce in `vue-port/`
+# Known legacy issues — the porting contract for `vue-port/`
 
 The legacy React app (`app/`) is being rewritten in Vue (`vue-port/`). The Jest suite in
 `__tests__/` characterises the legacy behaviour so that the rewrite has a specification to work
@@ -12,31 +12,34 @@ therefore:
 > reachable, non-defective paths were asserted and the defect itself was left untested. Once fixed
 > (see **Legacy status**), the tests assert the corrected behaviour.
 
-The ten defects below have since been fixed in `app/`. They stay in this document because the
-analysis is what the Vue work reads: each entry gives the mechanism, what the legacy fix was, and
-what the Vue implementation must do instead. A green legacy suite is **not** a specification of
-correct behaviour on its own — the entries below still mark what a faithful port must not
-reproduce.
+The ten entries below have since been resolved in `app/` — nine fixed, and one left as it was
+because it turned out to be deliberate. They stay in this document because the analysis is what the
+Vue work reads: each entry gives the mechanism, what the legacy outcome was, and what the Vue
+implementation must do instead. A green legacy suite is **not** a specification of correct
+behaviour on its own — the entries below still mark what a faithful port must not reproduce.
 
 ## How the entries are tagged
 
-The three tags carry different obligations, so they are not interchangeable:
+The four tags carry different obligations, so they are not interchangeable:
 
 | Tag | Meaning | Obligation in `vue-port/` |
 |---|---|---|
 | **[not portable]** | Dead code, or a broken import that never crashes. | Nothing — the code will not exist in Vue. Listed so nobody "fixes" it in `app/`. |
 | **[re-implemented]** | A path Vue writes from scratch anyway. | Any new guard or state change must be justified by **Vue's own** failure mode (see the Refactoring Rules in `AGENTS.md`), not inherited from legacy. |
-| **[live]** | Behaviour a faithful port would copy verbatim. | Must **not** be reproduced. This is the list that matters. |
+| **[live]** | A defect the port would otherwise copy verbatim. | Must **not** be reproduced. This is the list that matters. |
+| **[intentional]** | Deliberate behaviour the port would otherwise copy verbatim. | Not a defect. Make an explicit choice instead of inheriting it by accident. |
 
-Three of the ten are **[live]**. Two of those are genuine defects — #7 throws on a malformed entry
-and #9 hangs the bulk upload on a network failure. #5 turned out to be intentional (a minimum
-loader time), not a defect; see its entry.
+Two of the ten are **[live]** defects — #7 throws on a malformed entry and #9 hangs the bulk upload
+on a network failure. #5 is the one **[intentional]** entry: a minimum loader time, not a defect,
+but still a choice the port has to make rather than inherit; see its entry.
 
 ## Legacy status
 
-All ten were fixed on `fix/legacy-known-issues`, one commit per defect, with `npm test` green after
-every commit. Each entry below records what the fix was, and its file/line references point at the
-fixed code.
+The entries were resolved on `fix/legacy-known-issues` — nine fixed, and #5 left as it was because
+it is deliberate — with `npm test` green after every commit. The fixes span the commits below
+rather than mapping one-to-one: #1–3 shared one chore commit, and #9 needed follow-ups after
+review. Each entry records what its outcome was, and its file/line references point at the fixed
+code.
 
 | Commit | Covers |
 |---|---|
@@ -50,6 +53,7 @@ fixed code.
 | `fe93970` `fix(requests): settle the bulk upload promise on network failure` | 9 |
 | `7ae167a` `fix(containers): ignore the stale responses of a stopped upload` | 9 (follow-up) |
 | `4f49bd6` `fix(containers): stop the upload when the modal is closed` | 9 (follow-up) |
+| `7c6ab92` `fix(containers): keep the upload alive when the user cancels` | 9 (follow-up) |
 
 Fixing `app/` diverges it from `vue-port/`, which lives on `codex/datavuer`. The same fixes have to
 be re-applied there.
@@ -130,7 +134,7 @@ reducer test covers the no-pagination path.
 **In Vue:** initialise the pagination state (or guard it) on its own terms. The Vue store has no
 `combineReducers` default, so "the initial state is null" is a Vue decision, not a legacy one.
 
-## 5. [live] a two second delay on every table page
+## 5. [intentional] a two second delay on every table page
 
 **`app/actions/index.js:494`**, constant in **`app/config/parameters.js:315`**
 
@@ -343,7 +347,7 @@ document.
 | 2 | `app/components/ModalStartDate.js` | not portable | deleted | no — dead code |
 | 3 | `app/containers/Main.js:5,193` | not portable | import removed | no — broken import |
 | 4 | `app/reducers/tableReducer.js:257` | re-implemented | guarded | guard it, on Vue's terms |
-| 5 | `app/actions/index.js:494` | **live** | constant named, value unchanged | **decide on your own; no inherited 2s** |
+| 5 | `app/actions/index.js:494` | intentional | constant named, value unchanged | **decide on your own; no inherited 2s** |
 | 6 | `app/reducers/navigationReducer.js` | re-implemented | local copies | no — keep the state pure |
 | 7 | `app/utils/entry-parser.js:20` | **live** | guarded | **no — guard at the parser** |
 | 8 | `app/utils/table.js`, `app/utils/helpers.js` | re-implemented | bounds corrected | fix the bounds check |
