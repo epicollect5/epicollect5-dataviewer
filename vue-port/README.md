@@ -11,13 +11,27 @@ Phase 1 scaffold for the Epicollect5 dataviewer migration.
 
 ## Dev Server
 
-The Vue port runs on `http://localhost:5174`.
+The Vue port runs on `http://localhost:6789`.
 The legacy React app keeps its existing port for side-by-side comparison.
+
+Opening the root URL redirects to `/project/ec5-demo-project/data`, so the demo
+project loads straight from the Vite dev server. Edit the slug in the path to
+open any other project, for example `/project/my-project/data`.
+
+The demo default and the root redirect are development-only conveniences. In
+production the app is served at `/project/<project-slug>/data`, for example
+`https://five.epicollect.net/project/ec5-demo-project/data`, and the project is
+taken from the slug in that path.
+
+When a URL has no slug, the app falls back to `VITE_PROJECT_SLUG` if it is set,
+and otherwise shows the "Project Required" message. A slug in the path always
+wins over the environment fallback.
 
 ## Environment
 
 - `VITE_SERVER_URL`: backend base URL used by the Vite proxy and API client
 - `VITE_DATA_EDITOR_BASE_URL`: add/edit entry base URL
+- `VITE_PROJECT_SLUG`: optional fallback project slug for URLs without a slug in the path; the path slug always wins
 - `VITE_MAPBOX_API_TOKEN`: reserved for later map work
 - `VITE_ESRI_API_TOKEN`: reserved for later map work
 
