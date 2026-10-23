@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__codegraph__codegraph_explore",
+      "mcp__fff__find_files",
+      "mcp__fff__grep",
+      "mcp__fff__multi_grep",
+      "Shell(git status:*)",
+      "Shell(git diff:*)",
+      "Shell(git log:*)",
+      "Shell(git show:*)",
+      "Shell(git branch:*)",
+      "Shell(git ls-files:*)",
+      "Shell(git rev-parse:*)",
+      "Shell(git add:*)",
+      "Shell(git commit:*)",
+      "Shell(mkdir:*)",
+      "Shell(npm test:*)",
+      "Shell(npm run build:*)",
+      "Shell(npx vitest*)",
+      "Shell(command -v gh:*)",
+      "Shell(gh auth status:*)",
+      "Shell(gh label list:*)",
+      "Shell(gh release view:*)",
+      "Shell(greptile review:*)"
+    ],
+    "ask": [
+      "Shell(git push:*)",
+      "Shell(git tag:*)",
+      "Shell(git reset:*)",
+      "Shell(npm install:*)",
+      "Shell(npm run deploy:*)",
+      "Shell(gh issue create:*)",
+      "Shell(gh release upload:*)"
+    ],
+    "deny": [
+      "Shell(rm -rf:*)",
+      "Shell(git push --force:*)",
+      "Shell(git reset --hard:*)",
+      "Shell(git clean -:*)"
+    ],
+    "defaultMode": "default"
+  }
+}

@@ -46,8 +46,6 @@ const initialState = {
     isRestoring: false
 };
 
-let hierarchyNavigatorCopy; //declared here as if  have the same constant declared twice, the second one will return undefined...maybe Babel issue
-
 export default function navigationReducer(state = initialState, action) {
 
     switch (action.type) {
@@ -106,7 +104,7 @@ export default function navigationReducer(state = initialState, action) {
 
         //this is called only when we are restring after add/edit entry
         case RESTORE_CHILD_ENTRIES_AND_LOCATIONS + '_FULFILLED': {
-            //using the "restored" namespace to avoid 'undefined', as hierarchyNavigatorCopy, see above
+            //the navigator comes from the action meta, so it is a local copy
             const restoredHierarchyNavigator = action.meta.hierarchyNavigator;
             const restoredFormRef = restoredHierarchyNavigator[0].formRef;
             const restoredFormName = restoredHierarchyNavigator[0].formName;
@@ -245,7 +243,7 @@ export default function navigationReducer(state = initialState, action) {
             const formName = action.meta.nextFormName;
             const isActionAfterBulkUpload = action.meta.isActionAfterBulkUpload;
 
-            hierarchyNavigatorCopy = JSON.parse(JSON.stringify(state.hierarchyNavigator));
+            const hierarchyNavigatorCopy = JSON.parse(JSON.stringify(state.hierarchyNavigator));
 
             //add current children view to navigation only when is a user navigation and not when closing the bulk upload modal
             if (!isActionAfterBulkUpload) {
@@ -289,7 +287,7 @@ export default function navigationReducer(state = initialState, action) {
             };
         //navigate back the children hierarchy
         case HIERARCHY_NAVIGATE_BACK: {
-            hierarchyNavigatorCopy = JSON.parse(JSON.stringify(state.hierarchyNavigator));
+            const hierarchyNavigatorCopy = JSON.parse(JSON.stringify(state.hierarchyNavigator));
             //remove last children parameters
             hierarchyNavigatorCopy.pop();
             return {
@@ -299,7 +297,7 @@ export default function navigationReducer(state = initialState, action) {
         }
         //reste hierarchy navigation leaving onlt the top parent form in (at index 0)
         case HIERARCHY_NAVIGATE_RESET: {
-            hierarchyNavigatorCopy = JSON.parse(JSON.stringify(state.hierarchyNavigator));
+            const hierarchyNavigatorCopy = JSON.parse(JSON.stringify(state.hierarchyNavigator));
             hierarchyNavigatorCopy.length = 1;
 
             return {

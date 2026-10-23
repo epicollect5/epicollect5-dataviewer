@@ -7,5 +7,5 @@ dist/dataviewer.js
 .history
 .env
 copy-to-server.sh
-.aiassistant
-vue-port/dist
+vue-port
+QA-*

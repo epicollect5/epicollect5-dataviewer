@@ -26,18 +26,23 @@ const requests = {
             endpoint = PARAMETERS.SERVER_URL + PARAMETERS.API_BULK_UPLOAD_EXTERNAL_ENDPOINT + projectSlug;
         }
 
-        //we use only resolve and we deal with it in the then() callback
-        return new Promise((resolve) => {
+        //the server can answer with an error payload, which is resolved with it,
+        //but a failure without any response (network error, timeout, dns failure)
+        //must reject: otherwise the promise never settles and the upload hangs
+        return new Promise((resolve, reject) => {
             axios.post(endpoint, entry)
                 .then((response) => {
                     //resolve with response
                     resolve(response);
                 })
                 .catch((error) => {
-                    //resolve with error
+                    //the server answered, resolve with the error payload
                     if (error.response) {
                         resolve(error.response.data);
+                        return;
                     }
+                    //no response at all, reject so the caller can handle it
+                    reject(error);
                 });
         });
     }

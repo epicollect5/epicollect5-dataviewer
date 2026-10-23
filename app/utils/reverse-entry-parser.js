@@ -69,6 +69,16 @@ const reverseEntryParser = {
         //hierarchy or branch entry?
         const entryType = currentBranchRef ? 'branch_entry' : 'entry';
 
+        //map every input ref (group inputs included) to its type,
+        //as a jumped question needs the empty value matching its own type
+        const inputTypesByRef = {};
+        inputs.forEach((formInput) => {
+            inputTypesByRef[formInput.ref] = formInput.type;
+            (formInput.group || []).forEach((groupInput) => {
+                inputTypesByRef[groupInput.ref] = groupInput.type;
+            });
+        });
+
         entriesClone.forEach((entry, entryIndex) => {
 
             let questionsJumpedRefs = new Set([]);
@@ -150,15 +160,26 @@ const reverseEntryParser = {
                                     questionsJumpedRefs = new Set([...questionsJumpedRefs, ...jumpedInputsRefs]);
                                 }
                                     break;
-                                case 'NO_ANSWER_GIVEN':
-                                    //todo check this and also checkboxes and search, '' or [] ????
-                                    if (reverseJump.answer_ref === null) {
+                                case 'NO_ANSWER_GIVEN': {
+                                    /**
+                                     * The form definition stores a null answer_ref for this condition,
+                                     * as there is no answer to match.
+                                     * The jump has to fire only when the entry has no answer
+                                     * for this question: an empty array for checkbox/search,
+                                     * an empty string for radio/dropdown and the other types.
+                                     */
+                                    const noAnswerGiven = Array.isArray(answer)
+                                        ? answer.length === 0
+                                        : answer === null || answer === undefined || (typeof answer === 'string' && answer.trim() === '');
+
+                                    if (noAnswerGiven) {
                                         //we have to jump
                                         const destinationRef = reverseJump.toInputRef;
                                         //from current input to jump destination, grab all input refs, they need to be set as jumped
                                         jumpedInputsRefs = self.getjumpedInputRefs(inputs, inputIndex, destinationRef);
                                         questionsJumpedRefs = new Set([...questionsJumpedRefs, ...jumpedInputsRefs]);
                                     }
+                                }
                                     break;
                                 default:
                                 //do nothing
@@ -173,12 +194,6 @@ const reverseEntryParser = {
 
                     Object.keys(entry.data[entryType].answers).forEach((inputRef) => {
 
-                        const inputTypesWithAnswerArray = [
-                            PARAMETERS.INPUT_TYPES.EC5_CHECKBOX_TYPE,
-                            PARAMETERS.INPUT_TYPES.EC5_SEARCH_SINGLE_TYPE,
-                            PARAMETERS.INPUT_TYPES.EC5_SEARCH_MULTIPLE_TYPE
-                        ];
-
                         //was this question jumped by the form logic?
                         if (questionsJumpedRefs.has(inputRef)) {
                             //ok: this question was jumped by the form logic
@@ -186,7 +201,7 @@ const reverseEntryParser = {
 
                             //todo: here we need to trigger the error on server side for bulk uploads
                             //todo:because it is not possible to provide values for jumped questions
-                            if (inputTypesWithAnswerArray.includes(input.type)) {
+                            if (PARAMETERS.MULTIPLE_ANSWERS_TYPES_AS_ARRAY.indexOf(inputTypesByRef[inputRef]) > -1) {
                                 //above question types get empty array when no answer is provided
                                 entriesClone[entryIndex].data[entryType].answers[inputRef].answer = [];
                             } else {
@@ -437,7 +452,7 @@ const reverseEntryParser = {
                             const today = new Date();
                             const year = today.getUTCFullYear();
                             const month = ('0' + (today.getUTCMonth() + 1)).slice(-2);
-                            const day = ('0' + today.getUTCDay()).slice(-2);
+                            const day = ('0' + today.getUTCDate()).slice(-2);
 
                             if (answerValue === '') {
                                 timeAnswer = '';
@@ -464,7 +479,7 @@ const reverseEntryParser = {
                                         break;
                                     case PARAMETERS.TIME_FORMAT_5:
                                         // TIME_FORMAT_5: 'mm:ss',
-                                        timeAnswer = '00:' + parts[1] + ':' + parts[0];
+                                        timeAnswer = '00:' + parts[0] + ':' + parts[1];
                                         break;
                                     default:
                                     //do nothing
@@ -646,6 +661,11 @@ const reverseEntryParser = {
                     reverseMapping[mapTo] = value[1];
                     reverseMapping[mapTo].input_ref = inputRef;
                     reverseMapping[mapTo].type = input.type;
+
+                    //a location is split over three headers sharing the same mapping object,
+                    //but jumps and missing answers are looked up by input ref,
+                    //so map it to the first header
+                    mappingHashMap[inputRef] = mapTo;
 
                     mapTo = 'long_' + value[1].map_to;
                     reverseMapping[mapTo] = value[1];

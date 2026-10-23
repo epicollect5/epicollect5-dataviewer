@@ -105,8 +105,13 @@ const helpers = {
         return false;
     },
     getQueryString(url) {
-        const urlParts = url.split('?', 1); //split only on first occurrence
-        return urlParts[urlParts.length - 1];
+        //the second argument of split() limits the number of results, not the number of
+        //splits, so it used to return the url up to the first '?' and never the query string
+        const queryIndex = url.indexOf('?');
+        if (queryIndex === -1) {
+            return '';
+        }
+        return url.slice(queryIndex + 1);
     },
 
     getTimeframeParams(activeTimeframe, currentState) {
@@ -256,7 +261,8 @@ const helpers = {
     getParentFormForUpload: (forms, currentFormRef) => {
         for (let i = 0, len = forms.length; i < len; i++) {
             if (forms[i].formRef === currentFormRef) {
-                if (i !== len) {
+                //the first form has no parent: i is never len, so the check was always true
+                if (i !== 0) {
                     return {
                         parentFormRef: forms[i - 1].formRef,
                         parentEntryUuid: forms[i].parentEntryUuid

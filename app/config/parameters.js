@@ -57,11 +57,11 @@ const PARAMETERS = {
     ESRI_TILES_PROVIDER_ATTRIBUTION: 'Powered by Esri | Esri, Maxar, Earthstar Geographics, and the GIS User Community',
 
     //carto https://carto.com/basemaps/
-    CARTO_LIGHT_TILES_PROVIDER: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+    CARTO_LIGHT_TILES_PROVIDER: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png?key=' + process.env.REACT_APP_CARTO_API_KEY,
     CARTO_TILES_ATTRIBUTION: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
 
     CARTO_DARK_TILES_PROVIDER:
-      'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=' + process.env.REACT_APP_CARTO_API_KEY,
 
     CARTO_DARK_TILES_ATTRIBUTION:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, ' +
@@ -240,10 +240,19 @@ const PARAMETERS = {
         FILE_UPLOAD_ERROR_NO_ROWS: 'Invalid file, no entries found',
         FILE_SIZE_ERROR: 'File size exceeded',
         FILE_MAPPING_ERROR: 'File mapping does not match',
+        FILE_DUPLICATE_HEADERS_ERROR: 'File contains duplicate headers',
         FILE_UUID_ERROR: 'File contains duplicate ec5_uuid values',
         FILE_BRANCH_UUID_ERROR: 'File contains duplicate ec5_branch_uuid values',
+        //the entry may or may not have been uploaded, as the server never answered
+        FILE_UPLOAD_NETWORK_ERROR: 'Upload not confirmed by the server, check your connection and retry',
         FILE_DOWNLOAD_ERROR: 'Cannot download file',
         DELETE_ENTRY_ERROR: 'Error, entry not deleted'
+    },
+
+    //the upload errors raised on the client, when the server never answered
+    UPLOAD_ERRORS: {
+        CLIENT_SOURCE: 'upload-client',
+        CLIENT_CODE: 'client-network-error'
     },
 
     TOAST_OPTIONS: {
@@ -301,7 +310,9 @@ const PARAMETERS = {
     DELAY: {
         SHORT: 250,
         MEDIUM: 500,
-        LONG: 1000
+        LONG: 1000,
+        //minimum time the table page loader stays up, so it does not flash
+        TABLE_PAGE_MIN: 2000
     },
     MAP_OVERLAYS: {
         CLUSTERS: 'Clusters',

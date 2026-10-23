@@ -242,6 +242,19 @@ class DrawerUpload extends React.Component {
                         return false;
                     }
 
+                    //duplicated headers are silently collapsed by the parser (the last value wins),
+                    //so bail out instead of uploading incomplete data
+                    const duplicatedHeaders = headers.filter((header, index) => {
+                        return headers.indexOf(header) !== index;
+                    });
+
+                    if (duplicatedHeaders.length > 0) {
+                        //hide modal and show error
+                        this.props.toggleModalUploadEntries();
+                        this.props.showToastFileUploadError(PARAMETERS.LABELS.FILE_DUPLICATE_HEADERS_ERROR);
+                        return false;
+                    }
+
                     //generate reverse mapping per each row
                     //todo filter out not bulk-uploadable question types??
                     const reverseMapping = reverseEntryParser.getReverseMapping(currentFormRef, currentFormMapping, projectExtra, projectDefinition, currentBranchRef);
@@ -308,7 +321,12 @@ class DrawerUpload extends React.Component {
                             //When the following is one, users are navigating using the form switcher
                             if (hierarchyNavigator.length > 1) {
                                 //users are navigating down the children/branches
-                                parentFormForUpload = helpers.getParentFormForUpload(hierarchyNavigator, currentFormRef);
+                                const parentForm = helpers.getParentFormForUpload(hierarchyNavigator, currentFormRef);
+                                //the helper returns false when there is no parent form:
+                                //keep the nulls, as the entry parser checks them against null
+                                if (parentForm) {
+                                    parentFormForUpload = parentForm;
+                                }
                             }
 
                             //parse all the reverse answers to get entry object for upload
@@ -318,6 +336,9 @@ class DrawerUpload extends React.Component {
                                 //get uuid from answer to hanlde edit/update
                                 let uuid = reverseAnswer.uuid;
 
+                                //entryTitle can be null here for a new entry, as the uuid is generated
+                                //right below. That is fine: the api replaces an empty title with the
+                                //entry uuid (EntryStructureDTO::getTitle), so keep this order as it is.
                                 const entryTitle = (reverseAnswer.title === null) ? uuid : reverseAnswer.title.trim();
 
                                 //if uuid not provided, generate a new one
@@ -355,6 +376,10 @@ class DrawerUpload extends React.Component {
                                 } else {
                                     this.props.showToastFileUploadError(PARAMETERS.LABELS.FILE_UUID_ERROR);
                                 }
+
+                                //do not stage the entries, otherwise they would be uploaded
+                                //the next time the upload modal is opened
+                                return false;
                             }
 
                             if (entries.length > 0) {
@@ -387,6 +412,12 @@ class DrawerUpload extends React.Component {
                     true,
                 skipEmptyLines:
                     'greedy',
+                //Excel adds a BOM and manual edits can leave spaces around headers:
+                //trim them so the header check and the ec5_uuid lookup work
+                transformHeader:
+                    (header) => {
+                        return header.trim();
+                    },
                 delimiter:
                     ',',
                 escapeChar: '"'

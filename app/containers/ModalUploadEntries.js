@@ -32,6 +32,11 @@ class ModalUploadEntries extends React.Component {
         this.failedReverseEntries = [];
         this.clonedReverseEntries = [];
         this.wasInterruptedUpload = false;
+        //each upload round gets a number, so that the requests still pending
+        //when a new round starts can be told apart from the current ones
+        this.uploadRound = 0;
+        //the round the results in the state belong to
+        this.resultsRound = 0;
 
         this.close = this.close.bind(this);
         this.handleClickNext = this.handleClickNext.bind(this);
@@ -166,6 +171,10 @@ class ModalUploadEntries extends React.Component {
         if (this.clonedReverseEntries.length > 0) {
 
             if (window.confirm('Are you sure? This will stop the uploads')) {
+                //the round is over: whatever is still pending must not reach the
+                //server nor add any result to this one
+                this.uploadRound += 1;
+
                 //set this flag so we can keep the modal open showing a loader while waiting for a page
                 //refresh in the background to show the just uploaded entries
                 this.wasInterruptedUpload = true;
@@ -198,6 +207,10 @@ class ModalUploadEntries extends React.Component {
                 });
             }
         } else {
+            //the round is over: whatever is still pending must not reach the
+            //server nor add any result to this one
+            this.uploadRound += 1;
+
             //reset arrays
             this.failedReverseEntries = [];
             this.clonedReverseEntries = [];
@@ -227,6 +240,8 @@ class ModalUploadEntries extends React.Component {
 
     componentDidMount () {
         console.log(' 1 -modal upload mounted');
+        //a round may have started on the first render
+        this.resultsRound = this.uploadRound;
     }
 
     componentDidUpdate () {
@@ -240,6 +255,16 @@ class ModalUploadEntries extends React.Component {
         //but we do not end up in an infinite loop
         if (!showModalUploadEntries) {
             this.isFirstRun = true;
+        }
+
+        //a new round starts with no results: the ones of the previous round
+        //must not show up in its table
+        if (this.resultsRound !== this.uploadRound) {
+            this.resultsRound = this.uploadRound;
+            this.setState({
+                responses: [],
+                failedResponses: []
+            });
         }
 
         if (this.clonedReverseEntries.length === 0) {
@@ -265,12 +290,38 @@ class ModalUploadEntries extends React.Component {
 
         if (this.isFirstRun) {
             this.clonedReverseEntries = reverseEntries.slice(0);
+            //a new upload round starts with a clean list of failures
+            this.failedReverseEntries = [];
             this.wasInterruptedUpload = false;
         }
 
         const uploadEntries = (entry) => {
+            //the round this request belongs to: when a new round starts, the
+            //requests still pending from the previous one are stale
+            const round = this.uploadRound;
+
+            //carry on with the next entry of this round
+            const uploadNext = () => {
+                if (round !== this.uploadRound) {
+                    return;
+                }
+                if (this.clonedReverseEntries.length !== 0) {
+                    uploadEntries(this.clonedReverseEntries.shift());
+                }
+            };
+
             window.setTimeout(() => {
+            //the upload can be stopped while the entry is waiting to be sent:
+            //it must not reach the server then
+            if (round !== this.uploadRound || this.wasInterruptedUpload) {
+                return;
+            }
             requests.uploadOneEntry(entry, projectSlug).then((response) => {
+
+                if (round !== this.uploadRound) {
+                    //a new upload round has started, this response is stale
+                    return;
+                }
 
                 if (!this.wasInterruptedUpload) {
                     if (response.errors) {
@@ -282,29 +333,52 @@ class ModalUploadEntries extends React.Component {
                                 responses: state.responses.concat([response, response]),
                                 failedResponses: state.failedResponses.concat([response, response])
                             };
-                        }, () => {
-                            if (this.clonedReverseEntries.length !== 0) {
-                                    uploadEntries(this.clonedReverseEntries.shift());
-                            }
-                        });
+                        }, uploadNext);
                     } else {
                         this.setState((state) => {
                             return {
                                 responses: state.responses.concat([response, response])
                             };
-                        }, () => {
-                            if (this.clonedReverseEntries.length !== 0) {
-                                    uploadEntries(this.clonedReverseEntries.shift());
-                            }
-                        });
+                        }, uploadNext);
                     }
                 }
+            }).catch(() => {
+                //the server never answered (network error, timeout): the entry may or
+                //may not have been uploaded, so it is reported as failed and the
+                //upload carries on with the next entry
+                if (round !== this.uploadRound) {
+                    //a new upload round has started, this failure is stale
+                    return;
+                }
+                if (this.wasInterruptedUpload) {
+                    return;
+                }
+
+                const errorResponse = {
+                    errors: [{
+                        source: PARAMETERS.UPLOAD_ERRORS.CLIENT_SOURCE,
+                        code: PARAMETERS.UPLOAD_ERRORS.CLIENT_CODE,
+                        title: PARAMETERS.LABELS.FILE_UPLOAD_NETWORK_ERROR
+                    }]
+                };
+
+                this.failedReverseEntries.push(...[entry, entry]);
+
+                this.setState((state) => {
+                    return {
+                        responses: state.responses.concat([errorResponse, errorResponse]),
+                        failedResponses: state.failedResponses.concat([errorResponse, errorResponse])
+                    };
+                }, uploadNext);
             });
             }, PARAMETERS.DELAY.LONG);
         };
 
         if (showModalUploadEntries && reverseEntries.length > 0) {
             if (this.isFirstRun) {
+                //a new round starts: the requests still pending from the previous
+                //one are stale, their callbacks must not touch this round
+                this.uploadRound += 1;
                 uploadEntries(this.clonedReverseEntries.shift());
                 this.isFirstRun = false;
             }

@@ -209,7 +209,8 @@ const table = {
     getChildFormRef: (forms, currentFormRef) => {
         for (let i = 0, len = forms.length; i < len; i++) {
             if (forms[i].ref === currentFormRef) {
-                if (i !== len) {
+                //the last form has no child: i is never len, so the check was always true
+                if (i !== len - 1) {
                     return forms[i + 1].ref;
                 }
             }
@@ -222,7 +223,8 @@ const table = {
     getParentFormRef: (forms, currentFormRef) => {
         for (let i = 0, len = forms.length; i < len; i++) {
             if (forms[i].ref === currentFormRef) {
-                if (i !== len) {
+                //the first form has no parent: i is never len, so the check was always true
+                if (i !== 0) {
                     return forms[i - 1].ref;
                 }
             }

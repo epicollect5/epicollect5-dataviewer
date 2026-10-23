@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ToastContainer, ToastMessage } from 'react-toastr';
-import { fetchProject, fetchProjectAndEntries, toastResetState } from 'actions';
+import { fetchProjectAndEntries, toastResetState } from 'actions';
 import axios from 'axios';
 import Loader from 'components/Loader';
 import ErrorView from 'components/ErrorView';
@@ -191,7 +191,6 @@ function mapStateToProps (state) {
 
 function mapDispatchToProps (dispatch) {
     return bindActionCreators({
-        fetchProject,
         fetchProjectAndEntries,
         toastResetState
     }, dispatch);

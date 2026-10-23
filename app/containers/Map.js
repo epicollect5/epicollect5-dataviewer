@@ -156,11 +156,13 @@ class Map extends React.Component {
         ////add tiles (CARTO) -> default
         const carto = L.tileLayer(PARAMETERS.CARTO_LIGHT_TILES_PROVIDER, {
             attribution: PARAMETERS.CARTO_TILES_ATTRIBUTION,
+            subdomains: 'abcd',
             maxNativeZoom: 20
         });
 
         const cartoDark = L.tileLayer(PARAMETERS.CARTO_DARK_TILES_PROVIDER, {
             attribution: PARAMETERS.CARTO_DARK_TILES_ATTRIBUTION,
+            subdomains: 'abcd',
             maxNativeZoom: 20
         });
 

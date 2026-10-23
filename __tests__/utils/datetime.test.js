@@ -61,4 +61,46 @@ describe('datetime utils test', () => {
         expect(datetime.getFormattedTime(dateISO8601, PARAMETERS.TIME_FORMAT_5)).toBe('59:29');
     });
 
+
+    it('should return an empty string for an empty date', () => {
+        expect(datetime.getFormattedDate('', PARAMETERS.DATE_FORMAT_1)).toBe('');
+    });
+
+    it('should return an empty string for an empty time', () => {
+        expect(datetime.getFormattedTime('', PARAMETERS.TIME_FORMAT_1)).toBe('');
+    });
+
+    it('should return an empty string for an empty time format', () => {
+        expect(datetime.getFormattedTime('2018-02-24T17:59:29.179Z', '')).toBe('');
+    });
+
+    describe('doDatesHaveSameDay', () => {
+
+        it('should tell that two dates of the same day match', () => {
+            expect(datetime.doDatesHaveSameDay(
+                new Date(2018, 0, 24, 10, 0, 0),
+                new Date(2018, 0, 24, 22, 0, 0)
+            )).toBe(true);
+        });
+
+        it('should tell that two dates of the same utc day match', () => {
+            expect(datetime.doDatesHaveSameDay(
+                new Date('2018-01-24T23:30:00.000Z'),
+                new Date('2018-01-24T00:30:00.000Z')
+            )).toBe(true);
+        });
+
+        it('should tell that two dates of different days do not match', () => {
+            expect(datetime.doDatesHaveSameDay(
+                new Date(2018, 0, 24, 10, 0, 0),
+                new Date(2018, 0, 25, 10, 0, 0)
+            )).toBe(false);
+        });
+
+        it('should tell that a non date does not match', () => {
+            expect(datetime.doDatesHaveSameDay('2018-01-24', new Date(2018, 0, 24))).toBe(false);
+            expect(datetime.doDatesHaveSameDay(new Date(2018, 0, 24), '2018-01-24')).toBe(false);
+        });
+    });
+
 });
