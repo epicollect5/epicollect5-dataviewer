@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.DS_Store
 node_modules/
 dist/*.map
 dist/dataviewer.js
@@ -7,5 +8,4 @@ dist/dataviewer.js
 .history
 .env
 copy-to-server.sh
-vue-port
 QA-*
