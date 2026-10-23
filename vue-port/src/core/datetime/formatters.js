@@ -88,6 +88,18 @@ const formatters = {
       date1.getUTCMonth() === date2.getUTCMonth() &&
       date1.getUTCDate() === date2.getUTCDate()
     );
+  },
+
+  getShortDate(inputDate) {
+    if (!(inputDate instanceof Date) || Number.isNaN(inputDate.getTime())) {
+      return '--';
+    }
+
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: '2-digit'
+    }).format(inputDate);
   }
 };
 

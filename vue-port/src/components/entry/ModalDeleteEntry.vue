@@ -13,7 +13,7 @@
   <ion-content class="ion-padding">
     <ion-card class="delete-entry-modal">
       <ion-card-content>
-        <div v-if="state.isDeleting" class="delete-entry-modal__loader">
+        <div v-if="isDeleting" class="delete-entry-modal__loader">
           <LoaderSpinner />
         </div>
 
@@ -103,15 +103,20 @@ export default {
     };
 
     const computedScope = {
+      isDeleting: computed(() => state.isDeleting),
       payload: computed(() => modalStore.payload || {}),
       entryTitle: computed(() => computedScope.payload.value.entryTitle || 'Untitled entry')
+    };
+
+    const icons = {
+      close
     };
 
     return {
       state,
       ...methods,
       ...computedScope,
-      close
+      ...icons
     };
   }
 };

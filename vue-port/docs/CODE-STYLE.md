@@ -1,10 +1,13 @@
-# AI Rules — Vue Migration (Dataviewer)
+# AI Rules — Epicollect5 Dataviewer (Vue port)
 
-These rules define the required coding style for the Vue refactor.
+These rules define the required coding style for the **Vue port only**.
 
-They mirror the Epicollect5 mobile app conventions.
+> **Scope: `vue-port/**`.**
+> The legacy React application under `app/**` keeps its existing conventions and is
+> **not** restyled. Nothing in this file applies to `app/**` or `__tests__/`.
 
-If generic Vue guidance conflicts with this file, **this file wins**.
+If generic Vue guidance conflicts with this file, **this file wins** — but only for
+`vue-port/**`.
 
 ## Why This Style Exists
 
@@ -38,7 +41,7 @@ Reason:
 
 ---
 
-#### Grouped structure (state, methods, computedScope)
+#### Grouped structure (state, methods, computed)
 
 Each component follows a consistent structure:
 
@@ -70,25 +73,16 @@ Reason:
 - Components orchestrate UI; they do not implement workflow logic.
 - Put code in the correct architectural layer.
 
-Use the Vue port structure rules:
+Use the structure rules:
 
 - `src/stores/`
   Shared reactive state and model-like app state
 
-- `src/composable/`
-  Reusable Vue composition logic only
-
 - `src/core/`
-  Dataviewer-specific helper and transformation logic
+  Domain logic: entry parsing, upload row pairing, date formatting, map maths
 
-- `src/services/api/`
-  Backend communication and endpoint-specific request functions
-
-- `src/services/upload/`
-  Upload-specific workflow logic
-
-- `src/services/entries/`
-  Entry-specific workflow logic
+- `src/composables/`
+  Reusable Vue composition logic only
 
 - `src/components/`
   Reusable UI components only
@@ -98,30 +92,30 @@ Use the Vue port structure rules:
 
 ### Rules
 
-- If code is about backend requests, put it in `services/api/`
-- If code is dataviewer-specific helper logic or shaping, put it in `core/`
+- If code is about backend requests, put it in `services/`
 - If code is shared state, put it in `stores/`
+- If code is dataviewer-specific transformation logic, put it in `core/`
 - If code is reusable Vue composition logic, put it in `composable/`
-- If code is entry or upload workflow logic, put it in `services/entries/` or `services/upload/`
+- If code is entry or upload workflow logic, put it in `services/`
 - Do not put workflow or business logic directly in components
 
 ## Reference Implementation
 
-See: `ExampleComponent.vue`
+See: `src/components/`
 
-- This file is the **canonical pattern**.
-- Always start from its structure.
-- Prefer copying it over using generic Vue examples.
+- This folder is the **canonical pattern**.
+- Always start from the structure of the components already committed there.
+- Prefer copying them over using generic Vue examples.
 
 When generating Vue components:
-- Start by copying `ExampleComponent.vue`.
+- Start by copying an existing component from `src/components/`.
 - Then adapt it to the specific feature.
 
 ---
 
 ## Core Principles
 
-- Follow existing mobile app architecture and conventions.
+- Follow existing dataviewer port architecture and conventions.
 - Consistency is more important than “modern Vue best practices”.
 - Do **NOT** introduce new patterns unless explicitly requested.
 
@@ -129,7 +123,9 @@ When generating Vue components:
 
 ## Linting
 
- - Always use the rules defined in the .eslintrc.js file
+- Always use the rules defined in the `eslint.config.js` file of the port
+
+---
 
 ## State
 
@@ -188,7 +184,6 @@ return {
 - Keep the order consistent: `state` → `methods` → `computedScope`.
 - Important: NEVER spread `state`
 
-
 ---
 
 ## Template Rules
@@ -203,7 +198,7 @@ return {
 
 ✅ **Use:**
 ```html
-<button @click="methods.doSomething">
+<button @click="doSomething()">
 ```
 
 ---
@@ -230,7 +225,7 @@ Do **NOT**:
 
 - **State** = data container
 - **Methods** = actions
-- **ComputedScope** = derived state
+- **Computed** = derived state
 - **Services** = business logic
 - **Components** = UI orchestration only
 
@@ -239,23 +234,34 @@ Do **NOT**:
 ## Priority Order
 
 When in doubt:
-1. Follow `ExampleComponent.vue`
+1. Follow the components already in `src/components/`
 2. Follow this file
 3. Then consider general Vue guidance
 
+---
+
 # ESLint & Style Rules
+
 You must follow these rules strictly. If you generate code that violates these, it will fail build.
 
 - **Semicolons**: ALWAYS use semicolons at the end of statements (`'semi': ['error', 'always']`).
+- **Braces**: ALWAYS wrap `if`/`else`/`for`/`while` bodies in `{}`, even single statements (`'curly': ['error', 'all']`).
 - **Quotes**: Use SINGLE quotes for strings (`'quotes': ['error', 'single']`).
 - **Commas**: NEVER use trailing commas (`'comma-dangle': [1, 'never']`).
 - **Variables**: Prefer `const` over `let`, and NEVER use `var`.
 - **Vue Components**:
   - Disable multi-word component name checks.
   - Follow this specific order for component options: props, emits, setup, data, computed, watch, methods.
-- **Environment**: This is an Ionic Vue (3) project with Cordova globals enabled and Capacitor.
+- **Environment**: This is a Vue 3 + Pinia + Vite project with Ionic Vue 8 and ag-grid-vue3.
+
+---
+
 # Testing Requirements
-- **Framework**: Use Vitest for all tests. Never use Jest.
+
+*(applies to `vue-port/**` only — the legacy app under `app/**` uses Jest + Enzyme)*
+
+- **Framework**: Use Vitest for all tests in the port. Never use Jest there.
 - **Imports**: Always import testing functions from 'vitest' (e.g., `import { describe, it, expect, vi } from 'vitest';`).
 - **Mocks**: Use `vi.fn()` or `vi.spyOn()` instead of `jest.fn()` or `jest.spyOn()`.
 - **Globals**: Even if globals are enabled in `vite.config.js`, explicitly include imports in generated snippets to ensure type safety.
+- **Command**: Run with `NODE_ENV=test npx vitest run <file>` — without it, tests fail with misleading environment errors.

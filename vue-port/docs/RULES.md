@@ -62,7 +62,7 @@ All Vue components belong under `src/components/`.
 
 Current component groups:
 
-- `src/components/app/`
+- `src/components/main/`
 - `src/components/entry/`
 - `src/components/forms/`
 - `src/components/global/`
@@ -75,7 +75,7 @@ Create a new subfolder only when the component group is real and reusable, not f
 
 ## Naming Rules
 
-- `Main.vue` is always the entry point of the app
+- `App.vue` is always the entry point of the app
 
 Component type goes first in the filename.
 

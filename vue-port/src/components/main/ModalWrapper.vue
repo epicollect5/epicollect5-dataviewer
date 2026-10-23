@@ -1,12 +1,12 @@
 <template>
   <ModalPhotoViewer />
 
-  <ion-modal :is-open="activeModal !== null" :style="modalStyle" @didDismiss="closeModal">
-    <ModalUpload v-if="activeModal === 'upload'" />
-    <ModalDeleteEntry v-else-if="activeModal === 'delete-entry'" />
-    <ModalMediaViewer v-else-if="activeModal === 'media-viewer'" :ref="setMediaViewerModal" />
-    <ModalViewEntry v-else-if="activeModal === 'view-entry'" />
-    <ModalPrepareDownload v-else-if="activeModal === 'prepare-download'" />
+  <ion-modal :is-open="isModalOpen" :style="modalStyle" @didDismiss="closeModal">
+    <ModalUpload v-if="isUploadModal" />
+    <ModalDeleteEntry v-else-if="isDeleteEntryModal" />
+    <ModalMediaViewer v-else-if="isMediaViewerModal" :ref="setMediaViewerModal" />
+    <ModalViewEntry v-else-if="isViewEntryModal" />
+    <ModalPrepareDownload v-else-if="isPrepareDownloadModal" />
     <ion-content v-else class="ion-padding">
       <h2>{{ modalTitle }}</h2>
       <p>Modal placeholder.</p>
@@ -21,7 +21,7 @@ import ModalDeleteEntry from '@/components/entry/ModalDeleteEntry.vue';
 import ModalViewEntry from '@/components/entry/ModalViewEntry.vue';
 import ModalMediaViewer from '@/components/media/ModalMediaViewer.vue';
 import ModalPhotoViewer from '@/components/media/ModalPhotoViewer.vue';
-import ModalPrepareDownload from '@/components/app/ModalPrepareDownload.vue';
+import ModalPrepareDownload from '@/components/main/ModalPrepareDownload.vue';
 import ModalUpload from '@/components/upload/ModalUpload.vue';
 import { useModalStore } from '@/stores/modalStore';
 
@@ -56,6 +56,12 @@ export default {
 
     const computedScope = {
       activeModal: computed(() => modalStore.activeModal),
+      isModalOpen: computed(() => modalStore.activeModal !== null),
+      isUploadModal: computed(() => modalStore.activeModal === 'upload'),
+      isDeleteEntryModal: computed(() => modalStore.activeModal === 'delete-entry'),
+      isMediaViewerModal: computed(() => modalStore.activeModal === 'media-viewer'),
+      isViewEntryModal: computed(() => modalStore.activeModal === 'view-entry'),
+      isPrepareDownloadModal: computed(() => modalStore.activeModal === 'prepare-download'),
       modalTitle: computed(() => modalStore.activeModal || 'Modal'),
       modalStyle: computed(() => {
         if (modalStore.activeModal === 'media-viewer') {
@@ -91,3 +97,4 @@ export default {
   }
 };
 </script>
+<style src="@/theme/app/ModalWrapper.scss" lang="scss"></style>

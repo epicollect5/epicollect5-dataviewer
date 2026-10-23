@@ -11,7 +11,7 @@
       :default-col-def="state.defaultColDef"
       :row-data="rowData"
       :animate-rows="true"
-      :class="{ 'entries-grid--hidden': isLoading }"
+      :class="gridClasses"
       :suppress-drag-leave-hides-columns="true"
       :ensure-dom-order="true"
       :suppress-cell-focus="true"
@@ -71,7 +71,10 @@ export default {
         childFormName: props.childFormName,
         hasChildForm: props.hasChildForm
       })),
-      rowData: computed(() => props.rows)
+      rowData: computed(() => props.rows),
+      gridClasses: computed(() => ({
+        'entries-grid--hidden': props.isLoading
+      }))
     };
 
     return {

@@ -1,11 +1,11 @@
 <template>
-    <ion-menu
+  <ion-menu
     menu-id="app-drawer-menu"
     content-id="app-shell-main-content"
     type="overlay"
     :class="drawerClasses"
     :side="drawerSide"
-    :disabled="!activeDrawer"
+    :disabled="isDrawerDisabled"
     :swipe-gesture="false"
     @ionDidClose="handleMenuDidClose"
   >
@@ -21,28 +21,28 @@
     </ion-header>
 
     <ion-content class="drawer-wrapper">
-      <DrawerEntry v-if="activeDrawer === 'map-entry'" />
+      <DrawerEntry v-if="isEntryDrawer" />
       <DrawerMap
-        v-else-if="activeDrawer === 'map-filters'"
+        v-else-if="isFiltersDrawer"
         v-bind="drawerPayload"
-        @change-location="forward('change-location', $event)"
-        @change-distribution="forward('change-distribution', $event)"
-        @reset-distribution="forward('reset-distribution')"
-        @toggle-clusters="forward('toggle-clusters', $event)"
-        @update-dates="forward('update-dates', $event)"
-        @reset-dates="forward('reset-dates')"
+        @change-location="handleChangeLocation"
+        @change-distribution="handleChangeDistribution"
+        @reset-distribution="handleResetDistribution"
+        @toggle-clusters="handleToggleClusters"
+        @update-dates="handleUpdateDates"
+        @reset-dates="handleResetDates"
       />
       <DrawerNavbarPrimary
-        v-else-if="activeDrawer === 'navbar-primary'"
+        v-else-if="isNavbarDrawer"
         v-bind="drawerPayload"
-        @avatar-error="forward('avatar-error')"
-        @download="forward('download')"
-        @navigate-page="forward('navigate-page', $event)"
+        @avatar-error="handleAvatarError"
+        @download="handleDownload"
+        @navigate-page="handleNavigatePage"
       />
       <DrawerDownload
-        v-else-if="activeDrawer === 'app-download'"
+        v-else-if="isDownloadDrawer"
         v-bind="drawerPayload"
-        @download="forward('download', $event)"
+        @download="handleDownload"
       />
     </ion-content>
   </ion-menu>
@@ -52,8 +52,8 @@
 import { IonButton, IonContent, IonHeader, IonIcon, IonMenu, IonToolbar, menuController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
-import DrawerDownload from '@/components/app/DrawerDownload.vue';
-import DrawerNavbarPrimary from '@/components/app/DrawerNavbarPrimary.vue';
+import DrawerDownload from '@/components/main/DrawerDownload.vue';
+import DrawerNavbarPrimary from '@/components/main/DrawerNavbarPrimary.vue';
 import DrawerEntry from '@/components/entry/DrawerEntry.vue';
 import DrawerMap from '@/components/map/DrawerMap.vue';
 import { useDrawerStore } from '@/stores/drawerStore';
@@ -121,11 +121,43 @@ export default {
         const onEvent = drawerStore.payload?.onEvent;
 
         onEvent?.(eventName, value);
+      },
+      handleChangeLocation(value) {
+        methods.forward('change-location', value);
+      },
+      handleChangeDistribution(value) {
+        methods.forward('change-distribution', value);
+      },
+      handleResetDistribution() {
+        methods.forward('reset-distribution');
+      },
+      handleToggleClusters(value) {
+        methods.forward('toggle-clusters', value);
+      },
+      handleUpdateDates(value) {
+        methods.forward('update-dates', value);
+      },
+      handleResetDates() {
+        methods.forward('reset-dates');
+      },
+      handleAvatarError() {
+        methods.forward('avatar-error');
+      },
+      handleDownload(value) {
+        methods.forward('download', value);
+      },
+      handleNavigatePage(value) {
+        methods.forward('navigate-page', value);
       }
     };
 
     const computedScope = {
       activeDrawer: computed(() => drawerStore.activeDrawer),
+      isDrawerDisabled: computed(() => !drawerStore.activeDrawer),
+      isEntryDrawer: computed(() => drawerStore.activeDrawer === 'map-entry'),
+      isFiltersDrawer: computed(() => drawerStore.activeDrawer === 'map-filters'),
+      isNavbarDrawer: computed(() => drawerStore.activeDrawer === 'navbar-primary'),
+      isDownloadDrawer: computed(() => drawerStore.activeDrawer === 'app-download'),
       payload: computed(() => drawerStore.payload),
       drawerPayload: computed(() => {
         if (!drawerStore.payload) {
@@ -175,11 +207,15 @@ export default {
       }
     );
 
+    const icons = {
+      close
+    };
+
     return {
       state,
       ...methods,
       ...computedScope,
-      close
+      ...icons
     };
   }
 };

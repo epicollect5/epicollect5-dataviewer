@@ -1,10 +1,10 @@
 <template>
   <transition name="fade" mode="out-in">
-    <div v-if="state.mapStore.isFetchingEntry" key="loading" class="drawer-entry__loader">
+    <div v-if="isFetchingEntry" key="loading" class="drawer-entry__loader">
       <LoaderSpinner />
     </div>
 
-    <div v-else-if="!entrySections.length" key="empty" class="drawer-entry__loader drawer-entry__loader--empty">
+    <div v-else-if="!hasEntrySections" key="empty" class="drawer-entry__loader drawer-entry__loader--empty">
       No entry selected.
     </div>
 
@@ -31,11 +31,11 @@
         <div class="drawer-entry__item-content">
           <div class="drawer-entry__question">{{ section.question }}</div>
           <div class="drawer-entry__answer">
-            <template v-if="section.kind === 'photo'">
+            <template v-if="section.isPhoto">
               <button
                 type="button"
                 class="drawer-entry__photo-button"
-                @click="openPhoto(entryTitle, section.value.entry_original, section.value.entry_thumb || section.value.entry_default)"
+                @click="openSectionPhoto(section)"
               >
                 <span class="drawer-entry__photo-frame">
                   <span class="drawer-entry__photo-mat">
@@ -49,7 +49,7 @@
                         :src="section.value.entry_original"
                         :alt="section.question"
                         class="drawer-entry__photo"
-                        :class="{ 'drawer-entry__photo--ready': !isThumbLoading(section.key) }"
+                        :class="getPhotoClasses(section.key)"
                         @load="handleThumbLoad(section.key)"
                       />
                     </span>
@@ -57,18 +57,18 @@
                 </span>
               </button>
             </template>
-            <template v-else-if="section.kind === 'audio'">
+            <template v-else-if="section.isAudio">
               <PlayButton
                 label="Play audio"
                 :full-width="true"
-                @click="openMedia('audio', section.question, section.value.entry_original)"
+                @click="openSectionMedia(section)"
               />
             </template>
-            <template v-else-if="section.kind === 'video'">
+            <template v-else-if="section.isVideo">
               <PlayButton
                 label="Play video"
                 :full-width="true"
-                @click="openMedia('video', section.question, section.value.entry_original)"
+                @click="openSectionMedia(section)"
               />
             </template>
             <template v-else>
@@ -129,8 +129,62 @@ export default {
           src
         });
       },
+      getAnswerKind(answer) {
+        if (!answer.answer) {
+          return 'text';
+        }
+
+        if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE) {
+          return 'photo';
+        }
+
+        if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE) {
+          return 'audio';
+        }
+
+        if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE) {
+          return 'video';
+        }
+
+        return 'text';
+      },
+      buildEntrySection(header, answer, index) {
+        const kind = methods.getAnswerKind(answer);
+
+        return {
+          key: `${header.question}-${index}`,
+          question: header.question,
+          kind,
+          value: answer.answer,
+          isPhoto: kind === 'photo',
+          isAudio: kind === 'audio',
+          isVideo: kind === 'video'
+        };
+      },
+      getPhotoPreview(value) {
+        return value?.entry_thumb || value?.entry_default || '';
+      },
+      openSectionPhoto(section) {
+        methods.openPhoto(
+          computedScope.entryTitle.value,
+          section.value?.entry_original,
+          methods.getPhotoPreview(section.value)
+        );
+      },
+      openSectionMedia(section) {
+        methods.openMedia(
+          section.kind,
+          section.question,
+          section.value?.entry_original
+        );
+      },
       isThumbLoading(key) {
         return state.loadedThumbs[key] !== true;
+      },
+      getPhotoClasses(key) {
+        return {
+          'drawer-entry__photo--ready': !methods.isThumbLoading(key)
+        };
       },
       handleThumbLoad(key) {
         state.loadedThumbs = {
@@ -141,6 +195,7 @@ export default {
     };
 
     const computedScope = {
+      isFetchingEntry: computed(() => mapStore.isFetchingEntry),
       entryData: computed(() => {
         if (!mapStore.selectedEntry || !navigationStore.currentFormRef) {
           return null;
@@ -196,42 +251,11 @@ export default {
               return null;
             }
 
-            if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE && answer.answer) {
-              return {
-                key: `${header.question}-${index}`,
-                question: header.question,
-                kind: 'photo',
-                value: answer.answer
-              };
-            }
-
-            if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE && answer.answer) {
-              return {
-                key: `${header.question}-${index}`,
-                question: header.question,
-                kind: 'audio',
-                value: answer.answer
-              };
-            }
-
-            if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE && answer.answer) {
-              return {
-                key: `${header.question}-${index}`,
-                question: header.question,
-                kind: 'video',
-                value: answer.answer
-              };
-            }
-
-            return {
-              key: `${header.question}-${index}`,
-              question: header.question,
-              kind: 'text',
-              value: answer.answer
-            };
+            return methods.buildEntrySection(header, answer, index);
           })
           .filter(Boolean);
-      })
+      }),
+      hasEntrySections: computed(() => computedScope.entrySections.value.length > 0)
     };
 
     return {

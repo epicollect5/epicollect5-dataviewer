@@ -1,10 +1,10 @@
 <template>
   <section class="page-data">
-    <div class="page-data__panel" :class="{ 'page-data__panel--active': !isMapPage }" :aria-hidden="isMapPage">
+    <div class="page-data__panel" :class="tablePanelClasses" :aria-hidden="isMapPage">
       <PageTable />
     </div>
 
-    <div class="page-data__panel" :class="{ 'page-data__panel--active': isMapPage }" :aria-hidden="!isMapPage">
+    <div class="page-data__panel" :class="mapPanelClasses" :aria-hidden="!isMapPage">
       <PageMap />
     </div>
   </section>
@@ -26,7 +26,13 @@ export default {
     const navigationStore = useNavigationStore();
 
     const computedScope = {
-      isMapPage: computed(() => navigationStore.activePage === 'map')
+      isMapPage: computed(() => navigationStore.activePage === 'map'),
+      tablePanelClasses: computed(() => ({
+        'page-data__panel--active': navigationStore.activePage !== 'map'
+      })),
+      mapPanelClasses: computed(() => ({
+        'page-data__panel--active': navigationStore.activePage === 'map'
+      }))
     };
 
     return {

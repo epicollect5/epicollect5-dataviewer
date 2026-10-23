@@ -2,7 +2,7 @@
   <button
     type="button"
     class="play-button"
-    :class="{ 'play-button--block': fullWidth }"
+    :class="buttonClasses"
     :aria-label="buttonLabel"
     @click="handleClick"
   >
@@ -40,14 +40,22 @@ export default {
     };
 
     const computedScope = {
-      buttonLabel: computed(() => props.label || 'Play')
+      buttonLabel: computed(() => props.label || 'Play'),
+      buttonClasses: computed(() => ({
+        'play-button--block': props.fullWidth
+      }))
+    };
+
+    const icons = {
+      play
     };
 
     return {
       ...methods,
       ...computedScope,
-      play
+      ...icons
     };
   }
 };
 </script>
+<style src="@/theme/global/PlayButton.scss" lang="scss"></style>

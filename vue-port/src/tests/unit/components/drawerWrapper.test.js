@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { vi } from 'vitest';
-import DrawerWrapper from '@/components/app/DrawerWrapper.vue';
+import DrawerWrapper from '@/components/main/DrawerWrapper.vue';
 import { useDrawerStore } from '@/stores/drawerStore';
 
 vi.mock('@ionic/vue', async (importOriginal) => {
@@ -18,7 +18,7 @@ vi.mock('@ionic/vue', async (importOriginal) => {
   };
 });
 
-describe('components/app/DrawerWrapper', () => {
+describe('components/main/DrawerWrapper', () => {
   it('marks the map filters drawer so its Ionic backdrop can be bypassed', async () => {
     setActivePinia(createPinia());
 

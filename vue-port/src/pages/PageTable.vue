@@ -13,12 +13,12 @@
     <template v-else>
       <NavbarSecondary>
         <template #end>
-          <div v-if="state.tableStore.pagination" class="secondary-navbar-pagination">
+          <div v-if="hasPagination" class="secondary-navbar-pagination">
             <span>Total {{ state.tableStore.pagination.total }} | Page {{ state.tableStore.pagination.current_page }}/{{ state.tableStore.pagination.last_page }}</span>
             <button
               type="button"
               class="secondary-navbar-pagination__button"
-              :disabled="!state.tableStore.links?.prev || state.tableStore.isFetchingPage"
+              :disabled="isPreviousPageDisabled"
               aria-label="Previous page"
               title="Previous page"
               @click="handlePreviousPage"
@@ -28,7 +28,7 @@
             <button
               type="button"
               class="secondary-navbar-pagination__button"
-              :disabled="!state.tableStore.links?.next || state.tableStore.isFetchingPage"
+              :disabled="isNextPageDisabled"
               aria-label="Next page"
               title="Next page"
               @click="handleNextPage"
@@ -86,12 +86,12 @@ import { IonIcon } from '@ionic/vue';
 import { chevronBackCircle, chevronForwardCircle } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
+import NavbarSecondary from '@/components/main/NavbarSecondary.vue';
 import env from '@/core/config/env';
-import PARAMETERS from '@/core/config/parameters';
 import EntriesGrid from '@/components/table/GridEntries.vue';
 import TableEmptyState from '@/components/table/StateEmptyTable.vue';
 import TableToolbar from '@/components/table/ToolbarTable.vue';
+import { getOrderSorting } from '@/core/entries/orderSorting';
 import mapUtils from '@/core/map/mapUtils';
 import { useFiltersStore } from '@/stores/filtersStore';
 import { useMapStore } from '@/stores/mapStore';
@@ -157,26 +157,7 @@ export default {
         await tableStore.loadEntries({ params: { page: 1 } });
       },
       async handleOrderChange(selectedOrderBy) {
-        const orderMap = {
-          [PARAMETERS.ORDER_BY.NEWEST]: {
-            sortBy: 'created_at',
-            sortOrder: 'DESC'
-          },
-          [PARAMETERS.ORDER_BY.OLDEST]: {
-            sortBy: 'created_at',
-            sortOrder: 'ASC'
-          },
-          [PARAMETERS.ORDER_BY.AZ]: {
-            sortBy: 'title',
-            sortOrder: 'ASC'
-          },
-          [PARAMETERS.ORDER_BY.ZA]: {
-            sortBy: 'title',
-            sortOrder: 'DESC'
-          }
-        };
-
-        const nextOrder = orderMap[selectedOrderBy] || orderMap[PARAMETERS.ORDER_BY.NEWEST];
+        const nextOrder = getOrderSorting(selectedOrderBy);
         filtersStore.setOrder(selectedOrderBy, nextOrder.sortBy, nextOrder.sortOrder);
         await tableStore.loadEntries({ params: { page: 1 } });
       },
@@ -220,7 +201,10 @@ export default {
           currentFormRef: navigationStore.currentFormRef,
           projectCreatedAt: projectStore.projectDefinition?.project?.created_at
         });
-      })
+      }),
+      hasPagination: computed(() => Boolean(tableStore.pagination)),
+      isPreviousPageDisabled: computed(() => !tableStore.links?.prev || tableStore.isFetchingPage),
+      isNextPageDisabled: computed(() => !tableStore.links?.next || tableStore.isFetchingPage)
     };
 
     onMounted(methods.bootstrap);
@@ -232,12 +216,16 @@ export default {
       }
     });
 
+    const icons = {
+      chevronBackCircle,
+      chevronForwardCircle
+    };
+
     return {
       state,
-      chevronBackCircle,
-      chevronForwardCircle,
       ...methods,
-      ...computedScope
+      ...computedScope,
+      ...icons
     };
   }
 };

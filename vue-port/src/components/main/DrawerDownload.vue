@@ -35,16 +35,16 @@
           <button
             type="button"
             class="drawer-download__format-btn"
-            :class="{ 'drawer-download__format-btn--active': state.selectedFormat === PARAMETERS.FORMAT_JSON }"
-            @click="handleFormatChange(PARAMETERS.FORMAT_JSON)"
+            :class="jsonFormatClasses"
+            @click="selectJsonFormat"
           >
             JSON
           </button>
           <button
             type="button"
             class="drawer-download__format-btn"
-            :class="{ 'drawer-download__format-btn--active': state.selectedFormat === PARAMETERS.FORMAT_CSV }"
-            @click="handleFormatChange(PARAMETERS.FORMAT_CSV)"
+            :class="csvFormatClasses"
+            @click="selectCsvFormat"
           >
             CSV
           </button>
@@ -124,20 +124,7 @@ import { archive } from 'ionicons/icons';
 import { computed, onMounted, reactive } from 'vue';
 import Dropdown from '@/components/global/Dropdown.vue';
 import PARAMETERS from '@/core/config/parameters';
-
-const formatToDateInput = (value) => {
-  if (!value) {
-    return '';
-  }
-
-  const d = new Date(String(value).replace(' ', 'T'));
-
-  if (Number.isNaN(d.getTime())) {
-    return '';
-  }
-
-  return d.toISOString().slice(0, 10);
-};
+import mapUtils from '@/core/map/mapUtils';
 
 export default {
   name: 'DrawerDownload',
@@ -208,6 +195,12 @@ export default {
       handleFormatChange(value) {
         state.selectedFormat = value;
       },
+      selectJsonFormat() {
+        methods.handleFormatChange(PARAMETERS.FORMAT_JSON);
+      },
+      selectCsvFormat() {
+        methods.handleFormatChange(PARAMETERS.FORMAT_CSV);
+      },
       handleStartDateChange(event) {
         const detailValue = Array.isArray(event.detail?.value) ? event.detail.value[0] : event.detail?.value;
 
@@ -233,11 +226,7 @@ export default {
         state.showPickDatesModal = false;
       },
       getSelectedMapping() {
-        const mappings = Array.isArray(props.projectMapping)
-          ? props.projectMapping
-          : Object.values(props.projectMapping || {});
-
-        return mappings.find((m) => m.map_index === state.selectedMappingIndex) || null;
+        return computedScope.normalizedMapping.value.find((mapping) => mapping.map_index === state.selectedMappingIndex) || null;
       },
       handleDownload() {
         const selectedMapping = methods.getSelectedMapping();
@@ -253,12 +242,13 @@ export default {
     };
 
     const computedScope = {
-      mappingOptions: computed(() => {
-        const mappings = Array.isArray(props.projectMapping)
+      normalizedMapping: computed(() => {
+        return Array.isArray(props.projectMapping)
           ? props.projectMapping
           : Object.values(props.projectMapping || {});
-
-        return mappings.map((mapping) => ({
+      }),
+      mappingOptions: computed(() => {
+        return computedScope.normalizedMapping.value.map((mapping) => ({
           label: mapping.name,
           value: mapping.map_index
         }));
@@ -269,8 +259,14 @@ export default {
           value
         }));
       }),
-      formattedMinDate: computed(() => formatToDateInput(props.firstEntryDate)),
-      formattedMaxDate: computed(() => formatToDateInput(props.lastEntryDate))
+      jsonFormatClasses: computed(() => ({
+        'drawer-download__format-btn--active': state.selectedFormat === PARAMETERS.FORMAT_JSON
+      })),
+      csvFormatClasses: computed(() => ({
+        'drawer-download__format-btn--active': state.selectedFormat === PARAMETERS.FORMAT_CSV
+      })),
+      formattedMinDate: computed(() => mapUtils.toDateInput(props.firstEntryDate)),
+      formattedMaxDate: computed(() => mapUtils.toDateInput(props.lastEntryDate))
     };
 
     onMounted(() => {
@@ -281,13 +277,15 @@ export default {
       state.selectedEndDate = computedScope.formattedMaxDate.value;
     });
 
+    const icons = {
+      archive
+    };
+
     return {
       state,
-      props,
-      PARAMETERS,
-      archive,
       ...methods,
-      ...computedScope
+      ...computedScope,
+      ...icons
     };
   }
 };

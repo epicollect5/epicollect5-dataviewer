@@ -4,13 +4,13 @@
     :message="toast.message"
     :color="toast.color"
     :duration="toast.duration"
-    @didDismiss="state.toastStore.dismiss()"
+    @didDismiss="handleDismiss"
   />
 </template>
 
 <script>
 import { IonToast } from '@ionic/vue';
-import { reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import { useToastStore } from '@/stores/toastStore';
 
 export default {
@@ -25,14 +25,22 @@ export default {
       toastStore
     });
 
-    const computed = {
-      toast: toastStore.toast
+    const methods = {
+      handleDismiss() {
+        toastStore.dismiss();
+      }
+    };
+
+    const computedScope = {
+      toast: computed(() => toastStore.toast)
     };
 
     return {
       state,
-      ...computed
+      ...methods,
+      ...computedScope
     };
   }
 };
 </script>
+<style src="@/theme/app/ToastWrapper.scss" lang="scss"></style>

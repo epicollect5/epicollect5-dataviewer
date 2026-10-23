@@ -3,15 +3,15 @@
     <button
       type="button"
       class="dropdown__trigger"
-      :class="{ 'dropdown__trigger--disabled': props.disabled }"
-      :disabled="props.disabled"
+      :class="{ 'dropdown__trigger--disabled': disabled }"
+      :disabled="disabled"
       aria-haspopup="listbox"
-      :aria-expanded="state.isOpen ? 'true' : 'false'"
+      :aria-expanded="ariaExpanded"
       @click="openPopover"
     >
       <span
         class="dropdown__label"
-        :class="{ 'dropdown__label--placeholder': !hasSelectedOption }"
+        :class="labelClasses"
       >
         {{ triggerLabel }}
       </span>
@@ -32,12 +32,12 @@
         <ion-list lines="none">
           <ion-item
             v-for="option in normalizedOptions"
-            :key="`dropdown-option-${getOptionValue(option)}`"
+            :key="getOptionKey(option)"
             button
             mode="md"
             detail="false"
             class="dropdown-popover__item"
-            :class="{ 'dropdown-popover__item--selected': isSelectedOption(option) }"
+            :class="getOptionItemClasses(option)"
             :disabled="isOptionDisabled(option)"
             @click="handleOptionSelect(option)"
           >
@@ -139,6 +139,14 @@ export default {
 
         return String(optionValue) === String(props.modelValue);
       },
+      getOptionKey(option) {
+        return `dropdown-option-${methods.getOptionValue(option)}`;
+      },
+      getOptionItemClasses(option) {
+        return {
+          'dropdown-popover__item--selected': methods.isSelectedOption(option)
+        };
+      },
       openPopover(event) {
         if (props.disabled) {
           return;
@@ -172,6 +180,10 @@ export default {
         return computedScope.normalizedOptions.value.find((option) => methods.isSelectedOption(option)) || null;
       }),
       hasSelectedOption: computed(() => Boolean(computedScope.selectedOption.value)),
+      labelClasses: computed(() => ({
+        'dropdown__label--placeholder': !computedScope.hasSelectedOption.value
+      })),
+      ariaExpanded: computed(() => (state.isOpen ? 'true' : 'false')),
       triggerLabel: computed(() => {
         if (computedScope.selectedOption.value) {
           return methods.getOptionLabel(computedScope.selectedOption.value);
@@ -181,14 +193,17 @@ export default {
       })
     };
 
+    const icons = {
+      chevronDown
+    };
+
     return {
-      props,
       state,
-      chevronDown,
       ...methods,
-      ...computedScope
+      ...computedScope,
+      ...icons
     };
   }
 };
 </script>
-<style src="@/theme/forms/Dropdown.scss" lang="scss"></style>
+<style src="@/theme/global/Dropdown.scss" lang="scss"></style>

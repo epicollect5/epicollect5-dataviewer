@@ -2,8 +2,8 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import { IonicVue } from '@ionic/vue';
 
-import App from './App.vue';
-import router from './router';
+import App from '@/App.vue';
+import router from '@/router';
 import { clearEntriesApiCache } from '@/services/entries/entriesPageCache';
 
 import '@ionic/vue/css/core.css';
@@ -18,8 +18,8 @@ import '@ionic/vue/css/flex-utils.css';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 import 'leaflet/dist/leaflet.css';
-import './theme/variables.css';
-import './theme/main.scss';
+import '@/theme/variables.css';
+import '@/theme/main.scss';
 
 clearEntriesApiCache();
 

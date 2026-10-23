@@ -9,9 +9,9 @@
           <span class="primary-navbar__project-name">{{ projectName }}</span>
         </div>
 
-        <label v-if="forms.length > 0" class="primary-navbar__forms">
+        <label v-if="hasForms" class="primary-navbar__forms">
           <Dropdown
-            :model-value="currentFormRef || ''"
+            :model-value="selectedFormRef"
             :options="forms"
             option-label-key="name"
             option-value-key="ref"
@@ -58,8 +58,8 @@
           <button
             type="button"
             class="primary-navbar__nav-link"
-            :class="{ 'primary-navbar__nav-link--active': !isMapPage }"
-            @click="navigateToPage('table')"
+            :class="tableLinkClasses"
+            @click="navigateToTable"
           >
             <ion-icon :icon="grid" />
             <span>Table</span>
@@ -68,8 +68,8 @@
           <button
             type="button"
             class="primary-navbar__nav-link"
-            :class="{ 'primary-navbar__nav-link--active': isMapPage }"
-            @click="navigateToPage('map')"
+            :class="mapLinkClasses"
+            @click="navigateToMap"
           >
             <ion-icon :icon="globe" />
             <span>Map</span>
@@ -102,17 +102,6 @@ import helpers from '@/utils/helpers';
 
 const DOWNLOAD_COOKIE_POLL_INTERVAL = 250;
 const DOWNLOAD_NAVIGATION_DELAY = 3000;
-
-const getCookieValue = (name) => {
-  const cookies = document.cookie ? document.cookie.split('; ') : [];
-  const cookie = cookies.find((item) => item.startsWith(`${encodeURIComponent(name)}=`));
-
-  return cookie ? decodeURIComponent(cookie.split('=').slice(1).join('=')) : null;
-};
-
-const removeCookie = (name) => {
-  document.cookie = `${encodeURIComponent(name)}=; Max-Age=0; path=/`;
-};
 
 export default {
   name: 'NavbarPrimary',
@@ -189,6 +178,12 @@ export default {
         }
         navigationStore.setActivePage(page);
       },
+      navigateToTable() {
+        return methods.navigateToPage('table');
+      },
+      navigateToMap() {
+        return methods.navigateToPage('map');
+      },
       async handleFormChange(formRef) {
         const nextForm = projectStore.forms.find((form) => form.ref === formRef);
         if (!nextForm || nextForm.ref === navigationStore.currentFormRef) {
@@ -260,11 +255,11 @@ export default {
         modalStore.open('prepare-download');
 
         state.downloadCookieInterval = window.setInterval(() => {
-          if (getCookieValue(requestCookie) === requestTimestamp) {
+          if (helpers.getCookieValue(requestCookie) === requestTimestamp) {
             modalStore.close();
             window.clearInterval(state.downloadCookieInterval);
             state.downloadCookieInterval = null;
-            removeCookie(requestCookie);
+            helpers.removeCookie(requestCookie);
           }
         }, DOWNLOAD_COOKIE_POLL_INTERVAL);
 
@@ -284,6 +279,14 @@ export default {
       projectName: computed(() => projectStore.projectDefinition.project?.name || 'Epicollect5'),
       currentFormRef: computed(() => navigationStore.currentFormRef),
       forms: computed(() => projectStore.forms),
+      hasForms: computed(() => computedScope.forms.value.length > 0),
+      selectedFormRef: computed(() => computedScope.currentFormRef.value || ''),
+      tableLinkClasses: computed(() => ({
+        'primary-navbar__nav-link--active': !computedScope.isMapPage.value
+      })),
+      mapLinkClasses: computed(() => ({
+        'primary-navbar__nav-link--active': computedScope.isMapPage.value
+      })),
       isLoggedIn: computed(() => {
         const user = projectStore.projectUser || {};
         return (user.role !== null && user.role !== undefined) || (user.id !== null && user.id !== undefined);
@@ -340,10 +343,7 @@ export default {
       { immediate: true }
     );
 
-    return {
-      state,
-      ...methods,
-      ...computedScope,
+    const icons = {
       cloudDownload,
       globe,
       grid,
@@ -351,6 +351,13 @@ export default {
       logOut,
       menu,
       power
+    };
+
+    return {
+      state,
+      ...methods,
+      ...computedScope,
+      ...icons
     };
   }
 };

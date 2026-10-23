@@ -72,7 +72,7 @@
             />
           </label>
           <div v-if="hasDistributionChart" class="drawer-map__distribution-chart">
-            <span class="drawer-map__distribution-total">Filtered total: {{ props.distributionChart.total }}</span>
+            <span class="drawer-map__distribution-total">Filtered total: {{ distributionChart.total }}</span>
             <div
               class="drawer-map__distribution-donut"
               :style="distributionDonutStyle"
@@ -80,15 +80,15 @@
             ></div>
             <ion-grid class="drawer-map__distribution-legend" role="table" aria-label="Distribution totals">
               <ion-row
-                v-for="row in props.distributionChart.rows"
-                :key="`distribution-row-${row.answerRef}`"
+                v-for="row in distributionChart.rows"
+                :key="getDistributionRowKey(row)"
                 class="drawer-map__distribution-row"
                 role="row"
               >
                 <ion-col class="drawer-map__distribution-swatch-col" role="cell">
                   <span
                     class="drawer-map__distribution-swatch"
-                    :style="getDistributionSwatchStyle(row)"
+                    :style="getSwatchStyle(row)"
                     aria-hidden="true"
                   ></span>
                 </ion-col>
@@ -96,7 +96,7 @@
                   <span class="drawer-map__distribution-value" :title="row.answer">{{ row.answer }}</span>
                 </ion-col>
                 <ion-col class="drawer-map__distribution-count-col" role="cell">
-                  <span class="drawer-map__distribution-count" :title="`${row.total}`">{{ row.total }}</span>
+                  <span class="drawer-map__distribution-count" :title="row.total">{{ row.total }}</span>
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -106,7 +106,7 @@
     </div>
 
     <p class="drawer-map__summary">
-      Showing {{ props.visibleCount }} marker{{ props.visibleCount === 1 ? '' : 's' }} from {{ props.totalCount }} location feature{{ props.totalCount === 1 ? '' : 's' }}.
+      Showing {{ visibleCount }} marker{{ markerSuffix }} from {{ totalCount }} location feature{{ featureSuffix }}.
     </p>
   </div>
 </template>
@@ -124,39 +124,11 @@ import {
 } from '@ionic/vue';
 import { computed, onBeforeUnmount, reactive, watch } from 'vue';
 import Dropdown from '@/components/global/Dropdown.vue';
+import formatters from '@/core/datetime/formatters';
 import mapUtils from '@/core/map/mapUtils';
 import { getDistributionDonutBackground, getDistributionSwatchStyle } from '@/services/map/distributionChart';
 
 const TIMELINE_DEBOUNCE_MS = 1000;
-
-const normalizeRangeValue = (value) => {
-  if (!value || typeof value !== 'object') {
-    return {
-      lower: 0,
-      upper: 0
-    };
-  }
-
-  const lower = Number(value.lower);
-  const upper = Number(value.upper);
-
-  return {
-    lower: Number.isFinite(lower) ? lower : 0,
-    upper: Number.isFinite(upper) ? upper : 0
-  };
-};
-
-const formatTimelineLabel = (value) => {
-  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
-    return '--';
-  }
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: '2-digit'
-  }).format(value);
-};
 
 export default {
   name: 'DrawerMap',
@@ -230,6 +202,28 @@ export default {
     });
 
     const methods = {
+      normalizeRangeValue(value) {
+        if (!value || typeof value !== 'object') {
+          return {
+            lower: 0,
+            upper: 0
+          };
+        }
+
+        const lower = Number(value.lower);
+        const upper = Number(value.upper);
+
+        return {
+          lower: Number.isFinite(lower) ? lower : 0,
+          upper: Number.isFinite(upper) ? upper : 0
+        };
+      },
+      getDistributionRowKey(row) {
+        return `distribution-row-${row.answerRef}`;
+      },
+      getSwatchStyle(row) {
+        return getDistributionSwatchStyle(row);
+      },
       getLocationKey(question) {
         return [question?.input_ref || '', question?.branch_ref || ''].join('::');
       },
@@ -357,7 +351,7 @@ export default {
           return;
         }
 
-        const nextValue = methods.getClampedTimelineValue(normalizeRangeValue(event.detail.value));
+        const nextValue = methods.getClampedTimelineValue(methods.normalizeRangeValue(event.detail.value));
         state.timelineValue = nextValue;
         methods.scheduleTimelineEmit(nextValue);
       },
@@ -366,7 +360,7 @@ export default {
           return;
         }
 
-        const nextValue = methods.getClampedTimelineValue(normalizeRangeValue(event.detail.value));
+        const nextValue = methods.getClampedTimelineValue(methods.normalizeRangeValue(event.detail.value));
         state.timelineValue = nextValue;
         window.clearTimeout(state.debounceTimer);
         methods.emitTimelineDates(nextValue);
@@ -424,14 +418,16 @@ export default {
       timelineStartLabel: computed(() => {
         const datesRange = computedScope.datesRange.value;
         const lower = state.timelineValue.lower;
-        return formatTimelineLabel(datesRange[lower]);
+        return formatters.getShortDate(datesRange[lower]);
       }),
       timelineEndLabel: computed(() => {
         const datesRange = computedScope.datesRange.value;
         const upper = state.timelineValue.upper;
-        return formatTimelineLabel(datesRange[upper]);
+        return formatters.getShortDate(datesRange[upper]);
       }),
-      timelineValue: computed(() => state.timelineValue)
+      timelineValue: computed(() => state.timelineValue),
+      markerSuffix: computed(() => (props.visibleCount === 1 ? '' : 's')),
+      featureSuffix: computed(() => (props.totalCount === 1 ? '' : 's'))
     };
 
     watch(
@@ -449,9 +445,7 @@ export default {
     });
 
     return {
-      props,
       state,
-      getDistributionSwatchStyle,
       ...methods,
       ...computedScope
     };

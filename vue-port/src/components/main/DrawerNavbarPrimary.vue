@@ -1,23 +1,23 @@
 <template>
   <section class="drawer-navbar-primary">
-    <div v-if="props.isLoggedIn" class="drawer-navbar-primary__user">
-      <img class="drawer-navbar-primary__avatar" :src="props.avatarSrc" alt="avatar" @error="emitAvatarError" />
-      <span>Hi,<strong> {{ props.userName }}</strong></span>
+    <div v-if="showUser" class="drawer-navbar-primary__user">
+      <img class="drawer-navbar-primary__avatar" :src="avatarSrc" alt="avatar" @error="emitAvatarError" />
+      <span>Hi,<strong> {{ userName }}</strong></span>
     </div>
 
     <nav class="drawer-navbar-primary__nav" aria-label="Primary navigation">
-      <a v-if="!props.isLoggedIn" class="drawer-navbar-primary__link" :href="props.loginHref">
+      <a v-if="showLoginLink" class="drawer-navbar-primary__link" :href="loginHref">
         <ion-icon :icon="logIn" />
         <span>Login</span>
       </a>
 
-      <a v-if="props.isLoggedIn" class="drawer-navbar-primary__link" :href="props.logoutHref">
+      <a v-if="showLogoutLink" class="drawer-navbar-primary__link" :href="logoutHref">
         <ion-icon :icon="logOut" />
         <span>Logout</span>
       </a>
 
       <button
-        v-if="props.showDownloadButton"
+        v-if="canShowDownloadButton"
         type="button"
         class="drawer-navbar-primary__link"
         @click="emitDownload"
@@ -29,8 +29,8 @@
       <button
         type="button"
         class="drawer-navbar-primary__link"
-        :class="{ 'drawer-navbar-primary__link--active': !props.isMapPage }"
-        @click="emitNavigate('table')"
+        :class="tableLinkClasses"
+        @click="emitNavigateToTable"
       >
         <ion-icon :icon="grid" />
         <span>Table</span>
@@ -39,14 +39,14 @@
       <button
         type="button"
         class="drawer-navbar-primary__link"
-        :class="{ 'drawer-navbar-primary__link--active': props.isMapPage }"
-        @click="emitNavigate('map')"
+        :class="mapLinkClasses"
+        @click="emitNavigateToMap"
       >
         <ion-icon :icon="globe" />
         <span>Map</span>
       </button>
 
-      <a class="drawer-navbar-primary__link" :href="props.projectHomeUrl">
+      <a class="drawer-navbar-primary__link" :href="projectHomeUrl">
         <ion-icon :icon="power" />
         <span>Exit</span>
       </a>
@@ -57,6 +57,7 @@
 <script>
 import { IonIcon } from '@ionic/vue';
 import { cloudDownload, globe, grid, logIn, logOut, power } from 'ionicons/icons';
+import { computed } from 'vue';
 
 export default {
   name: 'DrawerNavbarPrimary',
@@ -108,18 +109,41 @@ export default {
       },
       emitNavigate(page) {
         emit('navigate-page', page);
+      },
+      emitNavigateToTable() {
+        methods.emitNavigate('table');
+      },
+      emitNavigateToMap() {
+        methods.emitNavigate('map');
       }
     };
 
-    return {
-      props,
-      ...methods,
+    const computedScope = {
+      showUser: computed(() => props.isLoggedIn),
+      showLoginLink: computed(() => !props.isLoggedIn),
+      showLogoutLink: computed(() => props.isLoggedIn),
+      canShowDownloadButton: computed(() => props.showDownloadButton),
+      tableLinkClasses: computed(() => ({
+        'drawer-navbar-primary__link--active': !props.isMapPage
+      })),
+      mapLinkClasses: computed(() => ({
+        'drawer-navbar-primary__link--active': props.isMapPage
+      }))
+    };
+
+    const icons = {
       cloudDownload,
       globe,
       grid,
       logIn,
       logOut,
       power
+    };
+
+    return {
+      ...methods,
+      ...computedScope,
+      ...icons
     };
   }
 };

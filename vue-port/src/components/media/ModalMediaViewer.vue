@@ -124,11 +124,15 @@ export default {
       modalStyle: computedScope.modalStyle
     });
 
+    const icons = {
+      close
+    };
+
     return {
       state,
       ...methods,
       ...computedScope,
-      close
+      ...icons
     };
   }
 };

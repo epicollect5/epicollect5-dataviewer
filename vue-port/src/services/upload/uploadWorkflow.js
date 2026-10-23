@@ -198,3 +198,23 @@ export const uploadPreparedEntries = async ({ projectSlug, reverseEntries }) => 
     failedReverseEntries
   };
 };
+
+export const buildFailedRows = ({ uploadResults, uploadedRows, bulkUploadableHeaders }) => {
+  return uploadResults.reduce((rows, result, index) => {
+    if (result.status !== 'error') {
+      return rows;
+    }
+
+    const currentRow = { ...uploadedRows[index] };
+
+    Object.keys(currentRow).forEach((key) => {
+      if (!bulkUploadableHeaders.includes(key)) {
+        delete currentRow[key];
+      }
+    });
+
+    rows.push(currentRow);
+
+    return rows;
+  }, []);
+};

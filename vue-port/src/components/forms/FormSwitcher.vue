@@ -2,8 +2,8 @@
   <label class="form-switcher">
     <span class="form-switcher__label">Form</span>
     <Dropdown
-      :model-value="props.selectedFormRef"
-      :options="props.forms"
+      :model-value="selectedFormRef"
+      :options="forms"
       option-label-key="name"
       option-value-key="ref"
       @change="handleChange"
@@ -38,7 +38,6 @@ export default {
     };
 
     return {
-      props,
       ...methods
     };
   }

@@ -1,5 +1,5 @@
 <template>
-  <div class="leaflet-map-shell" :class="{ 'leaflet-map-shell--hidden': isHidden }">
+  <div class="leaflet-map-shell" :class="mapShellClasses">
     <div :ref="setMapElement" class="leaflet-map"></div>
   </div>
 </template>
@@ -11,7 +11,7 @@ import 'leaflet.markercluster';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { markRaw, onBeforeUnmount, onMounted, reactive, toRaw, watch } from 'vue';
+import { computed, markRaw, onBeforeUnmount, onMounted, reactive, toRaw, watch } from 'vue';
 import PARAMETERS from '@/core/config/parameters';
 import { CLUSTER_CONTROL_ICON, BASE_LAYER_CONTROL_ICON } from '@/core/map/controlIcons';
 import { getLocationCoordinates, getLocationTitle, getLocationUuid } from '@/core/map/compactLocations';
@@ -1010,9 +1010,16 @@ export default {
       ACTIVE_MAP_CONTEXT_KEY = null;
     });
 
+    const computedScope = {
+      mapShellClasses: computed(() => ({
+        'leaflet-map-shell--hidden': props.isHidden
+      }))
+    };
+
     return {
       state,
-      ...methods
+      ...methods,
+      ...computedScope
     };
   }
 };

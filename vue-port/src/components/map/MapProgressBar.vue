@@ -1,16 +1,16 @@
 <template>
   <Teleport to="body">
-    <div class="map-progress-wrapper" :class="{ 'map-progress-wrapper--visible': isVisible }">
+    <div class="map-progress-wrapper" :class="wrapperClasses">
       <div class="map-progress-wrapper__summary">{{ processed }}/{{ total }}</div>
       <div class="map-progress-bar">
-        <div class="map-progress-bar__fill" :style="{ width: `${percentage}%` }"></div>
+        <div class="map-progress-bar__fill" :style="fillStyle"></div>
       </div>
     </div>
   </Teleport>
 </template>
 
 <script>
-import { Teleport } from 'vue';
+import { Teleport, computed } from 'vue';
 
 export default {
   name: 'MapProgressBar',
@@ -34,6 +34,20 @@ export default {
       type: Number,
       default: 0
     }
+  },
+  setup(props) {
+    const computedScope = {
+      wrapperClasses: computed(() => ({
+        'map-progress-wrapper--visible': props.isVisible
+      })),
+      fillStyle: computed(() => ({
+        width: `${props.percentage}%`
+      }))
+    };
+
+    return {
+      ...computedScope
+    };
   }
 };
 </script>

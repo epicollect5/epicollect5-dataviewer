@@ -26,12 +26,12 @@
         </label>
 
         <div class="upload-modal__actions">
-          <ion-button :disabled="!state.selectedFile || state.uploadStore.isPreparing" @click="prepareUpload">
+          <ion-button :disabled="isPrepareDisabled" @click="prepareUpload">
             Prepare
           </ion-button>
           <ion-button
             color="secondary"
-            :disabled="state.uploadStore.reverseEntries.length === 0 || state.uploadStore.isUploading"
+            :disabled="isUploadDisabled"
             @click="startUpload"
           >
             Upload
@@ -41,13 +41,13 @@
 
       <p v-if="state.uploadStore.parsingError" class="upload-modal__error">{{ state.uploadStore.parsingError }}</p>
 
-      <div v-if="state.uploadStore.reverseEntries.length > 0" class="upload-modal__status">
+      <div v-if="hasPreparedRows" class="upload-modal__status">
         <label>
           <input
             type="checkbox"
             :checked="state.uploadStore.filterByFailed"
-            :disabled="state.uploadStore.failedReverseEntries.length === 0"
-            @change="handleFailedFilterChange($event.target.checked)"
+            :disabled="isFailedFilterDisabled"
+            @change="handleFailedFilterToggle"
           />
           Show only failed rows
         </label>
@@ -58,7 +58,7 @@
         <div class="upload-modal__actions">
           <ion-button
             fill="outline"
-            :disabled="failedRowsForDownload.length === 0"
+            :disabled="isFailedDownloadDisabled"
             @click="downloadFailedRows"
           >
             Download failed rows
@@ -67,16 +67,16 @@
       </div>
 
       <UploadGrid
-        v-if="pagedRows.length > 0"
+        v-if="hasPagedRows"
         :headers="state.uploadStore.availableHeaders"
         :rows="pagedRows"
       />
 
-      <div v-if="totalPages > 1" class="upload-modal__pagination">
+      <div v-if="hasPagination" class="upload-modal__pagination">
         <span>Page {{ state.currentPage }} / {{ totalPages }}</span>
         <div class="upload-modal__actions">
-          <ion-button fill="outline" :disabled="state.currentPage === 1" @click="goToPreviousPage">Prev</ion-button>
-          <ion-button fill="outline" :disabled="state.currentPage === totalPages" @click="goToNextPage">Next</ion-button>
+          <ion-button fill="outline" :disabled="isOnFirstPage" @click="goToPreviousPage">Prev</ion-button>
+          <ion-button fill="outline" :disabled="isOnLastPage" @click="goToNextPage">Next</ion-button>
         </div>
       </div>
 
@@ -106,6 +106,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
 import { useToastStore } from '@/stores/toastStore';
 import { useUploadStore } from '@/stores/uploadStore';
+import { buildFailedRows } from '@/services/upload/uploadWorkflow';
 
 const pageSize = 25;
 
@@ -157,6 +158,9 @@ export default {
       },
       handleFailedFilterChange(value) {
         uploadStore.setFilterByFailed(value);
+      },
+      handleFailedFilterToggle(event) {
+        methods.handleFailedFilterChange(event.target.checked);
       },
       goToPreviousPage() {
         if (state.currentPage > 1) {
@@ -245,6 +249,15 @@ export default {
           value: index
         }));
       }),
+      isPrepareDisabled: computed(() => !state.selectedFile || uploadStore.isPreparing),
+      isUploadDisabled: computed(() => uploadStore.reverseEntries.length === 0 || uploadStore.isUploading),
+      hasPreparedRows: computed(() => uploadStore.reverseEntries.length > 0),
+      isFailedFilterDisabled: computed(() => uploadStore.failedReverseEntries.length === 0),
+      isFailedDownloadDisabled: computed(() => computedScope.failedRowsForDownload.value.length === 0),
+      hasPagedRows: computed(() => computedScope.pagedRows.value.length > 0),
+      hasPagination: computed(() => computedScope.totalPages.value > 1),
+      isOnFirstPage: computed(() => state.currentPage === 1),
+      isOnLastPage: computed(() => state.currentPage === computedScope.totalPages.value),
       totalPages: computed(() => {
         return Math.max(1, Math.ceil(uploadStore.pairedRows.length / pageSize));
       }),
@@ -253,20 +266,11 @@ export default {
         return uploadStore.pairedRows.slice(start, start + pageSize);
       }),
       failedRowsForDownload: computed(() => {
-        return uploadStore.uploadResults.reduce((rows, result, index) => {
-          if (result.status !== 'error') {
-            return rows;
-          }
-
-          const currentRow = { ...uploadStore.uploadedRows[index] };
-          Object.keys(currentRow).forEach((key) => {
-            if (!uploadStore.bulkUploadableHeaders.includes(key)) {
-              delete currentRow[key];
-            }
-          });
-          rows.push(currentRow);
-          return rows;
-        }, []);
+        return buildFailedRows({
+          uploadResults: uploadStore.uploadResults,
+          uploadedRows: uploadStore.uploadedRows,
+          bulkUploadableHeaders: uploadStore.bulkUploadableHeaders
+        });
       })
     };
 

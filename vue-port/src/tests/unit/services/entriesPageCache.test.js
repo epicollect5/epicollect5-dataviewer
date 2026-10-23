@@ -1,10 +1,9 @@
 import lscache from 'lscache';
+import LZString from 'lz-string';
 import {
   clearEntriesApiCache,
   clearEntriesLocationsCache,
   clearEntriesPageCache,
-  compress,
-  decompress,
   getCachedEntriesLocations,
   getCachedEntriesPage,
   getEntriesLocationsCacheKey,
@@ -36,17 +35,25 @@ describe('services/entries/entriesPageCache', () => {
     expect(await getEntriesPageCacheKey({ projectRef: 'project_1', requestUrl })).toBe(`project_1:${hashedUrl}`);
   });
 
-  it('round-trips cached payload text through gzip compression streams', async () => {
-    const text = JSON.stringify({
+  it('stores cached payloads as LZString UTF-16 and restores them', async () => {
+    const requestUrl = 'https://five.epicollect.net/api/export/entries/demo?form_ref=form_1&page=2';
+    const payload = {
       data: Array.from({ length: 10 }, (_, index) => ({
         id: `entry-${index}`,
         title: 'Repeated entry title for compression'
       }))
-    });
-    const compressed = await compress(text);
+    };
 
-    expect(compressed).toBeInstanceOf(Uint8Array);
-    expect(await decompress(compressed)).toBe(text);
+    await setCachedEntriesPage({ projectRef: 'project_1', requestUrl, payload });
+
+    const cacheKey = await getEntriesPageCacheKey({ projectRef: 'project_1', requestUrl });
+    lscache.setBucket('ec5-table-entries:');
+    const cachedPayload = lscache.get(cacheKey);
+    lscache.resetBucket();
+
+    expect(cachedPayload.compression).toBe('lz-string-utf16');
+    expect(JSON.parse(LZString.decompressFromUTF16(cachedPayload.data))).toEqual(payload);
+    expect(await getCachedEntriesPage({ projectRef: 'project_1', requestUrl })).toEqual(payload);
   });
 
   it('normalizes request URLs before hashing cache keys', async () => {

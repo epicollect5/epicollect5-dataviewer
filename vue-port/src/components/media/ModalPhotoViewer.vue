@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { computed, onBeforeUnmount, reactive, watch, toRefs } from 'vue';
+import { computed, onBeforeUnmount, reactive, watch } from 'vue';
 import VueEasyLightbox from 'vue-easy-lightbox';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import { useModalStore } from '@/stores/modalStore';
@@ -36,17 +36,9 @@ export default {
   setup() {
     const modalStore = useModalStore();
     const state = reactive({
-      showOverlayLoader: false
+      showOverlayLoader: false,
+      pollTimer: null
     });
-
-    let pollTimer = null;
-
-    const clearPollTimer = () => {
-      if (pollTimer) {
-        window.clearInterval(pollTimer);
-        pollTimer = null;
-      }
-    };
 
     const methods = {
       markImageReady(image) {
@@ -55,9 +47,15 @@ export default {
       resetImageReady(image) {
         image?.classList.remove('photo-lightbox__image--ready');
       },
+      clearPollTimer() {
+        if (state.pollTimer) {
+          window.clearInterval(state.pollTimer);
+          state.pollTimer = null;
+        }
+      },
       stopOverlayLoader() {
         state.showOverlayLoader = false;
-        clearPollTimer();
+        methods.clearPollTimer();
       },
       startOverlayLoader() {
         if (typeof document === 'undefined') {
@@ -66,9 +64,9 @@ export default {
         }
 
         state.showOverlayLoader = true;
-        clearPollTimer();
+        methods.clearPollTimer();
 
-        pollTimer = window.setInterval(() => {
+        state.pollTimer = window.setInterval(() => {
           const image = document.querySelector('.vel-modal .vel-img');
           const errorState = document.querySelector('.vel-modal .vel-on-error');
 
@@ -137,13 +135,13 @@ export default {
     );
 
     onBeforeUnmount(() => {
-      clearPollTimer();
+      methods.clearPollTimer();
     });
 
     return {
       state,
-      ...computedScope,
-      ...methods
+      ...methods,
+      ...computedScope
     };
   }
 };

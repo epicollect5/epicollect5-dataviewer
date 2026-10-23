@@ -19,7 +19,7 @@
           Reload Entries
         </ion-button>
 
-        <ion-list v-if="entries.length > 0">
+        <ion-list v-if="hasEntries">
           <ion-item
             v-for="entry in entries"
             :key="entry.id">
@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
 import {
   IonButton,
   IonContent,
@@ -85,10 +85,8 @@ export default {
     };
 
     const computedScope = {
-      totalEntries() {
-        return state.entries.length;
-      },
-      modalTitle: computed(() => modalStore.activeModal || 'Modal')
+      totalEntries: computed(() => state.entries.length),
+      hasEntries: computed(() => state.entries.length > 0)
     };
 
     return {
@@ -100,4 +98,3 @@ export default {
 };
 </script>
 <style src="@/theme/ExampleComponent.scss" lang="scss"></style>
-

@@ -77,6 +77,17 @@ const helpers = {
     return str;
   },
 
+  getCookieValue(name) {
+    const cookies = document.cookie ? document.cookie.split('; ') : [];
+    const cookie = cookies.find((item) => item.startsWith(`${encodeURIComponent(name)}=`));
+
+    return cookie ? decodeURIComponent(cookie.split('=').slice(1).join('=')) : null;
+  },
+
+  removeCookie(name) {
+    document.cookie = `${encodeURIComponent(name)}=; Max-Age=0; path=/`;
+  },
+
   getXsrfToken(cookieSource) {
     const source =
       typeof cookieSource === 'string'

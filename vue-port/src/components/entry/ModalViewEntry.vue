@@ -24,28 +24,28 @@
             <tr v-for="row in rows" :key="row.key">
               <td>{{ row.question }}</td>
               <td>
-                <template v-if="row.kind === 'photo'">
+                <template v-if="row.isPhoto">
                   <button
                     type="button"
                     class="view-entry-modal__photo-button"
-                    @click="openPhoto(entryTitle, row.value.entry_original, row.value.entry_thumb || row.value.entry_default)"
+                    @click="openRowPhoto(row)"
                   >
                     <span class="view-entry-modal__photo-frame">
                       <span class="view-entry-modal__photo-mat">
                         <span class="view-entry-modal__photo-viewport">
-                          <img :src="row.value.entry_thumb || row.value.entry_default" :alt="row.question" class="view-entry-modal__photo-thumb" />
+                          <img :src="row.preview" :alt="row.question" class="view-entry-modal__photo-thumb" />
                         </span>
                       </span>
                     </span>
                   </button>
                 </template>
-                <template v-else-if="row.kind === 'audio'">
-                  <button type="button" class="view-entry-modal__media-button" @click="openMedia('audio', row.question, row.value.entry_original)">
+                <template v-else-if="row.isAudio">
+                  <button type="button" class="view-entry-modal__media-button" @click="openRowMedia(row)">
                     Play audio
                   </button>
                 </template>
-                <template v-else-if="row.kind === 'video'">
-                  <button type="button" class="view-entry-modal__media-button" @click="openMedia('video', row.question, row.value.entry_original)">
+                <template v-else-if="row.isVideo">
+                  <button type="button" class="view-entry-modal__media-button" @click="openRowMedia(row)">
                     Play video
                   </button>
                 </template>
@@ -111,6 +111,42 @@ export default {
       },
       closeModal() {
         modalStore.close();
+      },
+      getAnswerKind(answer) {
+        if (!answer.answer) {
+          return 'text';
+        }
+
+        if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE) {
+          return 'photo';
+        }
+
+        if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE) {
+          return 'audio';
+        }
+
+        if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE) {
+          return 'video';
+        }
+
+        return 'text';
+      },
+      getPhotoPreview(value) {
+        return value?.entry_thumb || value?.entry_default || '';
+      },
+      openRowPhoto(row) {
+        methods.openPhoto(
+          computedScope.entryTitle.value,
+          row.value?.entry_original,
+          methods.getPhotoPreview(row.value)
+        );
+      },
+      openRowMedia(row) {
+        methods.openMedia(
+          row.kind,
+          row.question,
+          row.value?.entry_original
+        );
       }
     };
 
@@ -122,28 +158,30 @@ export default {
       rows: computed(() => {
         return computedScope.answers.value.map((answer, index) => {
           const question = computedScope.headers.value[index]?.question || `Question ${index + 1}`;
+          const kind = methods.getAnswerKind(answer);
 
-          if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_PHOTO_TYPE && answer.answer) {
-            return { key: `${question}-${index}`, question, kind: 'photo', value: answer.answer };
-          }
-
-          if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_AUDIO_TYPE && answer.answer) {
-            return { key: `${question}-${index}`, question, kind: 'audio', value: answer.answer };
-          }
-
-          if (answer.inputType === PARAMETERS.INPUT_TYPES.EC5_VIDEO_TYPE && answer.answer) {
-            return { key: `${question}-${index}`, question, kind: 'video', value: answer.answer };
-          }
-
-          return { key: `${question}-${index}`, question, kind: 'text', value: answer.answer };
+          return {
+            key: `${question}-${index}`,
+            question,
+            kind,
+            value: answer.answer,
+            preview: methods.getPhotoPreview(answer.answer),
+            isPhoto: kind === 'photo',
+            isAudio: kind === 'audio',
+            isVideo: kind === 'video'
+          };
         });
       })
+    };
+
+    const icons = {
+      close
     };
 
     return {
       ...methods,
       ...computedScope,
-      close
+      ...icons
     };
   }
 };

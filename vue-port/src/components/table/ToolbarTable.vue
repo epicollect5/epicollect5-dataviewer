@@ -3,12 +3,12 @@
     <section class="table-toolbar">
       <div class="table-toolbar__primary">
         <ion-searchbar
-          :value="props.filterByTitle"
+          :value="filterByTitle"
           class="table-toolbar__searchbar"
           placeholder="Filter by title"
           :debounce="350"
           show-clear-button="focus"
-          @ionInput="handleTitleChange($event.detail.value || '')"
+          @ionInput="handleSearchInput"
         />
 
         <div class="table-toolbar__field table-toolbar__field--date">
@@ -17,11 +17,11 @@
             <ion-datetime
               :id="state.startDatetimeId"
               :value="resolvedStartDate"
-              :min="props.minDate"
+              :min="minDate"
               :max="resolvedEndDate"
               presentation="date"
               :show-default-buttons="true"
-              @ionChange="handleDateTimeChange('startDate', $event)"
+              @ionChange="handleStartDateTimeChange"
             />
           </ion-modal>
           <ion-datetime-button
@@ -39,10 +39,10 @@
               :id="state.endDatetimeId"
               :value="resolvedEndDate"
               :min="resolvedStartDate"
-              :max="props.maxDate"
+              :max="maxDate"
               presentation="date"
               :show-default-buttons="true"
-              @ionChange="handleDateTimeChange('endDate', $event)"
+              @ionChange="handleEndDateTimeChange"
             />
           </ion-modal>
           <ion-datetime-button
@@ -56,7 +56,7 @@
         <div class="table-toolbar__controls">
           <label class="table-toolbar__field table-toolbar__field--sort">
             <Dropdown
-              :model-value="props.selectedOrderBy"
+              :model-value="selectedOrderBy"
               :options="state.orderOptions"
               @change="handleOrderChange"
             />
@@ -81,10 +81,10 @@
 import { IonDatetime, IonDatetimeButton, IonIcon, IonModal, IonSearchbar } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, reactive } from 'vue';
-import NavbarSecondaryLight from '@/components/app/NavbarSecondaryLight.vue';
+import NavbarSecondaryLight from '@/components/main/NavbarSecondaryLight.vue';
 import Dropdown from '@/components/global/Dropdown.vue';
 import PARAMETERS from '@/core/config/parameters';
-import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
+import NavbarSecondary from '@/components/main/NavbarSecondary.vue';
 
 export default {
   name: 'ToolbarTable',
@@ -143,17 +143,16 @@ export default {
       datetimeButtonsReady: false
     });
 
-    const computedScope = {
-      hasDateBounds: computed(() => Boolean(props.minDate && props.maxDate)),
-      resolvedStartDate: computed(() => {
-        return (props.startDate ? props.startDate.slice(0, 10) : '') || props.minDate || '';
-      }),
-      resolvedEndDate: computed(() => {
-        return (props.endDate ? props.endDate.slice(0, 10) : '') || props.maxDate || '';
-      })
-    };
-
     const methods = {
+      handleSearchInput(event) {
+        methods.handleTitleChange(event.detail?.value || '');
+      },
+      handleStartDateTimeChange(event) {
+        methods.handleDateTimeChange('startDate', event);
+      },
+      handleEndDateTimeChange(event) {
+        methods.handleDateTimeChange('endDate', event);
+      },
       handleTitleChange(value) {
         emit('update:title', value);
       },
@@ -182,18 +181,31 @@ export default {
       }
     };
 
+    const computedScope = {
+      hasDateBounds: computed(() => Boolean(props.minDate && props.maxDate)),
+      resolvedStartDate: computed(() => {
+        return (props.startDate ? props.startDate.slice(0, 10) : '') || props.minDate || '';
+      }),
+      resolvedEndDate: computed(() => {
+        return (props.endDate ? props.endDate.slice(0, 10) : '') || props.maxDate || '';
+      })
+    };
+
     onMounted(() => {
       window.requestAnimationFrame(() => {
         state.datetimeButtonsReady = true;
       });
     });
 
+    const icons = {
+      close
+    };
+
     return {
-      props,
       state,
-      close,
       ...methods,
-      ...computedScope
+      ...computedScope,
+      ...icons
     };
   }
 };

@@ -24,12 +24,12 @@
         </template>
 
         <template #end>
-          <div v-if="state.mapStore.pagination" class="secondary-navbar-pagination">
+          <div v-if="hasPagination" class="secondary-navbar-pagination">
             <span>Total {{ entriesTotal }} | Page {{ currentPage }}/{{ lastPage }}</span>
             <button
               type="button"
               class="secondary-navbar-pagination__button"
-              :disabled="!state.mapStore.links?.prev || state.mapStore.isFetchingPage"
+              :disabled="isPreviousPageDisabled"
               aria-label="Previous page"
               title="Previous page"
               @click="handlePreviousPage"
@@ -39,7 +39,7 @@
             <button
               type="button"
               class="secondary-navbar-pagination__button"
-              :disabled="!state.mapStore.links?.next || state.mapStore.isFetchingPage"
+              :disabled="isNextPageDisabled"
               aria-label="Next page"
               title="Next page"
               @click="handleNextPage"
@@ -58,7 +58,7 @@
 
         <template v-else>
           <MapProgressBar
-            :is-visible="isMapPage && showMapLoader"
+            :is-visible="isProgressVisible"
             :processed="state.renderProgress.processed"
             :total="state.renderProgress.total"
             :percentage="state.renderProgress.percentage"
@@ -69,7 +69,7 @@
             <p>{{ mapErrors }}</p>
           </div>
 
-          <div v-else-if="!state.mapStore.isFetchingPage && state.mapStore.locations.length === 0" class="placeholder-view">
+          <div v-else-if="isEmptyLocations" class="placeholder-view">
             <h1>No mapped entries</h1>
             <p>The current form has a location question, but the API returned no location features for this selection.</p>
           </div>
@@ -79,7 +79,7 @@
             :ref="setLeafletMap"
             :locations="state.mapStore.visibleLocations"
             :is-active="isMapPage"
-            :is-hidden="isMapPage && showMapLoader"
+            :is-hidden="isMapHidden"
             :start-date="state.mapStore.startDate"
             :end-date="state.mapStore.endDate"
             :total-markers="state.mapStore.locations.length"
@@ -103,28 +103,17 @@ import { IonIcon } from '@ionic/vue';
 import { chevronBackCircle, chevronForwardCircle, menu } from 'ionicons/icons';
 import { computed, nextTick, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import NavbarSecondary from '@/components/app/NavbarSecondary.vue';
+import NavbarSecondary from '@/components/main/NavbarSecondary.vue';
 import env from '@/core/config/env';
 import { useDrawerStore } from '@/stores/drawerStore';
 import LeafletMap from '@/components/map/MapLeaflet.vue';
 import MapProgressBar from '@/components/map/MapProgressBar.vue';
+import { buildDistributionQuestions } from '@/core/map/distributionQuestions';
 import { buildDistributionChart } from '@/services/map/distributionChart';
 import { buildPieChartLegend } from '@/services/map/pieCharts';
 import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
-
-const getMultipleChoiceInputRefs = (inputHashMap) => {
-  if (!inputHashMap) {
-    return [];
-  }
-
-  if (Array.isArray(inputHashMap.order)) {
-    return inputHashMap.order;
-  }
-
-  return Object.keys(inputHashMap).filter((inputRef) => inputRef !== 'order');
-};
 
 export default {
   name: 'PageMap',
@@ -339,24 +328,16 @@ export default {
       entriesTotal: computed(() => mapStore.pagination?.total ?? mapStore.locations.length),
       currentPage: computed(() => mapStore.pagination?.current_page ?? 1),
       lastPage: computed(() => mapStore.pagination?.last_page ?? 1),
+      hasPagination: computed(() => Boolean(mapStore.pagination)),
+      isPreviousPageDisabled: computed(() => !mapStore.links?.prev || mapStore.isFetchingPage),
+      isNextPageDisabled: computed(() => !mapStore.links?.next || mapStore.isFetchingPage),
       isMapPage: computed(() => navigationStore.activePage === 'map'),
       distributionQuestions: computed(() => {
-        const currentForm = projectStore.projectExtra?.forms?.[navigationStore.currentFormRef];
-        const multipleChoiceInputs = currentForm?.lists?.multiple_choice_inputs;
-        const selectedBranchRef = mapStore.selectedLocationQuestion?.branch_ref || '';
-        let inputHashMap = multipleChoiceInputs?.form || {};
-
-        if (selectedBranchRef) {
-          inputHashMap = multipleChoiceInputs?.branch?.[selectedBranchRef] || {};
-        }
-
-        return getMultipleChoiceInputRefs(inputHashMap)
-          .map((inputRef) => ({
-            inputRef,
-            question: projectStore.projectExtra?.inputs?.[inputRef]?.data?.question || inputRef,
-            possibleAnswersHashMap: inputHashMap?.[inputRef]?.possible_answers || {}
-          }))
-          .filter((question) => Object.keys(question.possibleAnswersHashMap).length > 0);
+        return buildDistributionQuestions({
+          projectExtra: projectStore.projectExtra,
+          currentFormRef: navigationStore.currentFormRef,
+          selectedBranchRef: mapStore.selectedLocationQuestion?.branch_ref || ''
+        });
       }),
       pieChartLegend: computed(() => {
         const answers = mapStore.selectedDistributionQuestion?.possibleAnswersHashMap || {};
@@ -374,6 +355,9 @@ export default {
       shouldRenderMap: computed(() => {
         return computedScope.hasLocationQuestions.value && !mapStore.isRejectedPage && mapStore.locations.length > 0;
       }),
+      isEmptyLocations: computed(() => !mapStore.isFetchingPage && mapStore.locations.length === 0),
+      isProgressVisible: computed(() => computedScope.isMapPage.value && computedScope.showMapLoader.value),
+      isMapHidden: computed(() => computedScope.isMapPage.value && computedScope.showMapLoader.value),
       showMapLoader: computed(() => {
         if (!computedScope.hasLocationQuestions.value || mapStore.isRejectedPage) {
           return false;
@@ -477,13 +461,17 @@ export default {
       }
     );
 
+    const icons = {
+      chevronBackCircle,
+      chevronForwardCircle,
+      menu
+    };
+
     return {
       state,
       ...methods,
       ...computedScope,
-      chevronBackCircle,
-      chevronForwardCircle,
-      menu
+      ...icons
     };
   }
 };

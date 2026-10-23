@@ -26,6 +26,8 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     //this is to force a semi colon at the end, seems like vue does not want that, crazy.
     'semi': ['error', 'always'],
+    //every if/else/for/while body is wrapped in braces, even a single statement.
+    'curly': ['error', 'all'],
     'no-unused-vars': 'off',
     'quotes': ['error', 'single'],
     'comma-dangle': [1, 'never'],
