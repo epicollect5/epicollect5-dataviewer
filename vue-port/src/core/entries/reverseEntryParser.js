@@ -57,6 +57,14 @@ const reverseEntryParser = {
   setEntryJumps(entries, inputs, reverseMapping, currentBranchRef) {
     const entriesClone = entries.slice(0);
     const entryType = currentBranchRef ? 'branch_entry' : 'entry';
+    const inputTypesByRef = {};
+
+    inputs.forEach((formInput) => {
+      inputTypesByRef[formInput.ref] = formInput.type;
+      (formInput.group || []).forEach((groupInput) => {
+        inputTypesByRef[groupInput.ref] = groupInput.type;
+      });
+    });
 
     entriesClone.forEach((entry, entryIndex) => {
       let questionsJumpedRefs = new Set([]);
@@ -114,13 +122,18 @@ const reverseEntryParser = {
                   questionsJumpedRefs = new Set([...questionsJumpedRefs, ...jumpedInputsRefs]);
                   break;
                 }
-                case 'NO_ANSWER_GIVEN':
-                  if (reverseJump.answer_ref === null) {
+                case 'NO_ANSWER_GIVEN': {
+                  const noAnswerGiven = Array.isArray(answer)
+                    ? answer.length === 0
+                    : answer === null || answer === undefined || (typeof answer === 'string' && answer.trim() === '');
+
+                  if (noAnswerGiven) {
                     const destinationRef = reverseJump.toInputRef;
                     jumpedInputsRefs = this.getjumpedInputRefs(inputs, inputIndex, destinationRef);
                     questionsJumpedRefs = new Set([...questionsJumpedRefs, ...jumpedInputsRefs]);
                   }
                   break;
+                }
                 default:
               }
             }
@@ -129,16 +142,10 @@ const reverseEntryParser = {
           });
 
           Object.keys(entry.data[entryType].answers).forEach((inputRef) => {
-            const inputTypesWithAnswerArray = [
-              PARAMETERS.INPUT_TYPES.EC5_CHECKBOX_TYPE,
-              PARAMETERS.INPUT_TYPES.EC5_SEARCH_SINGLE_TYPE,
-              PARAMETERS.INPUT_TYPES.EC5_SEARCH_MULTIPLE_TYPE
-            ];
-
             if (questionsJumpedRefs.has(inputRef)) {
               entriesClone[entryIndex].data[entryType].answers[inputRef].was_jumped = true;
 
-              if (inputTypesWithAnswerArray.includes(input.type)) {
+              if (PARAMETERS.MULTIPLE_ANSWERS_TYPES_AS_ARRAY.indexOf(inputTypesByRef[inputRef]) > -1) {
                 entriesClone[entryIndex].data[entryType].answers[inputRef].answer = [];
               } else {
                 entriesClone[entryIndex].data[entryType].answers[inputRef].answer = '';
@@ -306,7 +313,7 @@ const reverseEntryParser = {
               const today = new Date();
               const year = today.getUTCFullYear();
               const month = `0${today.getUTCMonth() + 1}`.slice(-2);
-              const day = `0${today.getUTCDay()}`.slice(-2);
+              const day = `0${today.getUTCDate()}`.slice(-2);
 
               if (answerValue === '') {
                 timeAnswer = '';
@@ -322,7 +329,7 @@ const reverseEntryParser = {
                     timeAnswer = `${parts[0]}:${parts[1]}:00`;
                     break;
                   case PARAMETERS.TIME_FORMAT_5:
-                    timeAnswer = `00:${parts[1]}:${parts[0]}`;
+                    timeAnswer = `00:${parts[0]}:${parts[1]}`;
                     break;
                   default:
                 }
@@ -432,6 +439,11 @@ const reverseEntryParser = {
           reverseMapping[mapTo] = value[1];
           reverseMapping[mapTo].input_ref = inputRef;
           reverseMapping[mapTo].type = input.type;
+
+          //a location is split over three headers sharing the same mapping object,
+          //but jumps and missing answers are looked up by input ref,
+          //so map it to the first header
+          mappingHashMap[inputRef] = mapTo;
 
           mapTo = `long_${value[1].map_to}`;
           reverseMapping[mapTo] = value[1];

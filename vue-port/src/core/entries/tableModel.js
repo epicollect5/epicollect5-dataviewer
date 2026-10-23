@@ -176,7 +176,7 @@ const tableModel = {
   getChildFormRef(forms, currentFormRef) {
     for (let index = 0; index < forms.length; index += 1) {
       if (forms[index].ref === currentFormRef) {
-        if (index !== forms.length) {
+        if (index !== forms.length - 1) {
           return forms[index + 1].ref;
         }
       }
@@ -188,7 +188,7 @@ const tableModel = {
   getParentFormRef(forms, currentFormRef) {
     for (let index = 0; index < forms.length; index += 1) {
       if (forms[index].ref === currentFormRef) {
-        if (index !== forms.length) {
+        if (index !== 0) {
           return forms[index - 1].ref;
         }
       }

@@ -10,10 +10,27 @@ const entryParser = {
     const rawEntry = branchInputRef ? currentEntry.branch_entry : currentEntry.entry;
     const attributes = currentEntry.attributes;
     const relationships = currentEntry.relationships;
-    const inputRawAnswer = rawEntry ? rawEntry.answers[inputRef] : currentEntry.answers[inputRef];
+    const rawAnswers = rawEntry ? rawEntry.answers : currentEntry.answers;
+    const inputRawAnswer = rawAnswers ? rawAnswers[inputRef] : undefined;
     const uploadedAt = rawEntry ? rawEntry.uploaded_at : currentEntry.uploaded_at;
 
-    if (rawEntry.answers[inputRef].was_jumped) {
+    if (!inputRawAnswer) {
+      parsedAnswer = [
+        {
+          entryUuid,
+          attributes,
+          relationships,
+          inputRef: input.ref,
+          inputType: input.type,
+          cellType: PARAMETERS.CEll_TYPES.TEXT,
+          answer: ''
+        }
+      ];
+
+      return parsedAnswer;
+    }
+
+    if (inputRawAnswer.was_jumped) {
       parsedAnswer = [
         {
           entryUuid,
