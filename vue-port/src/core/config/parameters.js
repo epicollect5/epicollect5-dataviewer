@@ -127,6 +127,11 @@ const PARAMETERS = {
   COOKIES: {
     DOWNLOAD_ENTRIES: 'epicollect5-download-entries'
   },
+  DELAY: {
+    SHORT: 250,
+    //minimum time the table page loader stays up, so it does not flash
+    TABLE_PAGE_MIN: 2000
+  },
   MAP_OVERLAYS: {
     CLUSTERS: 'Clusters',
     HEATMAP: 'Heatmap',
@@ -143,7 +148,9 @@ const PARAMETERS = {
     FILE_UPLOAD_ERROR: 'Invalid file',
     FILE_UPLOAD_ERROR_NO_ROWS: 'Invalid file, no entries found',
     FILE_SIZE_ERROR: 'File size exceeded',
-    FILE_MAPPING_ERROR: 'File mapping does not match'
+    FILE_MAPPING_ERROR: 'File mapping does not match',
+    FILE_DUPLICATE_HEADERS_ERROR: 'File contains duplicate headers',
+    FILE_UUID_ERROR: 'File contains duplicate ec5_uuid values'
   }
 };
 
