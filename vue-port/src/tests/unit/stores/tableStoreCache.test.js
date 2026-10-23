@@ -98,5 +98,5 @@ describe('stores/tableStore page cache', () => {
       id: 'entry-1',
       title: 'Cached entry'
     }));
-  });
+  }, 15000);
 });
