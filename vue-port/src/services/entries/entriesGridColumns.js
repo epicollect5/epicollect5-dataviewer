@@ -50,7 +50,7 @@ const FIXED_COLUMN_BASE = {
   suppressMovable: true
 };
 
-const createActionColumn = (headerName, field, headers = [], width = 92) => ({
+const createActionColumn = (headerName, field, headers = [], width = 70) => ({
   headerName,
   field,
   ...FIXED_COLUMN_BASE,
