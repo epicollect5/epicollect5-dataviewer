@@ -43,6 +43,143 @@ describe('stores/tableStore', () => {
     });
   });
 
+  it('includes the hierarchy parent params when viewing children', () => {
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    navigationStore.enterChildForm({
+      formRef: 'form_2',
+      formName: 'Form Two',
+      parentEntryUuid: 'entry-1',
+      parentEntryTitle: 'Parent entry'
+    });
+
+    expect(tableStore.buildEntriesParams({ page: 1 })).toEqual(expect.objectContaining({
+      form_ref: 'form_2',
+      parent_form_ref: 'form_1',
+      parent_uuid: 'entry-1',
+      page: 1
+    }));
+  });
+
+  it('loads the immediate child form entries and resets filters', async () => {
+    const filtersStore = useFiltersStore();
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    projectStore.projectDefinition = {
+      project: {
+        forms: [
+          { ref: 'form_1', name: 'Form One' },
+          { ref: 'form_2', name: 'Form Two' }
+        ]
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    filtersStore.setTitle('abc');
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.loadChildEntries({
+      entryUuid: 'entry-1',
+      entryTitle: 'Parent entry'
+    });
+
+    expect(navigationStore.currentFormRef).toBe('form_2');
+    expect(navigationStore.currentFormName).toBe('Form Two');
+    expect(navigationStore.isViewingChildren).toBe(true);
+    expect(navigationStore.hierarchyNavigator).toHaveLength(2);
+    expect(navigationStore.hierarchyNavigator[1]).toEqual(expect.objectContaining({
+      formRef: 'form_2',
+      parentEntryUuid: 'entry-1',
+      parentEntryTitle: 'Parent entry'
+    }));
+    expect(filtersStore.filterByTitle).toBe('');
+    expect(tableStore.loadEntries).toHaveBeenCalledWith({ params: { page: 1 } });
+  });
+
+  it('does not navigate to children from a leaf form', async () => {
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    projectStore.projectDefinition = {
+      project: {
+        forms: [{ ref: 'form_1', name: 'Form One' }]
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.loadChildEntries({
+      entryUuid: 'entry-1',
+      entryTitle: 'Parent entry'
+    });
+
+    expect(navigationStore.currentFormRef).toBe('form_1');
+    expect(navigationStore.hierarchyNavigator).toHaveLength(1);
+    expect(tableStore.loadEntries).not.toHaveBeenCalled();
+  });
+
+  it('navigates back to the parent form and reloads its entries', async () => {
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    navigationStore.enterChildForm({
+      formRef: 'form_2',
+      formName: 'Form Two',
+      parentEntryUuid: 'entry-1',
+      parentEntryTitle: 'Parent entry'
+    });
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.navigateBack();
+
+    expect(navigationStore.currentFormRef).toBe('form_1');
+    expect(navigationStore.currentFormName).toBe('Form One');
+    expect(navigationStore.isViewingChildren).toBe(false);
+    expect(navigationStore.hierarchyNavigator).toHaveLength(1);
+    expect(tableStore.loadEntries).toHaveBeenCalledWith({ params: { page: 1 } });
+  });
+
+  it('resets the hierarchy to the root form and reloads its entries', async () => {
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    navigationStore.enterChildForm({
+      formRef: 'form_2',
+      formName: 'Form Two',
+      parentEntryUuid: 'entry-1',
+      parentEntryTitle: 'Parent entry'
+    });
+    navigationStore.enterChildForm({
+      formRef: 'form_3',
+      formName: 'Form Three',
+      parentEntryUuid: 'entry-2',
+      parentEntryTitle: 'Nested entry'
+    });
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.navigateToRoot();
+
+    expect(navigationStore.currentFormRef).toBe('form_1');
+    expect(navigationStore.currentFormName).toBe('Form One');
+    expect(navigationStore.isViewingChildren).toBe(false);
+    expect(navigationStore.hierarchyNavigator).toHaveLength(1);
+    expect(tableStore.loadEntries).toHaveBeenCalledWith({ params: { page: 1 } });
+  });
+
   it('keeps the table loader up for the minimum page delay', async () => {
     vi.useFakeTimers();
 
