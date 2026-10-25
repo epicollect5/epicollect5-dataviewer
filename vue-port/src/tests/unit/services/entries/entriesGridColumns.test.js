@@ -1,11 +1,29 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { createEntriesColumnDefs } from '@/services/entries/entriesGridColumns';
+import {
+  canEditEntryForProjectUser,
+  openAddBranchEntry,
+  openAddChildEntry,
+  openEditEntry
+} from '@/services/entries/dataEditorFlow';
 import { useModalStore } from '@/stores/modalStore';
 import { useTableStore } from '@/stores/tableStore';
+
+vi.mock('@/services/entries/dataEditorFlow', () => ({
+  openAddChildEntry: vi.fn(),
+  openAddBranchEntry: vi.fn(),
+  openEditEntry: vi.fn(),
+  canEditEntryForProjectUser: vi.fn(() => true)
+}));
 
 describe('services/entries/entriesGridColumns', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    openAddChildEntry.mockClear();
+    openAddBranchEntry.mockClear();
+    openEditEntry.mockClear();
+    canEditEntryForProjectUser.mockClear();
+    canEditEntryForProjectUser.mockReturnValue(true);
   });
 
   it('creates fixed pinned columns before dynamic question columns', () => {
@@ -59,12 +77,12 @@ describe('services/entries/entriesGridColumns', () => {
   });
 
   it('renders child count as an interactive count with an add button', () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const tableStore = useTableStore();
     const loadChildEntries = vi.spyOn(tableStore, 'loadChildEntries').mockResolvedValue();
     const columnDefs = createEntriesColumnDefs([], {
       childFormName: 'Household members',
-      hasChildForm: true
+      hasChildForm: true,
+      canAddEntry: true
     });
     const childCell = columnDefs[3].cellRenderer({
       value: 4,
@@ -88,11 +106,152 @@ describe('services/entries/entriesGridColumns', () => {
       entryUuid: 'entry-1',
       entryTitle: 'Parent entry'
     });
-    expect(consoleSpy).toHaveBeenCalledWith('Add child entry clicked', {
+    expect(openAddChildEntry).toHaveBeenCalledWith({
       entryUuid: 'entry-1'
     });
+  });
 
-    consoleSpy.mockRestore();
+  it('omits the add button when the project user cannot add entries', () => {
+    const columnDefs = createEntriesColumnDefs([], {
+      childFormName: 'Household members',
+      hasChildForm: true
+    });
+    const childCell = columnDefs[3].cellRenderer({
+      value: 0,
+      data: {
+        id: 'entry-1',
+        title: 'Parent entry'
+      }
+    });
+
+    expect(childCell.querySelector('.entries-grid__children-count-button')).not.toBe(null);
+    expect(childCell.querySelector('.entries-grid__action-button--add')).toBe(null);
+  });
+
+  it('renders a branch count with its own add button', () => {
+    const tableStore = useTableStore();
+    const loadBranchEntries = vi.spyOn(tableStore, 'loadBranchEntries').mockResolvedValue();
+    const columnDefs = createEntriesColumnDefs([
+      { inputRef: 'branch_1', question: 'Branch question' }
+    ], {
+      canAddEntry: true
+    });
+    const branchColumn = columnDefs[5];
+    const branchCell = branchColumn.cellRenderer({
+      value: 3,
+      data: {
+        id: 'entry-1',
+        title: 'Parent entry',
+        __fixedCellsTotal: 6,
+        __cells: [
+          { cellType: 'CellView', entryUuid: 'entry-1' },
+          { cellType: 'CellDelete', entryUuid: 'entry-1' },
+          { cellType: 'CellEdit', entryUuid: 'entry-1' },
+          { cellType: 'CellChildren', answer: 0, entryUuid: 'entry-1' },
+          { cellType: 'CellText', answer: 'Parent entry', entryUuid: 'entry-1' },
+          { cellType: 'CellText', answer: '10 Apr, 2024', entryUuid: 'entry-1' },
+          { cellType: 'CellBranch', answer: 3, entryUuid: 'entry-1', inputRef: 'branch_1' }
+        ]
+      }
+    });
+    const countButton = branchCell.querySelector('.entries-grid__children-count-button');
+    const addButton = branchCell.querySelector('.entries-grid__action-button--add');
+
+    expect(countButton.textContent).toBe('3');
+    expect(countButton.getAttribute('aria-label')).toBe('Open branch entries (3)');
+    expect(addButton.getAttribute('aria-label')).toBe('Add branch entry');
+
+    countButton.click();
+    addButton.click();
+
+    expect(loadBranchEntries).toHaveBeenCalledWith({
+      entryUuid: 'entry-1',
+      entryTitle: 'Parent entry',
+      branchRef: 'branch_1'
+    });
+    expect(openAddBranchEntry).toHaveBeenCalledWith({
+      entryUuid: 'entry-1',
+      branchRef: 'branch_1',
+      entryTitle: 'Parent entry'
+    });
+  });
+
+  it('reads the title and answers of a branch row from its own fixed cell count', () => {
+    const modalStore = useModalStore();
+    const columnDefs = createEntriesColumnDefs([
+      { inputRef: 'branch_1', question: 'Branch question' }
+    ]);
+    const viewButton = columnDefs[0].cellRenderer({
+      data: {
+        id: 'branch-entry-1',
+        __fixedCellsTotal: 5,
+        __cells: [
+          { cellType: 'CellView', entryUuid: 'branch-entry-1' },
+          { cellType: 'CellDelete', entryUuid: 'branch-entry-1' },
+          { cellType: 'CellEdit', entryUuid: 'branch-entry-1' },
+          { cellType: 'CellText', answer: 'Branch row title', entryUuid: 'branch-entry-1' },
+          { cellType: 'CellText', answer: '12 Apr, 2024', entryUuid: 'branch-entry-1' },
+          { cellType: 'CellText', answer: 'Alpha', entryUuid: 'branch-entry-1' }
+        ]
+      }
+    });
+
+    viewButton.click();
+
+    expect(modalStore.activeModal).toBe('view-entry');
+    expect(modalStore.payload).toEqual({
+      entryTitle: 'Branch row title',
+      viewHeaders: [{ inputRef: 'branch_1', question: 'Branch question' }],
+      viewAnswers: [{ cellType: 'CellText', answer: 'Alpha', entryUuid: 'branch-entry-1' }]
+    });
+  });
+
+  it('opens the edit page for the row entry and gates it on the entry ownership', () => {
+    const columnDefs = createEntriesColumnDefs([]);
+    const relationships = { user: { data: { id: 7 } } };
+    const data = {
+      id: 'entry-1',
+      __fixedCellsTotal: 6,
+      __cells: [
+        { cellType: 'CellView', entryUuid: 'entry-1' },
+        { cellType: 'CellDelete', entryUuid: 'entry-1' },
+        { cellType: 'CellEdit', entryUuid: 'entry-1' },
+        { cellType: 'CellChildren', answer: 0, entryUuid: 'entry-1' },
+        { cellType: 'CellText', answer: 'Entry title', entryUuid: 'entry-1', attributes: {}, relationships: null },
+        { cellType: 'CellText', answer: '10 Apr, 2024', entryUuid: 'entry-1', attributes: {}, relationships: null },
+        { cellType: 'CellText', answer: 'Alpha', entryUuid: 'entry-1', attributes: {}, relationships }
+      ]
+    };
+    const editColumn = columnDefs[2];
+    const editButton = editColumn.cellRenderer({ data });
+
+    expect(editButton.getAttribute('aria-label')).toBe('Edit');
+    expect(canEditEntryForProjectUser).toHaveBeenCalledWith({ relationships });
+    expect(editButton.disabled).toBe(false);
+
+    editButton.click();
+
+    expect(openEditEntry).toHaveBeenCalledWith({ entryUuid: 'entry-1' });
+  });
+
+  it('disables the edit action when the project user cannot edit that entry', () => {
+    canEditEntryForProjectUser.mockReturnValue(false);
+    const columnDefs = createEntriesColumnDefs([]);
+    const editButton = columnDefs[2].cellRenderer({
+      data: {
+        id: 'entry-1',
+        __cells: [
+          { cellType: 'CellEdit', entryUuid: 'entry-1' },
+          { cellType: 'CellText', entryUuid: 'entry-1', attributes: {}, relationships: {} }
+        ]
+      }
+    });
+
+    expect(editButton.disabled).toBe(true);
+
+    editButton.click();
+
+    expect(openEditEntry).not.toHaveBeenCalled();
   });
 
   it('renders fixed text cells with ellipsis-ready wrappers', () => {
