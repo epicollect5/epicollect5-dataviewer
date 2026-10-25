@@ -92,6 +92,74 @@ describe('TableView smoke', () => {
     expect(drawerStore.payload.side).toBe('left');
   });
 
+  it('shows a back link to the parent form while viewing children', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        forms: [
+          { ref: 'form_1', name: 'Form 1' },
+          { ref: 'form_2', name: 'Form 2' }
+        ]
+      }
+    };
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    navigationStore.enterChildForm({
+      formRef: 'form_2',
+      formName: 'Form 2',
+      parentEntryUuid: 'entry-1',
+      parentEntryTitle: 'Parent entry'
+    });
+
+    tableStore.rowCount = 0;
+    tableStore.pagination = {
+      total: 0,
+      current_page: 1,
+      last_page: 1
+    };
+    tableStore.links = {
+      prev: null,
+      next: null
+    };
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+    const navigateBack = vi.spyOn(tableStore, 'navigateBack').mockResolvedValue();
+
+    const wrapper = mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(wrapper.get('.table-view__hierarchy-label').text()).toBe('Form 1');
+
+    await wrapper.get('[aria-label="Back to parent form"]').trigger('click');
+
+    expect(navigateBack).toHaveBeenCalledTimes(1);
+  });
+
   it('loads the project from the slug in the url', async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
