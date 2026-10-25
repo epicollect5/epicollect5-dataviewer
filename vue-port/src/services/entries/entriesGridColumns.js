@@ -1,12 +1,18 @@
 import PARAMETERS from '@/core/config/parameters';
-import { add, create, eye, play, trash } from 'ionicons/icons';
+import { add, eye, pencil, play, trash } from 'ionicons/icons';
+import {
+  canEditEntryForProjectUser,
+  openAddBranchEntry,
+  openAddChildEntry,
+  openEditEntry
+} from '@/services/entries/dataEditorFlow';
 import { useModalStore } from '@/stores/modalStore';
 import { useTableStore } from '@/stores/tableStore';
 
 const ACTION_ICONS = {
   view: eye,
   delete: trash,
-  edit: create
+  edit: pencil
 };
 
 const handleChildCountClick = (params) => {
@@ -23,27 +29,70 @@ const handleChildCountClick = (params) => {
 };
 
 const handleAddChildEntryClick = (params) => {
-  console.log('Add child entry clicked', {
+  openAddChildEntry({
     entryUuid: params.data?.id || null
   });
 };
 
-const buildViewPayload = (headers, cells) => ({
-  entryTitle: cells[4]?.answer || 'Untitled entry',
-  viewHeaders: headers,
-  viewAnswers: cells.slice(PARAMETERS.TABLE_FIXED_HEADERS_TOTAL)
-});
+const handleBranchCountClick = (params, cell) => {
+  if (!cell?.entryUuid || !cell?.inputRef) {
+    return;
+  }
 
-const buildDeletePayload = (cells) => {
+  void useTableStore().loadBranchEntries({
+    entryUuid: cell.entryUuid,
+    entryTitle: params.data?.title || '',
+    branchRef: cell.inputRef
+  });
+};
+
+const handleAddBranchEntryClick = (params, cell) => {
+  openAddBranchEntry({
+    entryUuid: cell?.entryUuid || null,
+    branchRef: cell?.inputRef || null,
+    entryTitle: params.data?.title || ''
+  });
+};
+
+//branch tables have one fixed cell less than hierarchy tables, so the offsets
+//cannot be hardcoded
+const getFixedCellsTotal = (data = {}) => {
+  return data.__fixedCellsTotal || PARAMETERS.TABLE_FIXED_HEADERS_TOTAL;
+};
+
+const buildViewPayload = (headers, data = {}) => {
+  const cells = data.__cells || [];
+  const fixedCellsTotal = getFixedCellsTotal(data);
+
+  return {
+    entryTitle: cells[fixedCellsTotal - 2]?.answer || 'Untitled entry',
+    viewHeaders: headers,
+    viewAnswers: cells.slice(fixedCellsTotal)
+  };
+};
+
+const buildDeletePayload = (data = {}) => {
+  const cells = data.__cells || [];
   const sourceCell = cells.find((cell) => cell?.attributes && cell?.relationships) || cells[0] || {};
 
   return {
     entryUuid: sourceCell.entryUuid || cells[0]?.entryUuid || null,
-    entryTitle: cells[4]?.answer || 'Untitled entry',
+    entryTitle: cells[getFixedCellsTotal(data) - 2]?.answer || 'Untitled entry',
     entryExtra: {
       attributes: sourceCell.attributes,
       relationships: sourceCell.relationships
     }
+  };
+};
+
+const buildEditTarget = (data = {}) => {
+  const cells = data.__cells || [];
+  const actionCell = cells.find((cell) => cell?.cellType === PARAMETERS.CEll_TYPES.EDIT) || {};
+  const ownershipCell = cells.find((cell) => cell?.relationships) || {};
+
+  return {
+    entryUuid: actionCell.entryUuid || data.id || null,
+    relationships: ownershipCell.relationships
   };
 };
 
@@ -80,14 +129,23 @@ const createActionColumn = (headerName, field, headers = [], width = 70) => ({
     if (field === 'view') {
       const modalStore = useModalStore();
       button.addEventListener('click', () => {
-        modalStore.open('view-entry', buildViewPayload(headers, params.data.__cells || []));
+        modalStore.open('view-entry', buildViewPayload(headers, params.data || {}));
       });
     }
 
     if (field === 'delete') {
       const modalStore = useModalStore();
       button.addEventListener('click', () => {
-        modalStore.open('delete-entry', buildDeletePayload(params.data.__cells || []));
+        modalStore.open('delete-entry', buildDeletePayload(params.data || {}));
+      });
+    }
+
+    if (field === 'edit') {
+      const target = buildEditTarget(params.data || {});
+
+      button.disabled = !canEditEntryForProjectUser({ relationships: target.relationships });
+      button.addEventListener('click', () => {
+        openEditEntry({ entryUuid: target.entryUuid });
       });
     }
 
@@ -205,36 +263,67 @@ const createFixedTextCell = (value) => {
   return content;
 };
 
-const createChildrenCell = (params) => {
+const createCountAddCell = ({ count, countLabel, addLabel, canAddEntry, onCountClick, onAddClick }) => {
   const wrapper = document.createElement('div');
   wrapper.className = 'entries-grid__children-cell-content';
 
   const countButton = document.createElement('button');
   countButton.className = 'entries-grid__children-count-button';
   countButton.type = 'button';
-  countButton.textContent = params.value ?? 0;
-  countButton.setAttribute('aria-label', `Open child entries (${params.value ?? 0})`);
-  countButton.addEventListener('click', () => {
-    handleChildCountClick(params);
-  });
+  countButton.textContent = count;
+  countButton.setAttribute('aria-label', `${countLabel} (${count})`);
+  countButton.addEventListener('click', onCountClick);
+
+  wrapper.appendChild(countButton);
+
+  if (!canAddEntry) {
+    return wrapper;
+  }
 
   const addButton = document.createElement('button');
   addButton.className = 'entries-grid__action-button entries-grid__action-button--add';
   addButton.type = 'button';
-  addButton.setAttribute('aria-label', 'Add child entry');
-  addButton.addEventListener('click', () => {
-    handleAddChildEntryClick(params);
-  });
+  addButton.setAttribute('aria-label', addLabel);
+  addButton.addEventListener('click', onAddClick);
 
   const icon = document.createElement('ion-icon');
   icon.className = 'entries-grid__action-icon';
   icon.icon = add;
   addButton.appendChild(icon);
 
-  wrapper.appendChild(countButton);
   wrapper.appendChild(addButton);
 
   return wrapper;
+};
+
+const createChildrenCell = (params, canAddEntry = false) => {
+  return createCountAddCell({
+    count: params.value ?? 0,
+    countLabel: 'Open child entries',
+    addLabel: 'Add child entry',
+    canAddEntry,
+    onCountClick: () => {
+      handleChildCountClick(params);
+    },
+    onAddClick: () => {
+      handleAddChildEntryClick(params);
+    }
+  });
+};
+
+const createBranchCell = (params, cell, canAddEntry = false) => {
+  return createCountAddCell({
+    count: cell.answer ?? 0,
+    countLabel: 'Open branch entries',
+    addLabel: 'Add branch entry',
+    canAddEntry,
+    onCountClick: () => {
+      handleBranchCountClick(params, cell);
+    },
+    onAddClick: () => {
+      handleAddBranchEntryClick(params, cell);
+    }
+  });
 };
 
 const getDynamicCellClass = (value, isLastDynamicColumn = false) => {
@@ -270,7 +359,7 @@ export const createEntriesColumnDefs = (headers = [], options = {}) => {
       minWidth: 110,
       headerClass: 'entries-grid__fixed-header',
       cellClass: 'entries-grid__children-cell',
-      cellRenderer: createChildrenCell
+      cellRenderer: (params) => createChildrenCell(params, options.canAddEntry)
     });
   }
 
@@ -317,6 +406,12 @@ export const createEntriesColumnDefs = (headers = [], options = {}) => {
       cellClass: (params) => getDynamicCellClass(params.value, isLastDynamicColumn),
       cellRenderer: (params) => {
         const value = params.value;
+        const dynamicOffset = params.data?.__fixedCellsTotal || PARAMETERS.TABLE_FIXED_HEADERS_TOTAL;
+        const cell = params.data?.__cells?.[dynamicOffset + index];
+
+        if (cell?.cellType === PARAMETERS.CEll_TYPES.BRANCH) {
+          return createBranchCell(params, cell, options.canAddEntry);
+        }
 
         if (value && typeof value === 'object') {
           if (value.entry_default) {
