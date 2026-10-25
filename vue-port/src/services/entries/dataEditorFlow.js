@@ -2,8 +2,10 @@ import PARAMETERS from '@/core/config/parameters';
 import env from '@/core/config/env';
 import client from '@/services/api/client';
 import tableModel from '@/core/entries/tableModel';
+import helpers from '@/utils/helpers';
 import localstorage from '@/utils/localstorage';
 import { useFiltersStore } from '@/stores/filtersStore';
+import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
@@ -133,7 +135,9 @@ export const buildRestoreParams = ({
   branchOwnerEntryTitle,
   branchBackLink,
   entriesFilters,
-  page
+  page,
+  activePage,
+  mapView
 } = {}) => {
   return {
     projectSlug,
@@ -149,6 +153,9 @@ export const buildRestoreParams = ({
     branchOwnerEntryTitle: branchOwnerEntryTitle || null,
     branchBackLink: branchBackLink || null,
     page: page || 1,
+    //the viewer page the round trip started from, so map edits return to the map
+    activePage: activePage === 'map' ? 'map' : 'table',
+    mapView: mapView || null,
     entriesFilters
   };
 };
@@ -159,6 +166,7 @@ const saveViewForRestore = (branchOverrides = {}) => {
   const navigationStore = useNavigationStore();
   const tableStore = useTableStore();
   const filtersStore = useFiltersStore();
+  const mapStore = useMapStore();
 
   localstorage.save(buildRestoreParams({
     projectSlug: projectStore.projectSlug,
@@ -181,6 +189,16 @@ const saveViewForRestore = (branchOverrides = {}) => {
       sortOrder: filtersStore.sortOrder
     },
     page: tableStore.pagination?.current_page || 1,
+    activePage: navigationStore.activePage,
+    //the map is restored to the question, timeframe and distribution it was showing
+    mapView: navigationStore.activePage === 'map'
+      ? {
+          selectedLocationQuestion: mapStore.selectedLocationQuestion,
+          selectedDistributionQuestion: mapStore.selectedDistributionQuestion,
+          startDate: mapStore.startDate,
+          endDate: mapStore.endDate
+        }
+      : null,
     ...branchOverrides
   }));
 };
@@ -209,9 +227,16 @@ export const openAddChildEntry = ({ entryUuid } = {}) => {
 };
 
 export const openEditEntry = ({ entryUuid } = {}) => {
+  const navigationStore = useNavigationStore();
   const tableStore = useTableStore();
+  const mapStore = useMapStore();
+  //the map draws its entries from a different endpoint, so the entry is edited
+  //from the query the page the user is looking at was requested with
+  const selfLink = navigationStore.activePage === 'map'
+    ? mapStore.links?.self || ''
+    : tableStore.links?.self || '';
   const url = buildEditEntryUrl({
-    selfLink: tableStore.links?.self || '',
+    selfLink,
     entryUuid
   });
 
@@ -224,6 +249,72 @@ export const openEditEntry = ({ entryUuid } = {}) => {
   window.open(url, '_self');
 
   return true;
+};
+
+//the navbar add button adds to whatever the table is scoped to: the current
+//form, the parent entry of a child view, or the owner entry of a branch view
+export const buildAddEntryUrl = ({ entriesParams = {} } = {}) => {
+  const searchParams = new URLSearchParams();
+
+  Object.keys(entriesParams).forEach((key) => {
+    searchParams.set(key, entriesParams[key]);
+  });
+
+  if (!searchParams.get('form_ref')) {
+    return '';
+  }
+
+  return getDataEditorHref(PARAMETERS.DATA_EDITOR_ADD_ENTRY_PATH) + '?' + searchParams.toString();
+};
+
+export const openAddEntry = () => {
+  const tableStore = useTableStore();
+  const url = buildAddEntryUrl({ entriesParams: tableStore.buildEntriesParams() });
+
+  //no form to add an entry to, so leave the stored params untouched
+  if (!url) {
+    return false;
+  }
+
+  saveViewForRestore();
+  window.open(url, '_self');
+
+  return true;
+};
+
+//legacy hides the navbar add action for viewers and for forms with no questions
+export const getAddEntryAction = () => {
+  const projectStore = useProjectStore();
+  const navigationStore = useNavigationStore();
+  const projectUser = projectStore.projectUser || {};
+  const formRef = navigationStore.currentFormRef;
+  const formExtra = projectStore.projectExtra?.forms?.[formRef];
+  const hidden = { isVisible: false, label: '' };
+
+  if (!formRef || !formExtra || !canAddEntryForProjectUser()) {
+    return hidden;
+  }
+
+  if (projectUser.role === PARAMETERS.PROJECT_ROLES.VIEWER) {
+    return hidden;
+  }
+
+  const branchRef = navigationStore.currentBranchRef;
+  const inputRefs = navigationStore.isViewingBranch ? formExtra.branch?.[branchRef] || [] : formExtra.inputs || [];
+
+  //an entry can only be added once the form has questions
+  if (!inputRefs.length) {
+    return hidden;
+  }
+
+  const label = navigationStore.isViewingBranch
+    ? projectStore.projectExtra?.inputs?.[branchRef]?.data?.question || ''
+    : navigationStore.currentFormName || formExtra.details?.name || '';
+
+  return {
+    isVisible: Boolean(label),
+    label: label ? helpers.textTruncate(label) : ''
+  };
 };
 
 export const openAddBranchEntry = ({ entryUuid, branchRef, entryTitle } = {}) => {

@@ -135,8 +135,12 @@ const createActionColumn = (headerName, field, headers = [], width = 70) => ({
 
     if (field === 'delete') {
       const modalStore = useModalStore();
+      const payload = buildDeletePayload(params.data || {});
+
+      //legacy gates deletion with the same role/ownership rule as editing
+      button.disabled = !canEditEntryForProjectUser({ relationships: payload.entryExtra.relationships });
       button.addEventListener('click', () => {
-        modalStore.open('delete-entry', buildDeletePayload(params.data || {}));
+        modalStore.open('delete-entry', payload);
       });
     }
 
