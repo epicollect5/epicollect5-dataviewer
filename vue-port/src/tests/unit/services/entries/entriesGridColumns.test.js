@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { createEntriesColumnDefs } from '@/services/entries/entriesGridColumns';
 import { useModalStore } from '@/stores/modalStore';
+import { useTableStore } from '@/stores/tableStore';
 
 describe('services/entries/entriesGridColumns', () => {
   beforeEach(() => {
@@ -59,6 +60,8 @@ describe('services/entries/entriesGridColumns', () => {
 
   it('renders child count as an interactive count with an add button', () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const tableStore = useTableStore();
+    const loadChildEntries = vi.spyOn(tableStore, 'loadChildEntries').mockResolvedValue();
     const columnDefs = createEntriesColumnDefs([], {
       childFormName: 'Household members',
       hasChildForm: true
@@ -66,7 +69,8 @@ describe('services/entries/entriesGridColumns', () => {
     const childCell = columnDefs[3].cellRenderer({
       value: 4,
       data: {
-        id: 'entry-1'
+        id: 'entry-1',
+        title: 'Parent entry'
       }
     });
     const countButton = childCell.querySelector('.entries-grid__children-count-button');
@@ -80,9 +84,9 @@ describe('services/entries/entriesGridColumns', () => {
     countButton.click();
     addButton.click();
 
-    expect(consoleSpy).toHaveBeenCalledWith('Child count clicked', {
+    expect(loadChildEntries).toHaveBeenCalledWith({
       entryUuid: 'entry-1',
-      childCount: 4
+      entryTitle: 'Parent entry'
     });
     expect(consoleSpy).toHaveBeenCalledWith('Add child entry clicked', {
       entryUuid: 'entry-1'
