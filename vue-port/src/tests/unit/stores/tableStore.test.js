@@ -2,12 +2,17 @@ import { createPinia, setActivePinia } from 'pinia';
 import PARAMETERS from '@/core/config/parameters';
 import { fetchEntries } from '@/services/api/entriesApi';
 import { useFiltersStore } from '@/stores/filtersStore';
+import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
 
 vi.mock('@/services/api/entriesApi', () => ({
   fetchEntries: vi.fn()
+}));
+
+vi.mock('@/services/api/deleteApi', () => ({
+  deleteEntry: vi.fn().mockResolvedValue({})
 }));
 
 describe('stores/tableStore', () => {
@@ -140,6 +145,126 @@ describe('stores/tableStore', () => {
 
     expect(navigationStore.isViewingBranch).toBe(false);
     expect(tableStore.loadEntries).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the map locations after a delete while the map is showing', async () => {
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const mapStore = useMapStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    navigationStore.setActivePage('map');
+    mapStore.lastLoadedFormRef = 'form_1';
+    mapStore.loadLocations = vi.fn().mockResolvedValue();
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.deleteCurrentEntry({
+      entryUuid: 'entry-1',
+      entryExtra: { attributes: {}, relationships: {} }
+    });
+
+    expect(mapStore.loadLocations).toHaveBeenCalledWith({ formRef: 'form_1', resetFilters: false });
+  });
+
+  it('leaves the map locations alone when the table is the page on show', async () => {
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const mapStore = useMapStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    navigationStore.setActivePage('table');
+    mapStore.loadLocations = vi.fn().mockResolvedValue();
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.deleteCurrentEntry({
+      entryUuid: 'entry-1',
+      entryExtra: { attributes: {}, relationships: {} }
+    });
+
+    expect(mapStore.loadLocations).not.toHaveBeenCalled();
+  });
+
+  it('remembers the owner view a branch was opened from', async () => {
+    const filtersStore = useFiltersStore();
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    filtersStore.setTitle('river');
+    filtersStore.setDates('2024-01-01', '2024-02-01');
+    tableStore.pagination = { current_page: 3, last_page: 5 };
+    tableStore.links = { self: 'https://five.epicollect.net/api/internal/entries/demo-project?form_ref=form_1&page=3' };
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.loadBranchEntries({
+      entryUuid: 'entry-1',
+      entryTitle: 'Owner entry',
+      branchRef: 'branch_1'
+    });
+
+    expect(tableStore.branchReturnView).toEqual({
+      page: 3,
+      filters: {
+        filterByTitle: 'river',
+        startDate: '2024-01-01',
+        endDate: '2024-02-01',
+        selectedOrderBy: 'Newest',
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      }
+    });
+  });
+
+  it('replays the owner filters and page when a branch is left', async () => {
+    const filtersStore = useFiltersStore();
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    filtersStore.setTitle('river');
+    tableStore.pagination = { current_page: 3, last_page: 5 };
+    tableStore.links = { self: 'https://five.epicollect.net/api/internal/entries/demo-project?form_ref=form_1&page=3' };
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.loadBranchEntries({
+      entryUuid: 'entry-1',
+      entryTitle: 'Owner entry',
+      branchRef: 'branch_1'
+    });
+
+    await tableStore.navigateBackFromBranch();
+
+    expect(filtersStore.filterByTitle).toBe('river');
+    expect(tableStore.loadEntries).toHaveBeenLastCalledWith({ params: { page: 3 } });
+    expect(tableStore.branchReturnView).toBe(null);
+  });
+
+  it('keeps the outer owner view when a branch is opened from a branch', async () => {
+    const filtersStore = useFiltersStore();
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    filtersStore.setTitle('river');
+    tableStore.pagination = { current_page: 2, last_page: 5 };
+    tableStore.links = { self: 'https://five.epicollect.net/api/internal/entries/demo-project?form_ref=form_1&page=2' };
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    await tableStore.loadBranchEntries({ entryUuid: 'entry-1', entryTitle: 'Owner entry', branchRef: 'branch_1' });
+    await tableStore.loadBranchEntries({ entryUuid: 'branch-entry-1', entryTitle: 'Branch entry', branchRef: 'branch_2' });
+
+    expect(tableStore.branchReturnView).toEqual(expect.objectContaining({ page: 2 }));
+    expect(tableStore.branchReturnView.filters.filterByTitle).toBe('river');
   });
 
   it('leaves the branch and reloads the form entries', async () => {

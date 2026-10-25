@@ -34,6 +34,51 @@ const setupProjectWithLocation = ({ projectStore, navigationStore }) => {
   navigationStore.setCurrentForm('form_1', 'Form One');
 };
 
+describe('stores/mapStore map restore', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it('applies the saved question, timeframe and distribution once', () => {
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const mapStore = useMapStore();
+
+    setupProjectWithLocation({ projectStore, navigationStore });
+    mapStore.setPendingMapRestore({
+      selectedLocationQuestion: { input_ref: 'location_1', branch_ref: '', question: 'Where?' },
+      selectedDistributionQuestion: { inputRef: 'q1', question: 'Colour' },
+      startDate: '2024-01-01',
+      endDate: '2024-02-01'
+    });
+
+    const mapRestore = mapStore.takePendingMapRestore('form_1');
+
+    expect(mapRestore.selectedLocationQuestion).toEqual({ input_ref: 'location_1', branch_ref: '', question: 'Where?' });
+    expect(mapStore.startDate).toBe('2024-01-01');
+    expect(mapStore.endDate).toBe('2024-02-01');
+    expect(mapStore.selectedDistributionQuestion).toEqual({ inputRef: 'q1', question: 'Colour' });
+    //the view is consumed once, so a later plain load does not replay it
+    expect(mapStore.pendingMapRestore).toBe(null);
+    expect(mapStore.takePendingMapRestore('form_1')).toBe(null);
+  });
+
+  it('drops a location question the form no longer has', () => {
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const mapStore = useMapStore();
+
+    setupProjectWithLocation({ projectStore, navigationStore });
+    mapStore.setPendingMapRestore({
+      selectedLocationQuestion: { input_ref: 'location_removed', branch_ref: '', question: 'Old question' },
+      startDate: '',
+      endDate: ''
+    });
+
+    expect(mapStore.takePendingMapRestore('form_1')).toEqual({ selectedLocationQuestion: null });
+  });
+});
+
 const compactLocationPayload = ({
   points = [],
   paMap = ['answer_1', 'answer_2'],
