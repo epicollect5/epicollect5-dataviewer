@@ -12,6 +12,22 @@
 
     <template v-else>
       <NavbarSecondary>
+        <template #start>
+          <div v-if="isViewingChildren" class="table-view__hierarchy-nav">
+            <button
+              type="button"
+              class="table-view__hierarchy-back"
+              aria-label="Back to parent form"
+              title="Back to parent form"
+              :disabled="state.tableStore.isFetchingPage"
+              @click="handleHierarchyBack"
+            >
+              <ion-icon :icon="arrowBack" />
+            </button>
+            <span class="table-view__hierarchy-label" :title="hierarchyBackFormName">{{ hierarchyBackFormName }}</span>
+          </div>
+        </template>
+
         <template #end>
           <div v-if="hasPagination" class="secondary-navbar-pagination">
             <span>Total {{ state.tableStore.pagination.total }} | Page {{ state.tableStore.pagination.current_page }}/{{ state.tableStore.pagination.last_page }}</span>
@@ -86,7 +102,7 @@
 
 <script>
 import { IonIcon } from '@ionic/vue';
-import { chevronBackCircle, chevronForwardCircle, cloudUpload } from 'ionicons/icons';
+import { arrowBack, chevronBackCircle, chevronForwardCircle, cloudUpload } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import NavbarSecondary from '@/components/main/NavbarSecondary.vue';
@@ -165,6 +181,9 @@ export default {
         filtersStore.reset();
         await tableStore.loadEntries({ params: { page: 1 } });
       },
+      async handleHierarchyBack() {
+        await tableStore.navigateBack();
+      },
       async loadPage(url) {
         if (!url) {
           return;
@@ -190,6 +209,13 @@ export default {
         return route.params.projectSlug || route.query.project || env.projectSlug || '';
       }),
       missingProjectSlug: computed(() => !computedScope.resolvedProjectSlug.value),
+      isViewingChildren: computed(() => navigationStore.isViewingChildren),
+      hierarchyBackFormName: computed(() => {
+        const hierarchyNavigator = navigationStore.hierarchyNavigator;
+        const parentNavigator = hierarchyNavigator[hierarchyNavigator.length - 2];
+
+        return parentNavigator?.formName || '';
+      }),
       projectErrors: computed(() => {
         return Array.isArray(projectStore.errors) ? projectStore.errors.join(', ') : projectStore.errors;
       }),
@@ -218,6 +244,7 @@ export default {
     });
 
     const icons = {
+      arrowBack,
       chevronBackCircle,
       chevronForwardCircle,
       cloudUpload
