@@ -57,6 +57,50 @@
   width: 100%;
 }
 
+.drawer-entry__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-entry__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ion-color-secondary);
+  color: #333333;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.drawer-entry__action:hover {
+  background: #d0e9dc;
+}
+
+.drawer-entry__action--delete {
+  background: var(--ion-color-danger);
+  color: var(--ion-color-danger-contrast);
+}
+
+.drawer-entry__action--delete:hover {
+  background: var(--ion-color-danger-shade);
+}
+
+.drawer-entry__action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.drawer-entry__action ion-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
 .drawer-entry__question {
   padding: 10px 14px;
   font-size: 0.82rem;

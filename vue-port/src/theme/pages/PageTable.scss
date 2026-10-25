@@ -69,6 +69,34 @@
   line-height: 1;
 }
 
+.table-view__add-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ion-color-primary-contrast);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.table-view__add-entry:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.table-view__add-entry ion-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.table-view__add-entry-label {
+  white-space: nowrap;
+}
+
 .table-view__hierarchy-nav {
   display: flex;
   align-items: center;
@@ -128,6 +156,12 @@
 .placeholder-view p {
   max-width: 60ch;
   color: rgba(var(--ion-color-dark-rgb, 34, 36, 40), 0.75);
+}
+
+@media (max-width: 600px) {
+  .table-view__add-entry-label {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
