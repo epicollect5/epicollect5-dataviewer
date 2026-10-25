@@ -1,16 +1,20 @@
 import { createPinia, setActivePinia } from 'pinia';
 import {
   buildAddChildEntryUrl,
+  buildAddEntryUrl,
   buildEditEntryUrl,
   buildRestoreParams,
   canAddEntryForProjectUser,
   canEditEntryForProjectUser,
   buildAddBranchEntryUrl,
+  getAddEntryAction,
   openAddBranchEntry,
   openAddChildEntry,
+  openAddEntry,
   openEditEntry
 } from '@/services/entries/dataEditorFlow';
 import { useFiltersStore } from '@/stores/filtersStore';
+import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
@@ -90,6 +94,111 @@ describe('services/entries/dataEditorFlow', () => {
     expect(buildAddChildEntryUrl({ selfLink: SELF_LINK, formRef: 'form_1', childFormRef: 'form_2', entryUuid: null })).toBe('');
   });
 
+  it('builds the navbar add url from the params the table is scoped to', () => {
+    const url = buildAddEntryUrl({
+      entriesParams: {
+        form_ref: 'form_2',
+        parent_form_ref: 'form_1',
+        parent_uuid: 'entry-1'
+      }
+    });
+    const parsedUrl = new URL(url);
+
+    expect(parsedUrl.pathname).toBe('/add-entry');
+    expect(parsedUrl.searchParams.get('form_ref')).toBe('form_2');
+    expect(parsedUrl.searchParams.get('parent_form_ref')).toBe('form_1');
+    expect(parsedUrl.searchParams.get('parent_uuid')).toBe('entry-1');
+    expect(buildAddEntryUrl({ entriesParams: {} })).toBe('');
+  });
+
+  it('saves the branch view and opens the editor from the navbar add button', () => {
+    seedProject();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    navigationStore.enterBranch({
+      branchRef: 'branch_1',
+      ownerEntryUuid: 'entry-1',
+      ownerEntryTitle: 'Parent entry',
+      backLink: SELF_LINK
+    });
+    tableStore.links = { self: SELF_LINK };
+    tableStore.pagination = { current_page: 1 };
+
+    expect(openAddEntry()).toBe(true);
+
+    const openedUrl = new URL(openSpy.mock.calls[0][0]);
+    const savedParams = JSON.parse(localStorage.getItem('epicollect5-restore'));
+
+    expect(openSpy).toHaveBeenCalledWith(expect.any(String), '_self');
+    expect(openedUrl.pathname).toBe('/add-entry');
+    expect(openedUrl.searchParams.get('form_ref')).toBe('form_1');
+    //a branch table adds to the owner entry the branch belongs to
+    expect(openedUrl.searchParams.get('branch_ref')).toBe('branch_1');
+    expect(openedUrl.searchParams.get('branch_owner_uuid')).toBe('entry-1');
+    expect(savedParams).toEqual(expect.objectContaining({
+      formRef: 'form_1',
+      isViewingBranch: true,
+      branchRef: 'branch_1'
+    }));
+  });
+
+  it('describes the navbar add action for the current view', () => {
+    const projectStore = seedProject();
+    const navigationStore = useNavigationStore();
+
+    projectStore.projectUser = { id: 1, role: 'curator' };
+    projectStore.projectExtra = {
+      forms: {
+        form_1: { inputs: ['q1'], group: {}, branch: { branch_1: ['q2'] } }
+      },
+      inputs: {
+        q1: { data: { ref: 'q1', question: 'Q1' } },
+        branch_1: { data: { ref: 'branch_1', question: 'Household member?' } }
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+
+    expect(getAddEntryAction()).toEqual({ isVisible: true, label: 'Form 1' });
+
+    //the label is the branch question while a branch table is shown
+    navigationStore.enterBranch({ branchRef: 'branch_1', ownerEntryUuid: 'entry-1' });
+    expect(getAddEntryAction()).toEqual({ isVisible: true, label: 'Household member?' });
+    navigationStore.leaveBranch();
+
+    //a viewer never gets the add action, even when logged in
+    projectStore.projectUser = { id: 1, role: 'viewer' };
+    expect(getAddEntryAction()).toEqual({ isVisible: false, label: '' });
+
+    //so does a form with no questions yet
+    projectStore.projectUser = { id: 1, role: 'collector' };
+    projectStore.projectExtra.forms.form_1.inputs = [];
+    expect(getAddEntryAction()).toEqual({ isVisible: false, label: '' });
+
+    //and a logged out user, as the development bypass is off here
+    projectStore.projectUser = {};
+    expect(getAddEntryAction()).toEqual({ isVisible: false, label: '' });
+  });
+
+  it('truncates the navbar add label', () => {
+    const projectStore = seedProject();
+    const navigationStore = useNavigationStore();
+
+    projectStore.projectUser = { id: 1, role: 'manager' };
+    projectStore.projectExtra = {
+      forms: {
+        form_1: { inputs: ['q1'], group: {}, branch: {} }
+      },
+      inputs: {
+        q1: { data: { ref: 'q1', question: 'Q1' } }
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'A very long form name indeed');
+
+    expect(getAddEntryAction()).toEqual({ isVisible: true, label: 'A very long form ...' });
+  });
+
   it('builds the edit-entry url carrying the clicked entry uuid', () => {
     const url = buildEditEntryUrl({ selfLink: SELF_LINK, entryUuid: 'entry-1' });
     const parsedUrl = new URL(url);
@@ -134,6 +243,9 @@ describe('services/entries/dataEditorFlow', () => {
       branchOwnerEntryTitle: null,
       branchBackLink: null,
       page: 2,
+      //a round trip that does not come from the map comes back to the table
+      activePage: 'table',
+      mapView: null,
       entriesFilters: { filterByTitle: 'river' }
     });
   });
@@ -330,6 +442,75 @@ describe('services/entries/dataEditorFlow', () => {
       branchBackLink: SELF_LINK,
       page: 2
     }));
+  });
+
+  it('edits an entry from the map drawer with the locations query and returns to the map', () => {
+    seedProject();
+    const navigationStore = useNavigationStore();
+    const mapStore = useMapStore();
+    const tableStore = useTableStore();
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    navigationStore.setActivePage('map');
+    mapStore.links = {
+      self: 'https://five.epicollect.net/api/internal/entries-locations/demo?form_ref=form_1&input_ref=location_1&branch_ref=branch_1&page=1'
+    };
+    tableStore.links = { self: SELF_LINK };
+
+    expect(openEditEntry({ entryUuid: 'entry-1' })).toBe(true);
+
+    const openedUrl = new URL(openSpy.mock.calls[0][0]);
+    const savedParams = JSON.parse(localStorage.getItem('epicollect5-restore'));
+
+    expect(openedUrl.pathname).toBe('/edit-entry');
+    expect(openedUrl.searchParams.get('uuid')).toBe('entry-1');
+    //the map query, not the table one, tells the editor which form is in play
+    expect(openedUrl.searchParams.get('form_ref')).toBe('form_1');
+    expect(openedUrl.searchParams.get('branch_ref')).toBe('branch_1');
+    expect(savedParams.activePage).toBe('map');
+  });
+
+  it('saves the map question, timeframe and distribution for the return trip', () => {
+    seedProject();
+    const navigationStore = useNavigationStore();
+    const mapStore = useMapStore();
+    const tableStore = useTableStore();
+    const selectedLocationQuestion = { input_ref: 'location_1', branch_ref: '', question: 'Where?' };
+    const selectedDistributionQuestion = { inputRef: 'q1', question: 'Colour' };
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    navigationStore.setActivePage('map');
+    mapStore.links = { self: `${SELF_LINK}&input_ref=location_1` };
+    mapStore.selectedLocationQuestion = selectedLocationQuestion;
+    mapStore.selectedDistributionQuestion = selectedDistributionQuestion;
+    mapStore.startDate = '2024-01-01';
+    mapStore.endDate = '2024-02-01';
+    tableStore.links = { self: SELF_LINK };
+
+    openEditEntry({ entryUuid: 'entry-1' });
+
+    const savedParams = JSON.parse(localStorage.getItem('epicollect5-restore'));
+
+    expect(savedParams.mapView).toEqual({
+      selectedLocationQuestion,
+      selectedDistributionQuestion,
+      startDate: '2024-01-01',
+      endDate: '2024-02-01'
+    });
+  });
+
+  it('saves no map view when the table is the page on show', () => {
+    seedProject();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    navigationStore.setActivePage('table');
+    tableStore.links = { self: SELF_LINK };
+
+    openEditEntry({ entryUuid: 'entry-1' });
+
+    expect(JSON.parse(localStorage.getItem('epicollect5-restore')).mapView).toBe(null);
   });
 
   it('leaves the stored params untouched when the edit cannot be built', () => {

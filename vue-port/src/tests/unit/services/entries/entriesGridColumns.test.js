@@ -254,6 +254,39 @@ describe('services/entries/entriesGridColumns', () => {
     expect(openEditEntry).not.toHaveBeenCalled();
   });
 
+  it('gates the delete action on the same rule as editing', () => {
+    const modalStore = useModalStore();
+    const relationships = { user: { data: { id: 7 } } };
+    const data = {
+      id: 'entry-1',
+      __cells: [
+        { cellType: 'CellEdit', entryUuid: 'entry-1' },
+        { cellType: 'CellText', answer: 'Entry title', entryUuid: 'entry-1', attributes: {}, relationships }
+      ]
+    };
+    const deleteColumn = createEntriesColumnDefs([])[1];
+
+    canEditEntryForProjectUser.mockReturnValue(false);
+    const blockedButton = deleteColumn.cellRenderer({ data });
+
+    expect(canEditEntryForProjectUser).toHaveBeenCalledWith({ relationships });
+    expect(blockedButton.disabled).toBe(true);
+
+    blockedButton.click();
+
+    expect(modalStore.activeModal).toBe(null);
+
+    canEditEntryForProjectUser.mockReturnValue(true);
+    const allowedButton = deleteColumn.cellRenderer({ data });
+
+    expect(allowedButton.disabled).toBe(false);
+
+    allowedButton.click();
+
+    expect(modalStore.activeModal).toBe('delete-entry');
+    expect(modalStore.payload).toEqual(expect.objectContaining({ entryUuid: 'entry-1' }));
+  });
+
   it('renders fixed text cells with ellipsis-ready wrappers', () => {
     const columnDefs = createEntriesColumnDefs([]);
     const titleCell = columnDefs[3].cellRenderer({
