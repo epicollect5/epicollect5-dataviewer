@@ -612,7 +612,7 @@ describe('TableView smoke', () => {
       }
     }));
 
-    mount(PageTable, {
+    const wrapper = mount(PageTable, {
       global: {
         plugins: [router, pinia]
       }
@@ -626,6 +626,234 @@ describe('TableView smoke', () => {
     expect(navigationStore.currentBranchOwnerEntryTitle).toBe('Parent entry');
     expect(tableStore.loadEntries).toHaveBeenCalledWith({ params: { page: 2 } });
     expect(localStorage.getItem('epicollect5-restore')).toBe(null);
+
+    //the page the restore came from is the owner view the branch is left to
+    await wrapper.get('[aria-label="Back to entry"]').trigger('click');
+    await flushPromises();
+
+    expect(navigationStore.isViewingBranch).toBe(false);
+    expect(tableStore.loadEntries).toHaveBeenLastCalledWith({ params: { page: 2 } });
+  });
+
+  it('comes back to the map page after editing an entry from the map drawer', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data?restore=1');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        forms: [{ ref: 'form_1', name: 'Form 1' }]
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+    tableStore.links = { prev: null, next: null };
+    localStorage.setItem('epicollect5-restore', JSON.stringify({
+      projectSlug: 'demo',
+      savedAt: Date.now(),
+      formRef: 'form_1',
+      formName: 'Form 1',
+      parentFormRef: 'form_1',
+      hierarchyNavigator: [{ formRef: 'form_1', formName: 'Form 1' }],
+      isViewingChildren: false,
+      isViewingBranch: false,
+      branchRef: null,
+      branchOwnerUuid: null,
+      branchOwnerEntryTitle: null,
+      branchBackLink: null,
+      page: 1,
+      activePage: 'map',
+      entriesFilters: {
+        filterByTitle: '',
+        startDate: '',
+        endDate: '',
+        selectedOrderBy: 'Newest',
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      }
+    }));
+
+    mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(navigationStore.activePage).toBe('map');
+    expect(navigationStore.currentFormRef).toBe('form_1');
+    expect(localStorage.getItem('epicollect5-restore')).toBe(null);
+  });
+
+  it('adds an entry from the secondary navbar for the view the table is showing', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const filtersStore = useFiltersStore();
+    const tableStore = useTableStore();
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectUser = { id: 1, role: 'curator' };
+    projectStore.projectDefinition = {
+      project: {
+        forms: [{ ref: 'form_1', name: 'Form 1' }]
+      }
+    };
+    projectStore.projectExtra = {
+      forms: {
+        form_1: { inputs: ['q1'], group: {}, branch: {} }
+      },
+      inputs: {
+        q1: { data: { ref: 'q1', question: 'Q1' } }
+      }
+    };
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    filtersStore.setTitle('river');
+    tableStore.pagination = {
+      total: 1,
+      current_page: 3,
+      last_page: 4
+    };
+    tableStore.links = { prev: 'https://five.epicollect.net/api/internal/entries/demo?page=2', next: null };
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    const wrapper = mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    const addButton = wrapper.get('.table-view__add-entry');
+    expect(addButton.text()).toContain('Add Form 1');
+
+    await addButton.trigger('click');
+
+    const openedUrl = new URL(openSpy.mock.calls[0][0]);
+    const savedParams = JSON.parse(localStorage.getItem('epicollect5-restore'));
+
+    expect(openedUrl.pathname).toBe('/add-entry');
+    expect(openedUrl.searchParams.get('form_ref')).toBe('form_1');
+    expect(openedUrl.searchParams.get('title')).toBe('river');
+    //the add goes back to the page and filters the user is looking at
+    expect(savedParams).toEqual(expect.objectContaining({
+      formRef: 'form_1',
+      page: 3,
+      entriesFilters: expect.objectContaining({ filterByTitle: 'river' })
+    }));
+
+    openSpy.mockRestore();
+  });
+
+  it('hides the navbar add action from viewers and empty forms', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectUser = { id: 1, role: 'viewer' };
+    projectStore.projectDefinition = {
+      project: {
+        forms: [{ ref: 'form_1', name: 'Form 1' }]
+      }
+    };
+    projectStore.projectExtra = {
+      forms: {
+        form_1: { inputs: ['q1'], group: {}, branch: {} }
+      },
+      inputs: {
+        q1: { data: { ref: 'q1', question: 'Q1' } }
+      }
+    };
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    tableStore.pagination = {
+      total: 1,
+      current_page: 1,
+      last_page: 1
+    };
+    tableStore.links = { prev: null, next: null };
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    const viewerWrapper = mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(viewerWrapper.find('.table-view__add-entry').exists()).toBe(false);
+
+    //a collector gets the action back only once the form has questions
+    projectStore.projectUser = { id: 1, role: 'collector' };
+    projectStore.projectExtra.forms.form_1.inputs = [];
+
+    const emptyFormWrapper = mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(emptyFormWrapper.find('.table-view__add-entry').exists()).toBe(false);
   });
 
   it('loads the project from the slug in the url', async () => {

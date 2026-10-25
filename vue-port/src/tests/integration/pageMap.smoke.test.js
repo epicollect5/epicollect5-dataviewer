@@ -255,8 +255,85 @@ describe('PageMap smoke', () => {
       formRef: 'form_1',
       resetFilters: true
     });
+
     expect(navigationStore.isRestoring).toBe(false);
     //the panel follows the form the map data belongs to, not the child form
     expect(wrapper.text()).not.toContain('No map questions in this form');
+  });
+
+  it('boots the map on the question and timeframe a round trip started from', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageMap
+        }
+      ]
+    });
+
+    router.push('/project/demo/data?restore=1');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const mapStore = useMapStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        created_at: '2024-01-01 00:00:00',
+        forms: [{ ref: 'form_1', name: 'Form 1' }]
+      }
+    };
+    projectStore.projectExtra = {
+      forms: {
+        form_1: {
+          lists: {
+            location_inputs: [{ input_ref: 'location_1', branch_ref: '', question: 'Location' }]
+          }
+        }
+      },
+      inputs: {}
+    };
+
+    navigationStore.restoreHierarchy({
+      hierarchyNavigator: [{ formRef: 'form_1', formName: 'Form 1' }],
+      currentFormRef: 'form_1',
+      currentFormName: 'Form 1',
+      isViewingChildren: false
+    });
+    mapStore.setPendingMapRestore({
+      selectedLocationQuestion: { input_ref: 'location_1', branch_ref: '', question: 'Location' },
+      selectedDistributionQuestion: null,
+      startDate: '2024-01-01',
+      endDate: '2024-02-01'
+    });
+    mapStore.loadLocations = vi.fn().mockResolvedValue();
+
+    mount(PageMap, {
+      global: {
+        plugins: [router, pinia],
+        stubs: {
+          LeafletMap: true
+        }
+      }
+    });
+
+    await flushPromises();
+
+    expect(mapStore.loadLocations).toHaveBeenCalledWith({
+      formRef: 'form_1',
+      selectedLocationQuestion: { input_ref: 'location_1', branch_ref: '', question: 'Location' },
+      resetFilters: false
+    });
+    //the timeframe the map was filtered by survives the round trip
+    expect(mapStore.startDate).toBe('2024-01-01');
+    expect(mapStore.endDate).toBe('2024-02-01');
+    expect(mapStore.pendingMapRestore).toBe(null);
   });
 });
