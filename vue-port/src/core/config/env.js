@@ -8,6 +8,9 @@ const env = {
   dataEditorBaseUrl: import.meta.env.VITE_DATA_EDITOR_BASE_URL || 'https://five.epicollect.net',
   projectSlug: import.meta.env.VITE_PROJECT_SLUG || '',
   defaultProjectSlug: import.meta.env.VITE_PROJECT_SLUG || devProjectSlug,
+  //legacy parity for PARAMETERS.IS_LOCALHOST: while debugging, entry actions are
+  //enabled even when the project user is not logged in (public demo projects)
+  isDev: import.meta.env.DEV,
   mapboxApiToken: import.meta.env.VITE_MAPBOX_API_TOKEN || '',
   esriApiToken: import.meta.env.VITE_ESRI_API_TOKEN || ''
 };

@@ -100,8 +100,20 @@ const PARAMETERS = {
   CEll_TYPES: {
     BRANCH: 'CellBranch',
     CHILDREN: 'CellChildren',
+    EDIT: 'CellEdit',
     MEDIA: 'CellMedia',
     TEXT: 'CellText'
+  },
+  USER_PERMISSIONS: {
+    CAN_DELETE: ['creator', 'manager', 'curator'],
+    CAN_EDIT: ['creator', 'manager', 'curator']
+  },
+  PROJECT_ROLES: {
+    CREATOR: 'creator',
+    MANAGER: 'manager',
+    CURATOR: 'curator',
+    COLLECTOR: 'collector',
+    VIEWER: 'viewer'
   },
   MULTIPLE_ANSWERS_TYPES: ['radio', 'checkbox', 'dropdown', 'searchsingle', 'searchmultiple'],
   MULTIPLE_ANSWERS_TYPES_AS_ARRAY: ['checkbox', 'searchsingle', 'searchmultiple'],
