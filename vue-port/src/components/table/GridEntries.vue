@@ -48,6 +48,10 @@ export default {
       type: Boolean,
       default: false
     },
+    canAddEntry: {
+      type: Boolean,
+      default: false
+    },
     rows: {
       type: Array,
       default: () => []
@@ -69,7 +73,8 @@ export default {
     const computedScope = {
       columnDefs: computed(() => createEntriesColumnDefs(props.headers, {
         childFormName: props.childFormName,
-        hasChildForm: props.hasChildForm
+        hasChildForm: props.hasChildForm,
+        canAddEntry: props.canAddEntry
       })),
       rowData: computed(() => props.rows),
       gridClasses: computed(() => ({
