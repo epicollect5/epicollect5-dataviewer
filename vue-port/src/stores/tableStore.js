@@ -25,7 +25,7 @@ const clearTableRows = () => {
   tableRowsContext.gridRows = markRaw([]);
 };
 
-const setTableRows = (rows = []) => {
+const setTableRows = (rows = [], isBranchTable = false) => {
   const rawRows = markRaw(rows);
   const flatRows = rawRows.map((cells, index) => ({
     id: cells[0]?.entryUuid || `row-${index}`,
@@ -33,7 +33,7 @@ const setTableRows = (rows = []) => {
     cells
   }));
 
-  tableRowsContext.gridRows = markRaw(mapTableRowsToGrid(flatRows));
+  tableRowsContext.gridRows = markRaw(mapTableRowsToGrid(flatRows, isBranchTable));
 
   return tableRowsContext.gridRows.length;
 };
@@ -60,6 +60,20 @@ const appendHierarchyParams = (params, navigationStore) => {
   const hierarchyNavigator = navigationStore.hierarchyNavigator;
   const activeNavigator = hierarchyNavigator[hierarchyNavigator.length - 1];
   const parentNavigator = hierarchyNavigator[hierarchyNavigator.length - 2];
+
+  //a branch table is scoped to its owner entry, never to a parent entry
+  if (navigationStore.currentBranchRef) {
+    params.branch_ref = navigationStore.currentBranchRef;
+    params.branch_owner_uuid = navigationStore.currentBranchOwnerUuid;
+
+    delete params.parent_form_ref;
+    delete params.parent_uuid;
+
+    return params;
+  }
+
+  delete params.branch_ref;
+  delete params.branch_owner_uuid;
 
   if (hierarchyNavigator.length > 1 && activeNavigator?.parentEntryUuid) {
     params.parent_form_ref = parentNavigator?.formRef;
@@ -197,14 +211,22 @@ export const useTableStore = defineStore('table', {
         }
 
         const formRef = navigationStore.currentFormRef;
+        const branchRef = navigationStore.currentBranchRef || '';
 
         this.requestParams = requestParams;
-        this.headers = tableModel.getHeaders(projectStore.projectExtra, formRef);
+        this.headers = branchRef
+          ? tableModel.getBranchHeaders(projectStore.projectExtra, formRef, branchRef)
+          : tableModel.getHeaders(projectStore.projectExtra, formRef);
         const childForm = getImmediateChildForm(projectStore.forms, formRef);
 
-        this.hasChildForm = Boolean(childForm);
+        //a branch table has no children column, as legacy splices it out
+        this.isBranchTable = Boolean(branchRef);
+        this.hasChildForm = !branchRef && Boolean(childForm);
         this.childFormName = childForm?.name || 'Children';
-        this.rowCount = setTableRows(tableModel.getRows(projectStore.projectSlug, projectStore.projectExtra, formRef, responseData));
+        this.rowCount = setTableRows(
+          tableModel.getRows(projectStore.projectSlug, projectStore.projectExtra, formRef, responseData, branchRef),
+          Boolean(branchRef)
+        );
         this.rowsVersion += 1;
         this.pagination = responseData.meta;
         this.links = responseData.links;
@@ -244,6 +266,40 @@ export const useTableStore = defineStore('table', {
         parentEntryUuid: entryUuid,
         parentEntryTitle: entryTitle || ''
       });
+      filtersStore.reset();
+
+      await this.loadEntries({ params: { page: 1 } });
+    },
+
+    async loadBranchEntries({ entryUuid, entryTitle, branchRef } = {}) {
+      const projectStore = useProjectStore();
+      const navigationStore = useNavigationStore();
+      const filtersStore = useFiltersStore();
+
+      if (!projectStore.projectSlug || !navigationStore.currentFormRef || !entryUuid || !branchRef || this.isFetchingPage) {
+        return;
+      }
+
+      navigationStore.enterBranch({
+        branchRef,
+        ownerEntryUuid: entryUuid,
+        ownerEntryTitle: entryTitle || '',
+        backLink: this.links?.self || ''
+      });
+      filtersStore.reset();
+
+      await this.loadEntries({ params: { page: 1 } });
+    },
+
+    async navigateBackFromBranch() {
+      const navigationStore = useNavigationStore();
+      const filtersStore = useFiltersStore();
+
+      if (!navigationStore.isViewingBranch) {
+        return;
+      }
+
+      navigationStore.leaveBranch();
       filtersStore.reset();
 
       await this.loadEntries({ params: { page: 1 } });

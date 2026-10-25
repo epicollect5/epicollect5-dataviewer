@@ -141,8 +141,9 @@ export const useMapStore = defineStore('map', {
 
       const projectStore = useProjectStore();
       const navigationStore = useNavigationStore();
+      const formRef = state.lastLoadedFormRef || navigationStore.currentFormRef;
 
-      if (!projectStore.projectSlug || !projectStore.projectExtra || !navigationStore.currentFormRef) {
+      if (!projectStore.projectSlug || !projectStore.projectExtra || !formRef) {
         return '';
       }
 
@@ -150,7 +151,7 @@ export const useMapStore = defineStore('map', {
       const rows = tableModel.getRows(
         projectStore.projectSlug,
         projectStore.projectExtra,
-        navigationStore.currentFormRef,
+        formRef,
         state.selectedEntry,
         branchRef
       );
@@ -264,23 +265,25 @@ export const useMapStore = defineStore('map', {
       };
     },
 
-    getLocationQuestions() {
+    //formRef is optional: it lets the map hold the locations of another form than
+    //the current one, as legacy does after a data editor round trip
+    getLocationQuestions(formRef = '') {
       const projectStore = useProjectStore();
       const navigationStore = useNavigationStore();
 
-      return getLocationQuestions(projectStore.projectExtra, navigationStore.currentFormRef);
+      return getLocationQuestions(projectStore.projectExtra, formRef || navigationStore.currentFormRef);
     },
 
-    getDefaultLocationQuestion() {
-      return this.getLocationQuestions()[0] || null;
+    getDefaultLocationQuestion(formRef = '') {
+      return this.getLocationQuestions(formRef)[0] || null;
     },
 
-    syncDateBounds() {
+    syncDateBounds(formRef = '') {
       const projectStore = useProjectStore();
       const navigationStore = useNavigationStore();
       const bounds = mapUtils.getDateBounds({
         projectStats: projectStore.projectStats,
-        currentFormRef: navigationStore.currentFormRef,
+        currentFormRef: formRef || navigationStore.currentFormRef,
         projectCreatedAt: projectStore.projectDefinition?.project?.created_at
       });
 
@@ -288,9 +291,10 @@ export const useMapStore = defineStore('map', {
       this.maxDate = bounds.maxDate;
     },
 
-    clearForFormWithoutLocation() {
+    clearForFormWithoutLocation(formRef = '') {
       const projectStore = useProjectStore();
       const navigationStore = useNavigationStore();
+      const resolvedFormRef = formRef || navigationStore.currentFormRef;
 
       this.locations = rawArray();
       this.possibleAnswerMap = rawArray();
@@ -298,13 +302,13 @@ export const useMapStore = defineStore('map', {
       this.markers = rawArray();
       this.hasLoadedInitialPage = true;
       this.lastLoadedProjectSlug = projectStore.projectSlug;
-      this.lastLoadedFormRef = navigationStore.currentFormRef || '';
+      this.lastLoadedFormRef = resolvedFormRef || '';
       this.lastLoadedLocationQuestionKey = '';
       this.selectedLocationQuestion = null;
       this.selectedDistributionQuestion = null;
       this.pagination = null;
       this.links = null;
-      this.syncDateBounds();
+      this.syncDateBounds(resolvedFormRef);
       this.startDate = '';
       this.endDate = '';
       this.progressBarMarkersProcessed = 0;
@@ -314,15 +318,17 @@ export const useMapStore = defineStore('map', {
 
     buildLocationsParams(overrides = {}) {
       const navigationStore = useNavigationStore();
-      const selectedLocationQuestion = overrides.selectedLocationQuestion || this.selectedLocationQuestion || this.getDefaultLocationQuestion();
+      const formRef = overrides.formRef || navigationStore.currentFormRef;
+      const selectedLocationQuestion = overrides.selectedLocationQuestion || this.selectedLocationQuestion || this.getDefaultLocationQuestion(formRef);
       const params = {
-        form_ref: navigationStore.currentFormRef,
+        form_ref: formRef,
         input_ref: selectedLocationQuestion?.input_ref,
         branch_ref: selectedLocationQuestion?.branch_ref || '',
         ...overrides
       };
 
       delete params.selectedLocationQuestion;
+      delete params.formRef;
 
       Object.keys(params).forEach((key) => {
         if (params[key] === '' || params[key] === null || params[key] === undefined) {
@@ -375,8 +381,12 @@ export const useMapStore = defineStore('map', {
     async loadLocations(options = {}) {
       const projectStore = useProjectStore();
       const navigationStore = useNavigationStore();
+      //a page link continues the location set that is already loaded, which can
+      //belong to another form than the current one (legacy restore behaviour)
+      const pagedFormRef = options.pageUrl ? this.lastLoadedFormRef : '';
+      const formRef = options.formRef || pagedFormRef || navigationStore.currentFormRef;
 
-      if (!projectStore.projectSlug || !navigationStore.currentFormRef) {
+      if (!projectStore.projectSlug || !formRef) {
         return;
       }
 
@@ -385,32 +395,32 @@ export const useMapStore = defineStore('map', {
         this.lastLoadedProjectSlug = projectStore.projectSlug;
       }
 
-      const locationQuestions = this.getLocationQuestions();
+      const locationQuestions = this.getLocationQuestions(formRef);
 
       if (locationQuestions.length === 0) {
-        this.clearForFormWithoutLocation();
+        this.clearForFormWithoutLocation(formRef);
         return;
       }
 
       const selectedLocationQuestion =
         options.selectedLocationQuestion ||
-        this.selectedLocationQuestion ||
-        this.getDefaultLocationQuestion();
+        (formRef === navigationStore.currentFormRef ? this.selectedLocationQuestion : null) ||
+        this.getDefaultLocationQuestion(formRef);
       const locationQuestionKey = getLocationQuestionKey(selectedLocationQuestion);
       const pageUrl = options.pageUrl || '';
-      const requestContextKey = `${projectStore.projectSlug}|${navigationStore.currentFormRef}|${locationQuestionKey}|${pageUrl}`;
+      const requestContextKey = `${projectStore.projectSlug}|${formRef}|${locationQuestionKey}|${pageUrl}`;
 
       if (
         !pageUrl &&
         this.hasLoadedInitialPage &&
         this.lastLoadedProjectSlug === projectStore.projectSlug &&
-        this.lastLoadedFormRef === navigationStore.currentFormRef &&
+        this.lastLoadedFormRef === formRef &&
         this.lastLoadedLocationQuestionKey === locationQuestionKey
       ) {
         this.isRejectedPage = false;
         this.errors = [];
         this.selectedLocationQuestion = selectedLocationQuestion;
-        this.syncDateBounds();
+        this.syncDateBounds(formRef);
 
         if (options.resetFilters) {
           this.startDate = '';
@@ -429,7 +439,7 @@ export const useMapStore = defineStore('map', {
       this.isRejectedPage = false;
       this.errors = [];
       this.selectedLocationQuestion = selectedLocationQuestion;
-      this.syncDateBounds();
+      this.syncDateBounds(formRef);
 
       if (options.resetFilters) {
         this.startDate = '';
@@ -443,7 +453,7 @@ export const useMapStore = defineStore('map', {
           const shouldUseCache = Boolean(pageUrl);
           const requestParams = pageUrl
             ? this.requestParams
-            : this.buildLocationsParams({ selectedLocationQuestion });
+            : this.buildLocationsParams({ selectedLocationQuestion, formRef });
           const requestUrl = getEntriesLocationsRequestUrl({
             pageUrl,
             projectSlug: projectStore.projectSlug,
@@ -485,7 +495,7 @@ export const useMapStore = defineStore('map', {
           this.links = payload.links || payload.link || null;
           this.selectedEntry = null;
           this.lastLoadedProjectSlug = projectStore.projectSlug;
-          this.lastLoadedFormRef = navigationStore.currentFormRef;
+          this.lastLoadedFormRef = formRef;
           this.lastLoadedLocationQuestionKey = locationQuestionKey;
           this.recomputeMarkers();
         } catch (error) {
@@ -518,8 +528,10 @@ export const useMapStore = defineStore('map', {
       const projectStore = useProjectStore();
       const navigationStore = useNavigationStore();
       const branchRef = this.selectedLocationQuestion?.branch_ref || '';
+      //the marker belongs to the loaded location set, not to the table's form
+      const formRef = this.lastLoadedFormRef || navigationStore.currentFormRef;
 
-      if (!projectStore.projectSlug || !navigationStore.currentFormRef || !entryUuid) {
+      if (!projectStore.projectSlug || !formRef || !entryUuid) {
         return;
       }
 
@@ -527,7 +539,7 @@ export const useMapStore = defineStore('map', {
 
       try {
         const response = await fetchEntry(projectStore.projectSlug, {
-          form_ref: navigationStore.currentFormRef,
+          form_ref: formRef,
           uuid: entryUuid,
           branch_ref: branchRef
         });

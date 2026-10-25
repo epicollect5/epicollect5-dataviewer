@@ -23,6 +23,19 @@ export const useFiltersStore = defineStore('filters', {
       this.sortBy = sortBy;
       this.sortOrder = sortOrder;
     },
+    //back from the data editor: the restored entries page was fetched with these filters
+    restore(entriesFilters) {
+      if (!entriesFilters) {
+        return;
+      }
+
+      this.filterByTitle = entriesFilters.filterByTitle || '';
+      this.startDate = entriesFilters.startDate || '';
+      this.endDate = entriesFilters.endDate || '';
+      this.selectedOrderBy = entriesFilters.selectedOrderBy || PARAMETERS.ORDER_BY.NEWEST;
+      this.sortBy = entriesFilters.sortBy || PARAMETERS.DEFAULT_ORDERING_COLUMN;
+      this.sortOrder = entriesFilters.sortOrder || PARAMETERS.DEFAULT_ORDERING;
+    },
     reset() {
       this.filterByTitle = '';
       this.startDate = '';
