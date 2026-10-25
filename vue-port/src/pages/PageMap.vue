@@ -188,9 +188,13 @@ export default {
 
         navigationStore.setRestoring(false);
 
+        //a data-editor round trip from the map comes back to the same view
+        const mapRestore = mapStore.takePendingMapRestore(restoredFormRef);
+
         await mapStore.loadLocations({
           ...(restoredFormRef ? { formRef: restoredFormRef } : {}),
-          resetFilters: true
+          ...(mapRestore?.selectedLocationQuestion ? { selectedLocationQuestion: mapRestore.selectedLocationQuestion } : {}),
+          resetFilters: !mapRestore
         });
       },
       async handleLocationQuestionChange(question) {

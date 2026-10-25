@@ -43,6 +43,18 @@
         </template>
 
         <template #end>
+          <button
+            v-if="addEntryAction.isVisible"
+            type="button"
+            class="table-view__add-entry"
+            :aria-label="`Add ${addEntryAction.label}`"
+            :title="`Add ${addEntryAction.label}`"
+            @click="handleAddEntry"
+          >
+            <ion-icon :icon="addCircle" />
+            <span class="table-view__add-entry-label">Add {{ addEntryAction.label }}</span>
+          </button>
+
           <div v-if="hasPagination" class="secondary-navbar-pagination">
             <span>Total {{ state.tableStore.pagination.total }} | Page {{ state.tableStore.pagination.current_page }}/{{ state.tableStore.pagination.last_page }}</span>
             <button
@@ -117,7 +129,7 @@
 
 <script>
 import { IonIcon } from '@ionic/vue';
-import { arrowBack, chevronBackCircle, chevronForwardCircle, cloudUpload } from 'ionicons/icons';
+import { addCircle, arrowBack, chevronBackCircle, chevronForwardCircle, cloudUpload } from 'ionicons/icons';
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import NavbarSecondary from '@/components/main/NavbarSecondary.vue';
@@ -127,7 +139,11 @@ import TableEmptyState from '@/components/table/StateEmptyTable.vue';
 import TableToolbar from '@/components/table/ToolbarTable.vue';
 import { getOrderSorting } from '@/core/entries/orderSorting';
 import mapUtils from '@/core/map/mapUtils';
-import { canAddEntryForProjectUser } from '@/services/entries/dataEditorFlow';
+import {
+  canAddEntryForProjectUser,
+  getAddEntryAction,
+  openAddEntry
+} from '@/services/entries/dataEditorFlow';
 import { clearPendingRestore, getPendingRestore } from '@/services/entries/restoreFlow';
 import { useDrawerStore } from '@/stores/drawerStore';
 import { useFiltersStore } from '@/stores/filtersStore';
@@ -209,6 +225,9 @@ export default {
           currentFormName: restoreParams.formName || activeNavigator.formName,
           isViewingChildren: restoreParams.isViewingChildren
         });
+        //an entry edited from the map drawer comes back to the map it was showing
+        navigationStore.setActivePage(restoreParams.activePage === 'map' ? 'map' : 'table');
+        mapStore.setPendingMapRestore(restoreParams.mapView || null);
         filtersStore.restore(restoreParams.entriesFilters);
 
         if (restoreParams.isViewingBranch) {
@@ -217,6 +236,11 @@ export default {
             ownerEntryUuid: restoreParams.branchOwnerUuid,
             ownerEntryTitle: restoreParams.branchOwnerEntryTitle,
             backLink: restoreParams.branchBackLink
+          });
+          //the saved view is the owner view the branch was opened from
+          tableStore.setBranchReturnView({
+            filters: restoreParams.entriesFilters,
+            page: Number(restoreParams.page) || 1
           });
         }
 
@@ -269,6 +293,9 @@ export default {
       handleNextPage() {
         return methods.loadPage(tableStore.links?.next);
       },
+      handleAddEntry() {
+        openAddEntry();
+      },
       handleOpenUpload() {
         drawerStore.open('upload', {
           side: 'left'
@@ -310,6 +337,7 @@ export default {
         });
       }),
       canAddEntry: computed(() => canAddEntryForProjectUser()),
+      addEntryAction: computed(() => getAddEntryAction()),
       hasPagination: computed(() => Boolean(tableStore.pagination)),
       isPreviousPageDisabled: computed(() => !tableStore.links?.prev || tableStore.isFetchingPage),
       isNextPageDisabled: computed(() => !tableStore.links?.next || tableStore.isFetchingPage)
@@ -325,6 +353,7 @@ export default {
     });
 
     const icons = {
+      addCircle,
       arrowBack,
       chevronBackCircle,
       chevronForwardCircle,
