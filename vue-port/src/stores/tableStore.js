@@ -14,6 +14,7 @@ import {
 } from '@/services/entries/entriesPageCache';
 import tableModel from '@/core/entries/tableModel';
 import { useFiltersStore } from '@/stores/filtersStore';
+import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 
@@ -111,6 +112,8 @@ export const useTableStore = defineStore('table', {
       isFetchingPage: false,
       isRejectedPage: false,
       isBranchTable: false,
+      //the owner view a branch was opened from, replayed when the branch is left
+      branchReturnView: null,
       isFetchingChildren: false,
       requestVersion: 0,
       errors: []
@@ -280,6 +283,14 @@ export const useTableStore = defineStore('table', {
         return;
       }
 
+      //a branch opened from another branch keeps the view of the outer owner form
+      if (!navigationStore.isViewingBranch) {
+        this.branchReturnView = {
+          filters: filtersStore.snapshot(),
+          page: this.pagination?.current_page || 1
+        };
+      }
+
       navigationStore.enterBranch({
         branchRef,
         ownerEntryUuid: entryUuid,
@@ -291,6 +302,10 @@ export const useTableStore = defineStore('table', {
       await this.loadEntries({ params: { page: 1 } });
     },
 
+    setBranchReturnView(view = null) {
+      this.branchReturnView = view;
+    },
+
     async navigateBackFromBranch() {
       const navigationStore = useNavigationStore();
       const filtersStore = useFiltersStore();
@@ -299,10 +314,20 @@ export const useTableStore = defineStore('table', {
         return;
       }
 
-      navigationStore.leaveBranch();
-      filtersStore.reset();
+      const branchReturnView = this.branchReturnView;
 
-      await this.loadEntries({ params: { page: 1 } });
+      navigationStore.leaveBranch();
+
+      //the owner form comes back the way it was, not filtered and paginated afresh
+      if (branchReturnView) {
+        filtersStore.restore(branchReturnView.filters);
+      } else {
+        filtersStore.reset();
+      }
+
+      this.branchReturnView = null;
+
+      await this.loadEntries({ params: { page: branchReturnView?.page || 1 } });
     },
 
     async navigateBack() {
@@ -354,6 +379,17 @@ export const useTableStore = defineStore('table', {
 
       await deleteEntryRequest(projectStore.projectSlug, deletePayload);
       await this.loadEntries({ params: this.requestParams });
+
+      //the map draws the same entry, so its markers must not outlive the delete
+      const navigationStore = useNavigationStore();
+      const mapStore = useMapStore();
+
+      if (navigationStore.activePage === 'map') {
+        await mapStore.loadLocations({
+          formRef: mapStore.lastLoadedFormRef || undefined,
+          resetFilters: false
+        });
+      }
     }
   }
 });

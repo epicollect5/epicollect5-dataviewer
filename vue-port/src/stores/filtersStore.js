@@ -23,6 +23,16 @@ export const useFiltersStore = defineStore('filters', {
       this.sortBy = sortBy;
       this.sortOrder = sortOrder;
     },
+    snapshot() {
+      return {
+        filterByTitle: this.filterByTitle,
+        startDate: this.startDate,
+        endDate: this.endDate,
+        selectedOrderBy: this.selectedOrderBy,
+        sortBy: this.sortBy,
+        sortOrder: this.sortOrder
+      };
+    },
     //back from the data editor: the restored entries page was fetched with these filters
     restore(entriesFilters) {
       if (!entriesFilters) {

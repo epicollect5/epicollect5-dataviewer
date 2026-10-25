@@ -113,6 +113,8 @@ export const useMapStore = defineStore('map', {
     selectedLocationQuestion: null,
     selectedDistributionQuestion: null,
     selectedEntry: null,
+    //the map view a data-editor round trip was started from, replayed on return
+    pendingMapRestore: null,
     requestParams: {},
     pagination: null,
     links: null,
@@ -276,6 +278,37 @@ export const useMapStore = defineStore('map', {
 
     getDefaultLocationQuestion(formRef = '') {
       return this.getLocationQuestions(formRef)[0] || null;
+    },
+
+    setPendingMapRestore(view = null) {
+      this.pendingMapRestore = view;
+    },
+
+    //applies the saved map view once, so the map boots where the round trip started;
+    //a location question the form no longer has falls back to the default one
+    takePendingMapRestore(formRef = '') {
+      const view = this.pendingMapRestore;
+
+      this.pendingMapRestore = null;
+
+      if (!view) {
+        return null;
+      }
+
+      const question = view.selectedLocationQuestion;
+      const hasQuestion =
+        Boolean(question) &&
+        this.getLocationQuestions(formRef).some((item) => {
+          return item.input_ref === question.input_ref && (item.branch_ref || '') === (question.branch_ref || '');
+        });
+
+      this.selectedDistributionQuestion = view.selectedDistributionQuestion || null;
+      this.startDate = view.startDate || '';
+      this.endDate = view.endDate || '';
+
+      return {
+        selectedLocationQuestion: hasQuestion ? question : null
+      };
     },
 
     syncDateBounds(formRef = '') {
