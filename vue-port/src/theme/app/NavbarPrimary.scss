@@ -134,6 +134,17 @@
   border-radius: 999px;
 }
 
+.primary-navbar__child-entry-title {
+  min-width: 0;
+  max-width: min(40vw, 420px);
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--ion-color-primary);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 1124px) {
   .primary-navbar__inner {
     align-items: center;
@@ -165,5 +176,9 @@
 
   .primary-navbar__project-name {
     max-width: min(28vw, 260px);
+  }
+
+  .primary-navbar__child-entry-title {
+    max-width: min(50vw, 260px);
   }
 }
