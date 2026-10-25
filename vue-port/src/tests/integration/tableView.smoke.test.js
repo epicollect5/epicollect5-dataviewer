@@ -17,6 +17,7 @@ describe('TableView smoke', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    localStorage.clear();
   });
 
   it('loads the table slice, debounces title filters, and opens a clean upload modal', async () => {
@@ -143,7 +144,6 @@ describe('TableView smoke', () => {
       next: null
     };
     tableStore.loadEntries = vi.fn().mockResolvedValue();
-    const navigateBack = vi.spyOn(tableStore, 'navigateBack').mockResolvedValue();
 
     const wrapper = mount(PageTable, {
       global: {
@@ -155,9 +155,477 @@ describe('TableView smoke', () => {
 
     expect(wrapper.get('.table-view__hierarchy-label').text()).toBe('Form 1');
 
+    //the real store action runs, so the hierarchy itself has to come back
     await wrapper.get('[aria-label="Back to parent form"]').trigger('click');
+    await flushPromises();
 
-    expect(navigateBack).toHaveBeenCalledTimes(1);
+    expect(navigationStore.currentFormRef).toBe('form_1');
+    expect(navigationStore.currentFormName).toBe('Form 1');
+    expect(navigationStore.isViewingChildren).toBe(false);
+    expect(navigationStore.hierarchyNavigator).toHaveLength(1);
+    expect(tableStore.loadEntries).toHaveBeenLastCalledWith({ params: { page: 1 } });
+    expect(tableStore.buildEntriesParams({})).not.toHaveProperty('parent_uuid');
+    expect(wrapper.find('.table-view__hierarchy-nav').exists()).toBe(false);
+  });
+
+  it('restores the saved view left behind by the data editor', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data?restore=1');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const filtersStore = useFiltersStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        forms: [
+          { ref: 'form_1', name: 'Form 1' },
+          { ref: 'form_2', name: 'Form 2' }
+        ]
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+    tableStore.links = { prev: null, next: null };
+    localStorage.setItem('epicollect5-restore', JSON.stringify({
+      projectSlug: 'demo',
+      savedAt: Date.now(),
+      formRef: 'form_2',
+      formName: 'Form 2',
+      parentFormRef: 'form_2',
+      hierarchyNavigator: [
+        { formRef: 'form_1', formName: 'Form 1' },
+        { formRef: 'form_2', formName: 'Form 2', parentEntryUuid: 'entry-1', parentEntryTitle: 'Parent entry' }
+      ],
+      isViewingChildren: true,
+      isViewingBranch: false,
+      page: 2,
+      entriesFilters: {
+        filterByTitle: 'river',
+        startDate: '',
+        endDate: '',
+        selectedOrderBy: 'Newest',
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      }
+    }));
+
+    const wrapper = mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(navigationStore.currentFormRef).toBe('form_2');
+    expect(navigationStore.isViewingChildren).toBe(true);
+    expect(navigationStore.isRestoring).toBe(true);
+    expect(filtersStore.filterByTitle).toBe('river');
+    expect(tableStore.loadEntries).toHaveBeenCalledTimes(1);
+    expect(tableStore.loadEntries).toHaveBeenCalledWith({ params: { page: 2 } });
+    expect(localStorage.getItem('epicollect5-restore')).toBe(null);
+    expect(wrapper.get('.table-view__hierarchy-label').text()).toBe('Form 1');
+  });
+
+  it('restores the root form view that opened the data editor', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data?restore=1');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const filtersStore = useFiltersStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        forms: [
+          { ref: 'form_1', name: 'Form 1' },
+          { ref: 'form_2', name: 'Form 2' }
+        ]
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+    tableStore.links = { prev: null, next: null };
+    localStorage.setItem('epicollect5-restore', JSON.stringify({
+      projectSlug: 'demo',
+      savedAt: Date.now(),
+      formRef: 'form_1',
+      formName: 'Form 1',
+      parentFormRef: 'form_1',
+      hierarchyNavigator: [{ formRef: 'form_1', formName: 'Form 1' }],
+      isViewingChildren: false,
+      isViewingBranch: false,
+      page: 3,
+      entriesFilters: {
+        filterByTitle: '',
+        startDate: '',
+        endDate: '',
+        selectedOrderBy: 'Oldest',
+        sortBy: 'created_at',
+        sortOrder: 'ASC'
+      }
+    }));
+
+    const wrapper = mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(navigationStore.currentFormRef).toBe('form_1');
+    expect(navigationStore.isViewingChildren).toBe(false);
+    expect(filtersStore.selectedOrderBy).toBe('Oldest');
+    expect(filtersStore.sortOrder).toBe('ASC');
+    expect(tableStore.loadEntries).toHaveBeenCalledWith({ params: { page: 3 } });
+    expect(localStorage.getItem('epicollect5-restore')).toBe(null);
+    expect(wrapper.find('[aria-label="Back to parent form"]').exists()).toBe(false);
+  });
+
+  it('boots the root form when the saved view is stale', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data?restore=1');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const filtersStore = useFiltersStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        forms: [
+          { ref: 'form_1', name: 'Form 1' },
+          { ref: 'form_2', name: 'Form 2' }
+        ]
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+    tableStore.links = { prev: null, next: null };
+    localStorage.setItem('epicollect5-restore', JSON.stringify({
+      projectSlug: 'another-project',
+      savedAt: Date.now(),
+      formRef: 'form_2',
+      hierarchyNavigator: [
+        { formRef: 'form_1', formName: 'Form 1' },
+        { formRef: 'form_2', formName: 'Form 2' }
+      ],
+      isViewingChildren: true,
+      page: 2
+    }));
+
+    mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(navigationStore.currentFormRef).toBe('form_1');
+    expect(navigationStore.isViewingChildren).toBe(false);
+    expect(filtersStore.filterByTitle).toBe('');
+    expect(tableStore.loadEntries).toHaveBeenCalledWith();
+    //the blob is left for its own project, it is not this view's to delete
+    expect(localStorage.getItem('epicollect5-restore')).not.toBe(null);
+  });
+
+  it('shows the branch back navigation while viewing a branch', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        forms: [{ ref: 'form_1', name: 'Form 1' }]
+      }
+    };
+    projectStore.projectExtra = {
+      forms: {
+        form_1: {
+          inputs: ['branch_1'],
+          group: {},
+          branch: { branch_1: ['q1'] },
+          lists: {}
+        }
+      },
+      inputs: {
+        branch_1: { data: { ref: 'branch_1', type: 'branch', question: 'Branch question' } },
+        q1: { data: { ref: 'q1', type: 'text', question: 'Q1' } }
+      }
+    };
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    navigationStore.enterBranch({
+      branchRef: 'branch_1',
+      ownerEntryUuid: 'entry-1',
+      ownerEntryTitle: 'Parent entry',
+      backLink: 'https://five.epicollect.net/api/internal/entries/demo?form_ref=form_1&page=1'
+    });
+
+    tableStore.pagination = {
+      total: 1,
+      current_page: 1,
+      last_page: 1
+    };
+    tableStore.links = { prev: null, next: null };
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    const wrapper = mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(wrapper.get('.table-view__hierarchy-label').text()).toBe('Parent entry | Branch question');
+    expect(wrapper.find('[aria-label="Back to parent form"]').exists()).toBe(false);
+
+    //the real store action runs, so the branch scope has to be dropped and the
+    //owner form reloaded
+    await wrapper.get('[aria-label="Back to entry"]').trigger('click');
+    await flushPromises();
+
+    expect(navigationStore.isViewingBranch).toBe(false);
+    expect(navigationStore.currentBranchRef).toBe(null);
+    expect(navigationStore.currentBranchOwnerUuid).toBe(null);
+    expect(navigationStore.currentBranchOwnerEntryTitle).toBe(null);
+    expect(tableStore.loadEntries).toHaveBeenLastCalledWith({ params: { page: 1 } });
+    expect(tableStore.buildEntriesParams({})).not.toHaveProperty('branch_ref');
+    expect(tableStore.buildEntriesParams({})).not.toHaveProperty('branch_owner_uuid');
+    expect(wrapper.find('.table-view__hierarchy-nav').exists()).toBe(false);
+  });
+
+  it('keeps the child hierarchy when leaving a branch opened from a child view', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        forms: [
+          { ref: 'form_1', name: 'Form 1' },
+          { ref: 'form_2', name: 'Form 2' }
+        ]
+      }
+    };
+    projectStore.projectExtra = {
+      forms: {
+        form_2: {
+          inputs: ['branch_1'],
+          group: {},
+          branch: { branch_1: ['q1'] },
+          lists: {}
+        }
+      },
+      inputs: {
+        branch_1: { data: { ref: 'branch_1', type: 'branch', question: 'Branch question' } },
+        q1: { data: { ref: 'q1', type: 'text', question: 'Q1' } }
+      }
+    };
+
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+    navigationStore.enterChildForm({
+      formRef: 'form_2',
+      formName: 'Form 2',
+      parentEntryUuid: 'entry-1',
+      parentEntryTitle: 'Parent entry'
+    });
+    navigationStore.enterBranch({
+      branchRef: 'branch_1',
+      ownerEntryUuid: 'entry-2',
+      ownerEntryTitle: 'Child entry',
+      backLink: 'https://five.epicollect.net/api/internal/entries/demo?form_ref=form_2&page=1'
+    });
+
+    tableStore.pagination = {
+      total: 1,
+      current_page: 1,
+      last_page: 1
+    };
+    tableStore.links = { prev: null, next: null };
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+
+    const wrapper = mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(wrapper.get('.table-view__hierarchy-label').text()).toBe('Child entry | Branch question');
+
+    await wrapper.get('[aria-label="Back to entry"]').trigger('click');
+    await flushPromises();
+
+    expect(navigationStore.isViewingBranch).toBe(false);
+    expect(navigationStore.isViewingChildren).toBe(true);
+    expect(navigationStore.currentFormRef).toBe('form_2');
+    expect(navigationStore.hierarchyNavigator).toHaveLength(2);
+    expect(tableStore.loadEntries).toHaveBeenLastCalledWith({ params: { page: 1 } });
+    expect(wrapper.get('.table-view__hierarchy-label').text()).toBe('Form 1');
+  });
+
+  it('restores a branch view left behind by the data editor', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageTable
+        }
+      ]
+    });
+
+    router.push('/project/demo/data?restore=1');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        forms: [{ ref: 'form_1', name: 'Form 1' }]
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form 1');
+
+    tableStore.loadEntries = vi.fn().mockResolvedValue();
+    tableStore.links = { prev: null, next: null };
+    localStorage.setItem('epicollect5-restore', JSON.stringify({
+      projectSlug: 'demo',
+      savedAt: Date.now(),
+      formRef: 'form_1',
+      formName: 'Form 1',
+      parentFormRef: 'form_1',
+      hierarchyNavigator: [{ formRef: 'form_1', formName: 'Form 1' }],
+      isViewingChildren: false,
+      isViewingBranch: true,
+      branchRef: 'branch_1',
+      branchOwnerUuid: 'entry-1',
+      branchOwnerEntryTitle: 'Parent entry',
+      branchBackLink: 'https://five.epicollect.net/api/internal/entries/demo?form_ref=form_1&page=1',
+      page: 2,
+      entriesFilters: {
+        filterByTitle: '',
+        startDate: '',
+        endDate: '',
+        selectedOrderBy: 'Newest',
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      }
+    }));
+
+    mount(PageTable, {
+      global: {
+        plugins: [router, pinia]
+      }
+    });
+
+    await flushPromises();
+
+    expect(navigationStore.isViewingBranch).toBe(true);
+    expect(navigationStore.currentBranchRef).toBe('branch_1');
+    expect(navigationStore.currentBranchOwnerUuid).toBe('entry-1');
+    expect(navigationStore.currentBranchOwnerEntryTitle).toBe('Parent entry');
+    expect(tableStore.loadEntries).toHaveBeenCalledWith({ params: { page: 2 } });
+    expect(localStorage.getItem('epicollect5-restore')).toBe(null);
   });
 
   it('loads the project from the slug in the url', async () => {

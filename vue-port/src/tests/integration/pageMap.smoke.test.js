@@ -177,4 +177,86 @@ describe('PageMap smoke', () => {
     expect(drawerStore.activeDrawer).toBe('map-entry');
     expect(mapStore.loadEntry).toHaveBeenCalledWith('entry-1');
   });
+
+  it('shows the hierarchy root locations after a data editor round trip', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: '/project/:projectSlug?/data',
+          component: PageMap
+        }
+      ]
+    });
+
+    router.push('/project/demo/data?restore=1');
+    await router.isReady();
+
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const mapStore = useMapStore();
+
+    projectStore.projectSlug = 'demo';
+    projectStore.isFetching = false;
+    projectStore.isRejected = false;
+    projectStore.projectDefinition = {
+      project: {
+        created_at: '2024-01-01 00:00:00',
+        forms: [
+          { ref: 'form_1', name: 'Form 1' },
+          { ref: 'form_2', name: 'Form 2' }
+        ]
+      }
+    };
+    projectStore.projectExtra = {
+      forms: {
+        form_1: {
+          lists: {
+            location_inputs: [{ input_ref: 'location_1', branch_ref: '', question: 'Location' }]
+          }
+        },
+        form_2: {
+          lists: {
+            location_inputs: []
+          }
+        }
+      },
+      inputs: {}
+    };
+
+    navigationStore.restoreHierarchy({
+      hierarchyNavigator: [
+        { formRef: 'form_1', formName: 'Form 1' },
+        { formRef: 'form_2', formName: 'Form 2', parentEntryUuid: 'entry-1' }
+      ],
+      currentFormRef: 'form_2',
+      currentFormName: 'Form 2',
+      isViewingChildren: true
+    });
+    //the map already holds the parent form locations from before the round trip
+    mapStore.lastLoadedFormRef = 'form_1';
+    mapStore.loadLocations = vi.fn().mockResolvedValue();
+
+    const wrapper = mount(PageMap, {
+      global: {
+        plugins: [router, pinia],
+        stubs: {
+          LeafletMap: true
+        }
+      }
+    });
+
+    await flushPromises();
+
+    //legacy keeps the locations of the form the hierarchy started from
+    expect(mapStore.loadLocations).toHaveBeenCalledWith({
+      formRef: 'form_1',
+      resetFilters: true
+    });
+    expect(navigationStore.isRestoring).toBe(false);
+    //the panel follows the form the map data belongs to, not the child form
+    expect(wrapper.text()).not.toContain('No map questions in this form');
+  });
 });
