@@ -16,6 +16,31 @@
       </ion-item>
 
       <ion-item class="drawer-entry__group" :detail="false">
+        <div class="drawer-entry__item-content drawer-entry__actions">
+          <button
+            type="button"
+            class="drawer-entry__action"
+            :disabled="!canEditEntry"
+            aria-label="Edit entry"
+            @click="handleEdit"
+          >
+            <ion-icon :icon="pencil" />
+            <span>Edit</span>
+          </button>
+          <button
+            type="button"
+            class="drawer-entry__action drawer-entry__action--delete"
+            :disabled="!canEditEntry"
+            aria-label="Delete entry"
+            @click="handleDelete"
+          >
+            <ion-icon :icon="trash" />
+            <span>Delete</span>
+          </button>
+        </div>
+      </ion-item>
+
+      <ion-item class="drawer-entry__group" :detail="false">
         <div class="drawer-entry__item-content">
           <div class="drawer-entry__question">Created At</div>
           <div class="drawer-entry__answer">{{ entryCreatedAt }}</div>
@@ -82,12 +107,14 @@
 </template>
 
 <script>
-import { IonItem, IonList } from '@ionic/vue';
+import { IonIcon, IonItem, IonList } from '@ionic/vue';
+import { pencil, trash } from 'ionicons/icons';
 import { computed, reactive } from 'vue';
 import PARAMETERS from '@/core/config/parameters';
 import tableModel from '@/core/entries/tableModel';
 import LoaderSpinner from '@/components/global/LoaderSpinner.vue';
 import PlayButton from '@/components/global/PlayButton.vue';
+import { canEditEntryForProjectUser, openEditEntry } from '@/services/entries/dataEditorFlow';
 import { useMapStore } from '@/stores/mapStore';
 import { useModalStore } from '@/stores/modalStore';
 import { useNavigationStore } from '@/stores/navigationStore';
@@ -96,6 +123,7 @@ import { useProjectStore } from '@/stores/projectStore';
 export default {
   name: 'DrawerEntry',
   components: {
+    IonIcon,
     IonItem,
     IonList,
     LoaderSpinner,
@@ -171,6 +199,19 @@ export default {
           methods.getPhotoPreview(section.value)
         );
       },
+      handleEdit() {
+        openEditEntry({ entryUuid: computedScope.entryData.value?.entryUuid || null });
+      },
+      handleDelete() {
+        modalStore.open('delete-entry', {
+          entryUuid: computedScope.entryData.value?.entryUuid || null,
+          entryTitle: computedScope.entryTitle.value,
+          entryExtra: {
+            attributes: computedScope.entryData.value?.attributes,
+            relationships: computedScope.entryData.value?.relationships
+          }
+        });
+      },
       openSectionMedia(section) {
         methods.openMedia(
           section.kind,
@@ -197,7 +238,11 @@ export default {
     const computedScope = {
       isFetchingEntry: computed(() => mapStore.isFetchingEntry),
       entryData: computed(() => {
-        if (!mapStore.selectedEntry || !navigationStore.currentFormRef) {
+        //the clicked marker belongs to the form the locations were loaded for,
+        //which can differ from the table's form after a data editor round trip
+        const formRef = mapStore.lastLoadedFormRef || navigationStore.currentFormRef;
+
+        if (!mapStore.selectedEntry || !formRef) {
           return null;
         }
 
@@ -205,7 +250,7 @@ export default {
         const rows = tableModel.getRows(
           projectStore.projectSlug,
           projectStore.projectExtra,
-          navigationStore.currentFormRef,
+          formRef,
           mapStore.selectedEntry,
           branchRef
         );
@@ -216,8 +261,8 @@ export default {
 
         const row = rows[0];
         const headers = branchRef
-          ? tableModel.getBranchHeaders(projectStore.projectExtra, navigationStore.currentFormRef, branchRef)
-          : tableModel.getHeaders(projectStore.projectExtra, navigationStore.currentFormRef);
+          ? tableModel.getBranchHeaders(projectStore.projectExtra, formRef, branchRef)
+          : tableModel.getHeaders(projectStore.projectExtra, formRef);
 
         const titleIndex = branchRef
           ? PARAMETERS.TABLE_FIXED_HEADERS_TITLE_INDEX - 1
@@ -229,12 +274,24 @@ export default {
           ? PARAMETERS.TABLE_FIXED_HEADERS_TOTAL - 1
           : PARAMETERS.TABLE_FIXED_HEADERS_TOTAL;
 
+        //the drawer actions need the same entry uuid and ownership the grid uses
+        const actionCell = row.find((cell) => cell?.cellType === PARAMETERS.CEll_TYPES.EDIT) || {};
+        const ownershipCell = row.find((cell) => cell?.attributes && cell?.relationships) || {};
+
         return {
           title: row[titleIndex]?.answer || 'Untitled entry',
           createdAt: row[createdAtIndex]?.answer || '',
           answers: row.slice(answerOffset),
-          headers
+          headers,
+          entryUuid: actionCell.entryUuid || ownershipCell.entryUuid || '',
+          attributes: ownershipCell.attributes,
+          relationships: ownershipCell.relationships
         };
+      }),
+      canEditEntry: computed(() => {
+        return canEditEntryForProjectUser({
+          relationships: computedScope.entryData.value?.relationships
+        });
       }),
       entryTitle: computed(() => computedScope.entryData.value?.title || 'Entry'),
       entryCreatedAt: computed(() => computedScope.entryData.value?.createdAt || ''),
@@ -258,10 +315,16 @@ export default {
       hasEntrySections: computed(() => computedScope.entrySections.value.length > 0)
     };
 
+    const icons = {
+      pencil,
+      trash
+    };
+
     return {
       state,
       ...methods,
-      ...computedScope
+      ...computedScope,
+      ...icons
     };
   }
 };
