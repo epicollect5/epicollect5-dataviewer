@@ -176,13 +176,28 @@ export default {
             : await projectStore.loadProject(computedScope.resolvedProjectSlug.value);
 
         if (didLoadProject && navigationStore.currentFormRef) {
-          await mapStore.loadLocations({ resetFilters: true });
+          await methods.loadInitialLocations();
         }
+      },
+      async loadInitialLocations() {
+        //legacy parity: after a data editor round trip the map keeps the locations
+        //of the form the hierarchy started from, which can differ from the current one
+        const restoredFormRef = navigationStore.isRestoring
+          ? navigationStore.hierarchyNavigator[0]?.formRef || ''
+          : '';
+
+        navigationStore.setRestoring(false);
+
+        await mapStore.loadLocations({
+          ...(restoredFormRef ? { formRef: restoredFormRef } : {}),
+          resetFilters: true
+        });
       },
       async handleLocationQuestionChange(question) {
         methods.resetMapViewState();
         navigationStore.setBusy(true);
         await mapStore.loadLocations({
+          formRef: computedScope.mapFormRef.value,
           selectedLocationQuestion: question,
           resetFilters: true
         });
@@ -323,7 +338,10 @@ export default {
       mapErrors: computed(() => {
         return Array.isArray(mapStore.errors) ? mapStore.errors.join(', ') : mapStore.errors;
       }),
-      locationQuestions: computed(() => mapStore.getLocationQuestions()),
+      //the map keeps the form its data belongs to, which can differ from the form
+      //the table shows after a data editor round trip
+      mapFormRef: computed(() => mapStore.lastLoadedFormRef || navigationStore.currentFormRef),
+      locationQuestions: computed(() => mapStore.getLocationQuestions(computedScope.mapFormRef.value)),
       hasLocationQuestions: computed(() => computedScope.locationQuestions.value.length > 0),
       entriesTotal: computed(() => mapStore.pagination?.total ?? mapStore.locations.length),
       currentPage: computed(() => mapStore.pagination?.current_page ?? 1),
@@ -335,7 +353,7 @@ export default {
       distributionQuestions: computed(() => {
         return buildDistributionQuestions({
           projectExtra: projectStore.projectExtra,
-          currentFormRef: navigationStore.currentFormRef,
+          currentFormRef: computedScope.mapFormRef.value,
           selectedBranchRef: mapStore.selectedLocationQuestion?.branch_ref || ''
         });
       }),
@@ -350,7 +368,7 @@ export default {
         const distributionKey = mapStore.selectedDistributionQuestion?.inputRef || 'none';
         const pageKey = mapStore.pagination?.current_page || 1;
 
-        return `${projectStore.projectSlug || 'project'}|${navigationStore.currentFormRef || 'form'}|${questionKey}|${distributionKey}|${pageKey}`;
+        return `${projectStore.projectSlug || 'project'}|${computedScope.mapFormRef.value || 'form'}|${questionKey}|${distributionKey}|${pageKey}`;
       }),
       shouldRenderMap: computed(() => {
         return computedScope.hasLocationQuestions.value && !mapStore.isRejectedPage && mapStore.locations.length > 0;

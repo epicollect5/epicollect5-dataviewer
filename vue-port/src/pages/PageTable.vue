@@ -13,7 +13,21 @@
     <template v-else>
       <NavbarSecondary>
         <template #start>
-          <div v-if="isViewingChildren" class="table-view__hierarchy-nav">
+          <div v-if="isViewingBranch" class="table-view__hierarchy-nav">
+            <button
+              type="button"
+              class="table-view__hierarchy-back"
+              aria-label="Back to entry"
+              title="Back to entry"
+              :disabled="state.tableStore.isFetchingPage"
+              @click="handleBranchBack"
+            >
+              <ion-icon :icon="arrowBack" />
+            </button>
+            <span class="table-view__hierarchy-label" :title="branchNavLabel">{{ branchNavLabel }}</span>
+          </div>
+
+          <div v-else-if="isViewingChildren" class="table-view__hierarchy-nav">
             <button
               type="button"
               class="table-view__hierarchy-back"
@@ -84,6 +98,7 @@
             :headers="state.tableStore.headers"
             :has-child-form="state.tableStore.hasChildForm"
             :child-form-name="state.tableStore.childFormName"
+            :can-add-entry="canAddEntry"
             :rows="state.tableStore.gridRows"
             :is-loading="state.tableStore.isFetchingPage"
           />
@@ -112,6 +127,8 @@ import TableEmptyState from '@/components/table/StateEmptyTable.vue';
 import TableToolbar from '@/components/table/ToolbarTable.vue';
 import { getOrderSorting } from '@/core/entries/orderSorting';
 import mapUtils from '@/core/map/mapUtils';
+import { canAddEntryForProjectUser } from '@/services/entries/dataEditorFlow';
+import { clearPendingRestore, getPendingRestore } from '@/services/entries/restoreFlow';
 import { useDrawerStore } from '@/stores/drawerStore';
 import { useFiltersStore } from '@/stores/filtersStore';
 import { useMapStore } from '@/stores/mapStore';
@@ -159,10 +176,62 @@ export default {
             ? true
             : await projectStore.loadProject(computedScope.resolvedProjectSlug.value);
 
-        if (didLoadProject && navigationStore.currentFormRef) {
+        if (!didLoadProject) {
+          return;
+        }
+
+        //coming back from the data editor: rebuild the view the user left behind
+        if (await methods.restorePendingView()) {
+          return;
+        }
+
+        if (navigationStore.currentFormRef) {
           void mapStore.loadLocations({ resetFilters: true });
           await tableStore.loadEntries();
         }
+      },
+      async restorePendingView() {
+        const restoreParams = getPendingRestore({
+          restoreQuery: route.query.restore,
+          projectStore
+        });
+
+        if (!restoreParams) {
+          return false;
+        }
+
+        const hierarchyNavigator = restoreParams.hierarchyNavigator;
+        const activeNavigator = hierarchyNavigator[hierarchyNavigator.length - 1];
+
+        navigationStore.restoreHierarchy({
+          hierarchyNavigator,
+          currentFormRef: restoreParams.formRef,
+          currentFormName: restoreParams.formName || activeNavigator.formName,
+          isViewingChildren: restoreParams.isViewingChildren
+        });
+        filtersStore.restore(restoreParams.entriesFilters);
+
+        if (restoreParams.isViewingBranch) {
+          navigationStore.enterBranch({
+            branchRef: restoreParams.branchRef,
+            ownerEntryUuid: restoreParams.branchOwnerUuid,
+            ownerEntryTitle: restoreParams.branchOwnerEntryTitle,
+            backLink: restoreParams.branchBackLink
+          });
+        }
+
+        await tableStore.loadEntries({
+          params: {
+            page: Number(restoreParams.page) || 1
+          }
+        });
+
+        //keep the params when the reload failed, a refresh retries the restore
+        if (!tableStore.isRejectedPage) {
+          clearPendingRestore();
+        }
+
+        return true;
       },
       async handleTitleChange(title) {
         filtersStore.setTitle(title);
@@ -183,6 +252,9 @@ export default {
       },
       async handleHierarchyBack() {
         await tableStore.navigateBack();
+      },
+      async handleBranchBack() {
+        await tableStore.navigateBackFromBranch();
       },
       async loadPage(url) {
         if (!url) {
@@ -210,11 +282,19 @@ export default {
       }),
       missingProjectSlug: computed(() => !computedScope.resolvedProjectSlug.value),
       isViewingChildren: computed(() => navigationStore.isViewingChildren),
+      isViewingBranch: computed(() => navigationStore.isViewingBranch),
       hierarchyBackFormName: computed(() => {
         const hierarchyNavigator = navigationStore.hierarchyNavigator;
         const parentNavigator = hierarchyNavigator[hierarchyNavigator.length - 2];
 
         return parentNavigator?.formName || '';
+      }),
+      branchNavLabel: computed(() => {
+        const ownerTitle = navigationStore.currentBranchOwnerEntryTitle || '';
+        const branchRef = navigationStore.currentBranchRef;
+        const question = branchRef ? projectStore.projectExtra?.inputs?.[branchRef]?.data?.question || '' : '';
+
+        return question ? `${ownerTitle} | ${question}` : ownerTitle;
       }),
       projectErrors: computed(() => {
         return Array.isArray(projectStore.errors) ? projectStore.errors.join(', ') : projectStore.errors;
@@ -229,6 +309,7 @@ export default {
           projectCreatedAt: projectStore.projectDefinition?.project?.created_at
         });
       }),
+      canAddEntry: computed(() => canAddEntryForProjectUser()),
       hasPagination: computed(() => Boolean(tableStore.pagination)),
       isPreviousPageDisabled: computed(() => !tableStore.links?.prev || tableStore.isFetchingPage),
       isNextPageDisabled: computed(() => !tableStore.links?.next || tableStore.isFetchingPage)
