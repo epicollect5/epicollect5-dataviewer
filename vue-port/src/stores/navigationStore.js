@@ -49,6 +49,47 @@ export const useNavigationStore = defineStore('navigation', {
       this.isViewingChildren = false;
       this.isViewingBranch = false;
       this.currentBranchRef = null;
+    },
+    enterChildForm({ formRef, formName, parentEntryUuid, parentEntryTitle }) {
+      this.hierarchyNavigator.push({
+        ...createRootNavigator(),
+        formRef,
+        formName,
+        parentEntryTitle,
+        parentEntryUuid
+      });
+      this.currentFormRef = formRef;
+      this.currentFormName = formName;
+      this.isViewingChildren = true;
+    },
+    navigateBack() {
+      if (this.hierarchyNavigator.length <= 1) {
+        return false;
+      }
+
+      this.hierarchyNavigator.pop();
+
+      const parentNavigator = this.hierarchyNavigator[this.hierarchyNavigator.length - 1];
+
+      this.currentFormRef = parentNavigator.formRef;
+      this.currentFormName = parentNavigator.formName;
+      this.isViewingChildren = this.hierarchyNavigator.length > 1;
+
+      return parentNavigator;
+    },
+    resetHierarchy() {
+      if (this.hierarchyNavigator.length <= 1) {
+        return false;
+      }
+
+      const rootNavigator = this.hierarchyNavigator[0];
+
+      this.hierarchyNavigator = [rootNavigator];
+      this.currentFormRef = rootNavigator.formRef;
+      this.currentFormName = rootNavigator.formName;
+      this.isViewingChildren = false;
+
+      return rootNavigator;
     }
   }
 });

@@ -56,6 +56,25 @@ const getImmediateChildForm = (forms = [], currentFormRef = '') => {
   return forms[currentFormIndex + 1] || null;
 };
 
+const appendHierarchyParams = (params, navigationStore) => {
+  const hierarchyNavigator = navigationStore.hierarchyNavigator;
+  const activeNavigator = hierarchyNavigator[hierarchyNavigator.length - 1];
+  const parentNavigator = hierarchyNavigator[hierarchyNavigator.length - 2];
+
+  if (hierarchyNavigator.length > 1 && activeNavigator?.parentEntryUuid) {
+    params.parent_form_ref = parentNavigator?.formRef;
+    params.parent_uuid = activeNavigator.parentEntryUuid;
+
+    return params;
+  }
+
+  //drop any stale parent filter left over by a previous child view
+  delete params.parent_form_ref;
+  delete params.parent_uuid;
+
+  return params;
+};
+
 const delay = (duration) => new Promise((resolve) => {
   window.setTimeout(resolve, duration);
 });
@@ -79,6 +98,7 @@ export const useTableStore = defineStore('table', {
       isRejectedPage: false,
       isBranchTable: false,
       isFetchingChildren: false,
+      requestVersion: 0,
       errors: []
     };
   },
@@ -102,6 +122,8 @@ export const useTableStore = defineStore('table', {
         ...overrides
       };
 
+      appendHierarchyParams(params, navigationStore);
+
       Object.keys(params).forEach((key) => {
         if (params[key] === '' || params[key] === null || params[key] === undefined) {
           delete params[key];
@@ -123,6 +145,9 @@ export const useTableStore = defineStore('table', {
         this.hasLoadedInitialPage = false;
         this.lastLoadedProjectSlug = projectStore.projectSlug;
       }
+
+      const requestVersion = this.requestVersion + 1;
+      this.requestVersion = requestVersion;
 
       this.isFetchingPage = true;
       this.isRejectedPage = false;
@@ -166,6 +191,11 @@ export const useTableStore = defineStore('table', {
         //the loader stays up for a minimum time, so it does not flash
         await delay(PARAMETERS.DELAY.TABLE_PAGE_MIN);
 
+        //a newer request (navigation, filters or pagination) has taken over
+        if (requestVersion !== this.requestVersion) {
+          return;
+        }
+
         const formRef = navigationStore.currentFormRef;
 
         this.requestParams = requestParams;
@@ -179,12 +209,72 @@ export const useTableStore = defineStore('table', {
         this.pagination = responseData.meta;
         this.links = responseData.links;
       } catch (error) {
+        if (requestVersion !== this.requestVersion) {
+          return;
+        }
+
         this.isRejectedPage = true;
         this.errors = error.response?.data?.errors || [error.message];
       } finally {
-        this.isFetchingPage = false;
-        this.hasLoadedInitialPage = true;
+        if (requestVersion === this.requestVersion) {
+          this.isFetchingPage = false;
+          this.hasLoadedInitialPage = true;
+        }
       }
+    },
+
+    async loadChildEntries({ entryUuid, entryTitle } = {}) {
+      const projectStore = useProjectStore();
+      const navigationStore = useNavigationStore();
+      const filtersStore = useFiltersStore();
+
+      if (!projectStore.projectSlug || !navigationStore.currentFormRef || !entryUuid || this.isFetchingPage) {
+        return;
+      }
+
+      const childForm = getImmediateChildForm(projectStore.forms, navigationStore.currentFormRef);
+
+      if (!childForm) {
+        return;
+      }
+
+      navigationStore.enterChildForm({
+        formRef: childForm.ref,
+        formName: childForm.name,
+        parentEntryUuid: entryUuid,
+        parentEntryTitle: entryTitle || ''
+      });
+      filtersStore.reset();
+
+      await this.loadEntries({ params: { page: 1 } });
+    },
+
+    async navigateBack() {
+      const navigationStore = useNavigationStore();
+      const filtersStore = useFiltersStore();
+
+      //a request already in flight is discarded by the request version check
+      if (!navigationStore.navigateBack()) {
+        return;
+      }
+
+      filtersStore.reset();
+
+      await this.loadEntries({ params: { page: 1 } });
+    },
+
+    async navigateToRoot() {
+      const navigationStore = useNavigationStore();
+      const filtersStore = useFiltersStore();
+
+      //a request already in flight is discarded by the request version check
+      if (!navigationStore.resetHierarchy()) {
+        return;
+      }
+
+      filtersStore.reset();
+
+      await this.loadEntries({ params: { page: 1 } });
     },
 
     async deleteCurrentEntry(payload = {}) {
