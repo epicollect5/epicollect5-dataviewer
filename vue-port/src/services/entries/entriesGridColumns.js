@@ -1,6 +1,7 @@
 import PARAMETERS from '@/core/config/parameters';
 import { add, create, eye, play, trash } from 'ionicons/icons';
 import { useModalStore } from '@/stores/modalStore';
+import { useTableStore } from '@/stores/tableStore';
 
 const ACTION_ICONS = {
   view: eye,
@@ -9,9 +10,15 @@ const ACTION_ICONS = {
 };
 
 const handleChildCountClick = (params) => {
-  console.log('Child count clicked', {
-    entryUuid: params.data?.id || null,
-    childCount: params.value ?? 0
+  const entryUuid = params.data?.id || null;
+
+  if (!entryUuid) {
+    return;
+  }
+
+  void useTableStore().loadChildEntries({
+    entryUuid,
+    entryTitle: params.data?.title || ''
   });
 };
 
