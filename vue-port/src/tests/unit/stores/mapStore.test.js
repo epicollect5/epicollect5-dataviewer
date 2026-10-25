@@ -236,6 +236,70 @@ describe('mapStore', () => {
     expect(store.locations[0].u).toBe('entry-2');
   });
 
+  it('keeps the loaded form when paging after a restore moved the current form', async () => {
+    const projectStore = useProjectStore();
+    const navigationStore = useNavigationStore();
+    const store = useMapStore();
+    const pageTwoUrl = 'https://five.epicollect.net/api/internal/entries-locations-compact/demo-project?form_ref=form_1&input_ref=location_1&page=2';
+
+    projectStore.projectSlug = 'demo-project';
+    projectStore.projectExtra = {
+      forms: {
+        form_1: {
+          lists: {
+            location_inputs: [{ input_ref: 'location_1', branch_ref: '' }]
+          }
+        },
+        form_2: {
+          lists: {
+            location_inputs: []
+          }
+        }
+      }
+    };
+    projectStore.projectDefinition = {
+      project: {
+        forms: [
+          { ref: 'form_1', name: 'Form One' },
+          { ref: 'form_2', name: 'Form Two' }
+        ]
+      }
+    };
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    fetchEntriesLocations.mockResolvedValue({
+      data: compactLocationPayload({
+        points: [{ u: 'entry-1', x: 12.5, y: 41.9, d: 20240410, pa: [0] }]
+      })
+    });
+
+    await store.loadLocations({ resetFilters: true });
+
+    //the table restored a child view, while the map holds the parent form locations
+    navigationStore.enterChildForm({
+      formRef: 'form_2',
+      formName: 'Form Two',
+      parentEntryUuid: 'entry-1',
+      parentEntryTitle: 'Parent entry'
+    });
+    vi.spyOn(client, 'get').mockResolvedValue({
+      data: compactLocationPayload({
+        points: [{ u: 'entry-2', x: 13.5, y: 42.9, d: 20240415, pa: [0] }],
+        links: {
+          self: pageTwoUrl,
+          prev: null,
+          next: null
+        }
+      })
+    });
+
+    await store.loadLocations({ pageUrl: pageTwoUrl });
+
+    expect(store.lastLoadedFormRef).toBe('form_1');
+    expect(store.isRejectedPage).toBe(false);
+    expect(store.locations).toHaveLength(1);
+    expect(store.locations[0].u).toBe('entry-2');
+  });
+
   it('loads a single compact chunk without rebuilding GeoJSON features', async () => {
     const projectStore = useProjectStore();
     const navigationStore = useNavigationStore();
