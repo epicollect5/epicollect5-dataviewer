@@ -3,13 +3,19 @@
     <ion-toolbar>
       <div class="primary-navbar__inner">
         <div class="primary-navbar__brand">
-          <a :href="projectHomeUrl" class="primary-navbar__brand-link">
+          <a
+            :href="brandHref"
+            class="primary-navbar__brand-link"
+            :aria-label="brandLabel"
+            :title="brandLabel"
+            @click="handleBrandClick"
+          >
             <img class="primary-navbar__project-logo" :src="state.projectLogoSrc" :alt="projectName" @error="handleLogoError" />
           </a>
           <span class="primary-navbar__project-name">{{ projectName }}</span>
         </div>
 
-        <label v-if="hasForms" class="primary-navbar__forms">
+        <label v-if="showFormSwitcher" class="primary-navbar__forms">
           <Dropdown
             :model-value="selectedFormRef"
             :options="forms"
@@ -20,6 +26,7 @@
         </label>
 
         <button
+          v-if="showPrimaryNavigation"
           type="button"
           class="primary-navbar__menu-toggle"
           aria-label="Open primary navigation"
@@ -28,7 +35,7 @@
           <ion-icon :icon="menu" />
         </button>
 
-        <nav class="primary-navbar__nav" aria-label="Primary navigation">
+        <nav v-if="showPrimaryNavigation" class="primary-navbar__nav" aria-label="Primary navigation">
           <template v-if="isLoggedIn">
             <span class="primary-navbar__user">
               <img class="primary-navbar__avatar" :src="state.avatarSrc" alt="avatar" @error="handleAvatarError" />
@@ -80,6 +87,14 @@
             <span>Exit</span>
           </a>
         </nav>
+
+        <span
+          v-if="showChildEntryTitle"
+          class="primary-navbar__child-entry-title"
+          :title="childEntryTooltip"
+        >
+          {{ childEntryContext }}
+        </span>
       </div>
     </ion-toolbar>
   </ion-header>
@@ -139,6 +154,14 @@ export default {
       },
       handleAvatarError() {
         state.avatarSrc = computedScope.fallbackAvatarSrc.value;
+      },
+      handleBrandClick(event) {
+        if (!computedScope.isViewingChildren.value) {
+          return;
+        }
+
+        event.preventDefault();
+        void tableStore.navigateToRoot();
       },
       handlePrimaryDrawerEvent(eventName, value) {
         if (eventName === 'avatar-error') {
@@ -278,8 +301,44 @@ export default {
       }),
       projectName: computed(() => projectStore.projectDefinition.project?.name || 'Epicollect5'),
       currentFormRef: computed(() => navigationStore.currentFormRef),
+      isViewingChildren: computed(() => navigationStore.isViewingChildren),
+      parentEntryTitle: computed(() => {
+        const hierarchyNavigator = navigationStore.hierarchyNavigator;
+        const activeNavigator = hierarchyNavigator[hierarchyNavigator.length - 1];
+
+        return activeNavigator?.parentEntryTitle || '';
+      }),
+      showChildEntryTitle: computed(() => {
+        return computedScope.isViewingChildren.value && Boolean(computedScope.parentEntryTitle.value);
+      }),
+      childEntryContext: computed(() => {
+        const hierarchyNavigator = navigationStore.hierarchyNavigator;
+        const activeNavigator = hierarchyNavigator[hierarchyNavigator.length - 1];
+        const childFormName = activeNavigator?.formName || '';
+        const parentEntryTitle = computedScope.parentEntryTitle.value;
+
+        if (!childFormName) {
+          return helpers.textTruncate(parentEntryTitle);
+        }
+
+        return `${helpers.textTruncate(childFormName)} of "${helpers.textTruncate(parentEntryTitle)}"`;
+      }),
+      childEntryTooltip: computed(() => {
+        const hierarchyNavigator = navigationStore.hierarchyNavigator;
+        const activeNavigator = hierarchyNavigator[hierarchyNavigator.length - 1];
+        const childFormName = activeNavigator?.formName || '';
+        const parentEntryTitle = computedScope.parentEntryTitle.value;
+
+        if (!childFormName) {
+          return parentEntryTitle;
+        }
+
+        return `${childFormName} of "${parentEntryTitle}"`;
+      }),
       forms: computed(() => projectStore.forms),
       hasForms: computed(() => computedScope.forms.value.length > 0),
+      showFormSwitcher: computed(() => computedScope.hasForms.value && !computedScope.isViewingChildren.value),
+      showPrimaryNavigation: computed(() => !computedScope.isViewingChildren.value),
       selectedFormRef: computed(() => computedScope.currentFormRef.value || ''),
       tableLinkClasses: computed(() => ({
         'primary-navbar__nav-link--active': !computedScope.isMapPage.value
@@ -323,6 +382,16 @@ export default {
         }
 
         return '/project/data';
+      }),
+      brandHref: computed(() => {
+        return computedScope.isViewingChildren.value
+          ? computedScope.tableHref.value
+          : computedScope.projectHomeUrl.value;
+      }),
+      brandLabel: computed(() => {
+        return computedScope.isViewingChildren.value
+          ? 'Back to the first form'
+          : `Open ${computedScope.projectName.value}`;
       }),
       fallbackAvatarSrc: computed(() => `${PARAMETERS.SERVER_URL}${PARAMETERS.IMAGES_PATH_LARAVEL}avatar-placeholder.png`)
     };
