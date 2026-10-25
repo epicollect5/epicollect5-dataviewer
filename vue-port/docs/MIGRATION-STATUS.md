@@ -15,10 +15,11 @@
 - Bulk upload supports CSV preparation, sequential upload, per-row error rows, failed-only filtering, failed-row CSV export, and table refresh after close.
 - Map view supports form switching, location-question selection, date filtering, grouped coordinate markers, and Leaflet rendering.
 - Ionic shell now hosts modal, toast, drawer, and wait-overlay layers in one place.
+- Form hierarchy navigation is implemented: the child count cell loads the entries of the next form for the selected parent entry, the secondary navbar links back to the immediate parent, and the primary navbar brand links back to the first form.
 
 ## Known Gaps
 
-- Entry actions are still placeholders: view, edit, delete, child navigation, and branch navigation are not wired yet.
+- Entry actions are still placeholders: view, edit, delete, add child entry, and branch navigation are not wired yet.
 - Map marker interaction is limited to popup text. Legacy drawer-entry flows and richer marker overlays are not ported.
 - The map “clusters” toggle currently groups identical coordinates instead of using the legacy cluster plugin behavior.
 - Download flows and subset-selection parity are not implemented yet.
