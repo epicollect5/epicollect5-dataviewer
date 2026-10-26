@@ -144,6 +144,7 @@ import {
   getAddEntryAction,
   openAddEntry
 } from '@/services/entries/dataEditorFlow';
+import { clearEntriesApiCache } from '@/services/entries/entriesPageCache';
 import { clearPendingRestore, getPendingRestore } from '@/services/entries/restoreFlow';
 import { useDrawerStore } from '@/stores/drawerStore';
 import { useFiltersStore } from '@/stores/filtersStore';
@@ -151,6 +152,7 @@ import { useMapStore } from '@/stores/mapStore';
 import { useNavigationStore } from '@/stores/navigationStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useTableStore } from '@/stores/tableStore';
+import { useToastStore } from '@/stores/toastStore';
 
 export default {
   name: 'PageTable',
@@ -169,6 +171,7 @@ export default {
     const tableStore = useTableStore();
     const mapStore = useMapStore();
     const drawerStore = useDrawerStore();
+    const toastStore = useToastStore();
 
     const state = reactive({
       projectStore,
@@ -176,7 +179,8 @@ export default {
       filtersStore,
       tableStore,
       mapStore,
-      drawerStore
+      drawerStore,
+      toastStore
     });
 
     const methods = {
@@ -207,6 +211,10 @@ export default {
         }
       },
       async restorePendingView() {
+        //the data editor can add, edit or delete any entry, so no page the viewer
+        //cached before the round trip can be served again
+        clearEntriesApiCache();
+
         const restoreParams = getPendingRestore({
           restoreQuery: route.query.restore,
           projectStore
@@ -250,12 +258,45 @@ export default {
           }
         });
 
+        //the entry the saved view was scoped to can be gone, removed by another
+        //user while the editor was open, so there is nothing left to rebuild
+        if (methods.shouldFallbackFromRestore(restoreParams)) {
+          await methods.fallbackFromRestore(restoreParams);
+          clearPendingRestore();
+
+          return true;
+        }
+
         //keep the params when the reload failed, a refresh retries the restore
         if (!tableStore.isRejectedPage) {
           clearPendingRestore();
         }
 
         return true;
+      },
+      //a branch or a child view is scoped to one entry, and the request for it is
+      //rejected once that entry is gone: a network or server failure stays
+      //retryable, so only a gone or not allowed answer falls back
+      shouldFallbackFromRestore(restoreParams) {
+        if (!restoreParams.isViewingBranch && !restoreParams.isViewingChildren) {
+          return false;
+        }
+
+        return [403, 404].includes(Number(tableStore.errorStatus));
+      },
+      async fallbackFromRestore(restoreParams) {
+        //the view the scoped one was opened from takes over, with its own filters
+        //and page rather than the root form
+        if (restoreParams.isViewingBranch) {
+          await tableStore.navigateBackFromBranch();
+        } else {
+          await tableStore.navigateBack();
+        }
+
+        toastStore.show('The entry this view belonged to is no longer available.', {
+          color: 'warning',
+          duration: 3000
+        });
       },
       async handleTitleChange(title) {
         filtersStore.setTitle(title);
