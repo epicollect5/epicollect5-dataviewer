@@ -11,6 +11,9 @@ const env = {
   //legacy parity for PARAMETERS.IS_LOCALHOST: while debugging, entry actions are
   //enabled even when the project user is not logged in (public demo projects)
   isDev: import.meta.env.DEV,
+  //empty in development and in any build that did not get the token: error
+  //reporting stays off rather than failing the build
+  rollbarAccessToken: import.meta.env.VITE_ROLLBAR_ACCESS_TOKEN || '',
   mapboxApiToken: import.meta.env.VITE_MAPBOX_API_TOKEN || '',
   esriApiToken: import.meta.env.VITE_ESRI_API_TOKEN || ''
 };
