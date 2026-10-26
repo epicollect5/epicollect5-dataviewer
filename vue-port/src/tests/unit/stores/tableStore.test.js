@@ -365,6 +365,32 @@ describe('stores/tableStore', () => {
     }));
   });
 
+  it('keeps the status of a rejected page, so a gone entry is told from a flaky network', async () => {
+    vi.useFakeTimers();
+
+    const navigationStore = useNavigationStore();
+    const projectStore = useProjectStore();
+    const tableStore = useTableStore();
+
+    projectStore.projectSlug = 'demo-project';
+    navigationStore.setCurrentForm('form_1', 'Form One');
+    fetchEntries.mockRejectedValue({
+      response: {
+        status: 404,
+        data: { errors: ['Entry not found'] }
+      }
+    });
+
+    const loadPromise = tableStore.loadEntries({ params: { page: 1 } });
+
+    await vi.advanceTimersByTimeAsync(PARAMETERS.DELAY.TABLE_PAGE_MIN);
+    await loadPromise;
+
+    expect(tableStore.isRejectedPage).toBe(true);
+    expect(tableStore.errorStatus).toBe(404);
+    expect(tableStore.errors).toEqual(['Entry not found']);
+  });
+
   it('loads the immediate child form entries and resets filters', async () => {
     const filtersStore = useFiltersStore();
     const navigationStore = useNavigationStore();
