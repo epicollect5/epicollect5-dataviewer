@@ -1,6 +1,7 @@
 import lscache from 'lscache';
 import PARAMETERS from '@/core/config/parameters';
 import client from '@/services/api/client';
+import { rollbarService } from '@/services/monitoring/rollbarService';
 import LZString from 'lz-string';
 
 const TABLE_ENTRIES_CACHE_BUCKET = 'ec5-table-entries:';
@@ -241,8 +242,10 @@ const setPersistentCachePayload = (bucketWriter, bucket, cacheKey, cachedPayload
         TABLE_ENTRIES_CACHE_TTL_MINUTES
       );
     });
-  } catch {
-    // Keep the in-memory cache warm even when localStorage quota is exceeded.
+  } catch (error) {
+    // Keep the in-memory cache warm even when localStorage quota is exceeded, but
+    // a full quota is invisible otherwise: the viewer silently stops caching pages
+    rollbarService.criticalWithContext('cache: persist page failed', error);
   }
 
   // Measure bucket size AFTER and calculate delta
