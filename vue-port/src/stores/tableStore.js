@@ -111,6 +111,8 @@ export const useTableStore = defineStore('table', {
       lastLoadedProjectSlug: '',
       isFetchingPage: false,
       isRejectedPage: false,
+      //the status of the last rejected page, telling a gone entry from a flaky network
+      errorStatus: 0,
       isBranchTable: false,
       //the owner view a branch was opened from, replayed when the branch is left
       branchReturnView: null,
@@ -168,6 +170,7 @@ export const useTableStore = defineStore('table', {
 
       this.isFetchingPage = true;
       this.isRejectedPage = false;
+      this.errorStatus = 0;
       this.errors = [];
 
       try {
@@ -239,6 +242,7 @@ export const useTableStore = defineStore('table', {
         }
 
         this.isRejectedPage = true;
+        this.errorStatus = error.response?.status || 0;
         this.errors = error.response?.data?.errors || [error.message];
       } finally {
         if (requestVersion === this.requestVersion) {
