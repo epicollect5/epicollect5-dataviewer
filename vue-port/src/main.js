@@ -5,6 +5,7 @@ import { IonicVue } from '@ionic/vue';
 import App from '@/App.vue';
 import router from '@/router';
 import { clearEntriesApiCache } from '@/services/entries/entriesPageCache';
+import { rollbarService } from '@/services/monitoring/rollbarService';
 
 import '@ionic/vue/css/core.css';
 import '@ionic/vue/css/normalize.css';
@@ -31,5 +32,14 @@ app.use(pinia);
 app.use(router);
 
 router.isReady().then(() => {
+  //error reporting is wired before the first render, so a failure while mounting
+  //is reported instead of only reaching the console
+  rollbarService.init(app);
+
+  //a deployed build is checked from the browser: ?rollbar_test=1 on any view
+  if (rollbarService.isTestReportRequested(window.location.search)) {
+    rollbarService.sendTestReport();
+  }
+
   app.mount('#app');
 });
